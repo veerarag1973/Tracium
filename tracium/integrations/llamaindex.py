@@ -61,7 +61,7 @@ def _require_llamaindex() -> Any:  # noqa: ANN401
         pass
     raise ImportError(
         "LlamaIndex package is required for the tracium LlamaIndex integration.\n"
-        "Install it with: pip install 'tracium[llamaindex]'"
+        "Install it with: pip install 'agentobs[llamaindex]'"
     )
 
 

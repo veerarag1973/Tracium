@@ -63,7 +63,7 @@ def _require_langchain() -> Any:  # noqa: ANN401
         pass
     raise ImportError(
         "LangChain package is required for the tracium LangChain integration.\n"
-        "Install it with: pip install 'tracium[langchain]'"
+        "Install it with: pip install 'agentobs[langchain]'"
     )
 
 

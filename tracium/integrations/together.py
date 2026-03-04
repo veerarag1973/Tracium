@@ -41,7 +41,7 @@ effect.  Call :func:`unpatch` to restore the original methods.
 
 Install with::
 
-    pip install "tracium[together]"
+    pip install "agentobs[together]"
 """
 
 from __future__ import annotations
@@ -402,7 +402,7 @@ def _require_together() -> Any:  # noqa: ANN401
     except ImportError as exc:
         raise ImportError(
             "The 'together' package is required for tracium Together AI integration.\n"
-            "Install it with: pip install 'tracium[together]'"
+            "Install it with: pip install 'agentobs[together]'"
         ) from exc
 
 

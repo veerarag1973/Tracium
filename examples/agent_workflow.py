@@ -5,7 +5,7 @@ instrument a simple research-and-summarise workflow.
 
 Usage
 -----
-    pip install tracium
+    pip install agentobs
     python examples/agent_workflow.py
 """
 

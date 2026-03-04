@@ -1,7 +1,7 @@
 # Command-Line Interface
 
 tracium ships a command-line tool, `tracium`, for operational tasks.
-The entry-point is installed automatically when you `pip install tracium`.
+The entry-point is installed automatically when you `pip install agentobs`.
 
 ```bash
 tracium --help

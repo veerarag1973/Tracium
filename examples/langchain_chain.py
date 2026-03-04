@@ -2,7 +2,7 @@
 
 Prerequisites
 -------------
-    pip install tracium[openai] langchain langchain-openai
+    pip install agentobs[openai] langchain langchain-openai
 
 Usage
 -----

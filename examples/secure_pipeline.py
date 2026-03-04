@@ -6,7 +6,7 @@ Demonstrates Phase 11 features:
 
 Usage
 -----
-    pip install tracium
+    pip install agentobs
     python examples/secure_pipeline.py
     tracium audit-chain secure_events.jsonl   # verify the chain
 """

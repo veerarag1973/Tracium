@@ -10,10 +10,8 @@
 </p>
 
 <p align="center">
-  <a href="https://pypi.org/project/tracium/"><img src="https://img.shields.io/pypi/v/tracium?color=4c8cbf&label=PyPI&logo=pypi&logoColor=white" alt="PyPI version"/></a>
-  <a href="https://pypi.org/project/tracium/"><img src="https://img.shields.io/pypi/pyversions/tracium?color=4c8cbf&logo=python&logoColor=white" alt="Python versions"/></a>
+  <img src="https://img.shields.io/badge/python-3.9%2B-4c8cbf?logo=python&logoColor=white" alt="Python 3.9+"/>
   <a href="RFC-0001-AGENTOBS.md"><img src="https://img.shields.io/badge/standard-AGENTOBS_RFC--0001-4c8cbf" alt="AGENTOBS RFC-0001"/></a>
-  <a href="https://pypi.org/project/tracium/"><img src="https://img.shields.io/pypi/dm/tracium?color=4c8cbf&label=downloads" alt="Monthly downloads"/></a>
   <img src="https://img.shields.io/badge/coverage-97%25-brightgreen" alt="97% test coverage"/>
   <img src="https://img.shields.io/badge/tests-1791%20passing-brightgreen" alt="1791 tests"/>
   <img src="https://img.shields.io/badge/dependencies-zero-brightgreen" alt="Zero dependencies"/>
@@ -52,27 +50,29 @@ Without a shared schema, every team invents their own log format. With ``tracium
 ## Install
 
 ```bash
-pip install tracium
+pip install agentobs
 ```
 
 ```python
-import tracium  # that's it — no configuration needed
+import tracium  # distribution name is agentobs, import name is tracium
 ```
 
 **Requires Python 3.9 or later.** No other packages are required for core usage.
 
+> **Note:** The PyPI distribution is named `agentobs`. The Python import name remains `tracium`.
+
 ### Optional extras
 
 ```bash
-pip install "tracium[jsonschema]"   # strict JSON Schema validation
-pip install "tracium[http]"         # Webhook + OTLP export
-pip install "tracium[pydantic]"     # Pydantic v2 model layer
-pip install "tracium[otel]"         # OpenTelemetry SDK integration
-pip install "tracium[kafka]"        # EventStream.from_kafka() via kafka-python
-pip install "tracium[langchain]"    # LangChain callback handler
-pip install "tracium[llamaindex]"   # LlamaIndex event handler
-pip install "tracium[datadog]"      # Datadog APM + metrics exporter
-pip install "tracium[all]"          # everything above
+pip install "agentobs[jsonschema]"   # strict JSON Schema validation
+pip install "agentobs[http]"         # Webhook + OTLP export
+pip install "agentobs[pydantic]"     # Pydantic v2 model layer
+pip install "agentobs[otel]"         # OpenTelemetry SDK integration
+pip install "agentobs[kafka]"        # EventStream.from_kafka() via kafka-python
+pip install "agentobs[langchain]"    # LangChain callback handler
+pip install "agentobs[llamaindex]"   # LlamaIndex event handler
+pip install "agentobs[datadog]"      # Datadog APM + metrics exporter
+pip install "agentobs[all]"          # everything above
 ```
 
 ---
@@ -475,7 +475,7 @@ examples/             <- Runnable sample scripts
 ## Development setup
 
 ```bash
-git clone https://github.com/llm-toolkit/tracium.git
+git clone https://github.com/veerarag1973/agentobs.git
 cd tracium
 
 python -m venv .venv
@@ -527,7 +527,7 @@ The ``llm.trace.*`` namespace payload schema is **additionally frozen at v2**: e
 
 ## Changelog
 
-See [docs/changelog.md](docs/changelog.md) or the [release history on PyPI](https://pypi.org/project/tracium/#history).
+See [docs/changelog.md](docs/changelog.md) for the full version history.
 
 ---
 
@@ -550,9 +550,8 @@ Key rules:
 
 <p align="center">
   Made with care for the LLM Developer Toolkit ecosystem.<br/>
-  <a href="https://pypi.org/project/tracium/">PyPI</a> ·
   <a href="docs/index.md">Docs</a> ·
   <a href="docs/quickstart.md">Quickstart</a> ·
   <a href="docs/api/index.md">API Reference</a> ·
-  <a href="https://github.com/llm-toolkit/tracium/issues">Report a bug</a>
+  <a href="https://github.com/veerarag1973/agentobs/issues">Report a bug</a>
 </p>

@@ -8,16 +8,18 @@ OTLP — in under five minutes.
 ## Installation
 
 ```bash
-pip install tracium
+pip install agentobs
 ```
+
+> The PyPI distribution is **`agentobs`**; the import name is `tracium`.
 
 For optional features:
 
 ```bash
-pip install "tracium[jsonschema]"   # JSON Schema validation
-pip install "tracium[http]"         # Async OTLP/webhook export (httpx)
-pip install "tracium[pydantic]"     # Pydantic v2 model layer
-pip install "tracium[otel]"         # OTelBridgeExporter — TracerProvider integration
+pip install "agentobs[jsonschema]"   # JSON Schema validation
+pip install "agentobs[http]"         # Async OTLP/webhook export (httpx)
+pip install "agentobs[pydantic]"     # Pydantic v2 model layer
+pip install "agentobs[otel]"         # OTelBridgeExporter — TracerProvider integration
 ```
 
 Python 3.9+ is required.

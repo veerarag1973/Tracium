@@ -3,13 +3,13 @@
 Each sub-module is an optional extra that sits on top of the zero-dependency
 core SDK.  Install the relevant extra before importing:
 
-    pip install "tracium[openai]"      # OpenAI auto-instrumentation
-    pip install "tracium[anthropic]"   # Anthropic Claude auto-instrumentation
-    pip install "tracium[ollama]"      # Ollama local model auto-instrumentation
-    pip install "tracium[groq]"        # Groq API auto-instrumentation
-    pip install "tracium[together]"    # Together AI auto-instrumentation
-    pip install "tracium[langchain]"   # LangChain callback handler
-    pip install "tracium[llamaindex]"  # LlamaIndex event handler
+    pip install "agentobs[openai]"      # OpenAI auto-instrumentation
+    pip install "agentobs[anthropic]"   # Anthropic Claude auto-instrumentation
+    pip install "agentobs[ollama]"      # Ollama local model auto-instrumentation
+    pip install "agentobs[groq]"        # Groq API auto-instrumentation
+    pip install "agentobs[together]"    # Together AI auto-instrumentation
+    pip install "agentobs[langchain]"   # LangChain callback handler
+    pip install "agentobs[llamaindex]"  # LlamaIndex event handler
 
 Available integrations
 ----------------------

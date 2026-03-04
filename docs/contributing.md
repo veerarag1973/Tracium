@@ -7,7 +7,8 @@ write code that matches the project's standards, and submit a pull request.
 ## Development setup
 
 ```bash
-git clone https://github.com/llm-toolkit/tracium.git
+git clone https://github.com/veerarag1973/agentobs.git
+cd tracium
 cd tracium
 python -m venv .venv
 
@@ -126,5 +127,5 @@ Before opening a PR, confirm:
 
 ## License
 
-tracium is released under the [MIT License](https://github.com/llm-toolkit/tracium/blob/main/LICENSE).
+tracium is released under the [MIT License](https://github.com/veerarag1973/agentobs/blob/main/LICENSE).
 By contributing you agree that your contributions will be licensed under the same terms.

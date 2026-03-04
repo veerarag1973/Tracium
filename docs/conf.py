@@ -93,13 +93,13 @@ html_theme_options = {
     "icon_links": [
         {
             "name": "GitHub",
-            "url": "https://github.com/llm-toolkit/tracium",
+            "url": "https://github.com/veerarag1973/agentobs",
             "icon": "fa-brands fa-github",
             "type": "fontawesome",
         },
         {
             "name": "PyPI",
-            "url": "https://pypi.org/project/Tracium/",
+            "url": "https://pypi.org/project/agentobs/",
             "icon": "fa-solid fa-box",
             "type": "fontawesome",
         },

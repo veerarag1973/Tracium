@@ -2,7 +2,7 @@
 
 Prerequisites
 -------------
-    pip install tracium[openai]
+    pip install agentobs[openai]
 
 Usage
 -----

@@ -18,7 +18,7 @@ Distribution of this memo is unlimited.
 This is a **Draft Specification**. This document is the product of open
 community collaboration. Please send feedback, objections, and
 implementation reports to the Issues tracker at
-[https://github.com/llm-toolkit/llm-toolkit-schema](https://github.com/llm-toolkit/llm-toolkit-schema).
+[https://github.com/veerarag1973/agentobs](https://github.com/veerarag1973/agentobs).
 
 This document is **not** an IETF RFC and is not published by the IETF.
 The term "RFC" in this repository denotes an open request-for-comments
@@ -1765,7 +1765,7 @@ major release.
   Regulation (EU) 2024/1689.
 - [llm-toolkit-schema] Reference implementation, v1.1.2.
   https://pypi.org/project/llm-toolkit-schema/
-  https://github.com/llm-toolkit/llm-toolkit-schema
+  https://github.com/veerarag1973/agentobs
 
 ---
 
@@ -1914,8 +1914,8 @@ are subject to update during ratification.
 ```
 Sriram
 llm-toolkit project
-GitHub: https://github.com/llm-toolkit/llm-toolkit-schema
-Issues: https://github.com/llm-toolkit/llm-toolkit-schema/issues
+GitHub: https://github.com/veerarag1973/agentobs
+Issues: https://github.com/veerarag1973/agentobs/issues
 ```
 
 Contributions, objections, and implementation reports are welcome via the

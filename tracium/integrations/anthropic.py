@@ -34,7 +34,7 @@ effect.  Call :func:`unpatch` to restore the original methods.
 
 Install with::
 
-    pip install "tracium[anthropic]"
+    pip install "agentobs[anthropic]"
 """
 
 from __future__ import annotations
@@ -302,7 +302,7 @@ def _require_anthropic() -> Any:  # noqa: ANN401
     except ImportError as exc:
         raise ImportError(
             "The 'anthropic' package is required for tracium Anthropic integration.\n"
-            "Install it with: pip install 'tracium[anthropic]'"
+            "Install it with: pip install 'agentobs[anthropic]'"
         ) from exc
 
 

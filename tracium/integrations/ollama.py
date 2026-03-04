@@ -33,7 +33,7 @@ effect.  Call :func:`unpatch` to restore the original functions.
 
 Install with::
 
-    pip install "tracium[ollama]"
+    pip install "agentobs[ollama]"
 
 .. note::
    Ollama has no per-token pricing.  :func:`normalize_response` always returns
@@ -250,7 +250,7 @@ def _require_ollama() -> Any:  # noqa: ANN401
     except ImportError as exc:
         raise ImportError(
             "The 'ollama' package is required for tracium Ollama integration.\n"
-            "Install it with: pip install 'tracium[ollama]'"
+            "Install it with: pip install 'agentobs[ollama]'"
         ) from exc
 
 

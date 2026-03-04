@@ -34,7 +34,7 @@ effect.  Call :func:`unpatch` to restore the original methods.
 
 Install with::
 
-    pip install "tracium[openai]"
+    pip install "agentobs[openai]"
 """
 
 from __future__ import annotations
@@ -253,7 +253,7 @@ def _require_openai() -> Any:  # noqa: ANN401
     except ImportError as exc:
         raise ImportError(
             "The 'openai' package is required for tracium OpenAI integration.\n"
-            "Install it with: pip install 'tracium[openai]'"
+            "Install it with: pip install 'agentobs[openai]'"
         ) from exc
 
 

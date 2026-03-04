@@ -6,13 +6,13 @@ build-backend = "hatchling.build"
 # Project metadata
 # ---------------------------------------------------------------------------
 [project]
-name = "tracium"
+name = "agentobs"
 version = "1.0.0"
-description = "Tracium — the official Python SDK for the SpanForge Observability Standard"
+description = "Tracium — reference implementation of RFC-0001 AGENTOBS, the Observability Schema Standard for Agentic AI Systems"
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "LLM Toolkit Team" }]
-keywords = ["llm", "schema", "opentelemetry", "events", "observability"]
+keywords = ["llm", "agentobs", "observability", "opentelemetry", "agentic-ai", "schema", "events"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -33,11 +33,11 @@ requires-python = ">=3.9"
 dependencies = []
 
 [project.urls]
-"Homepage" = "https://github.com/llm-toolkit/tracium"
-"Documentation" = "https://tracium.readthedocs.io"
-"Source" = "https://github.com/llm-toolkit/tracium"
-"Bug Tracker" = "https://github.com/llm-toolkit/tracium/issues"
-"Changelog" = "https://tracium.readthedocs.io/en/latest/changelog.html"
+"Homepage" = "https://github.com/veerarag1973/agentobs"
+"Documentation" = "https://github.com/veerarag1973/agentobs/blob/main/docs/index.md"
+"Source" = "https://github.com/veerarag1973/agentobs"
+"Bug Tracker" = "https://github.com/veerarag1973/agentobs/issues"
+"Changelog" = "https://github.com/veerarag1973/agentobs/blob/main/docs/changelog.md"
 
 [project.optional-dependencies]
 dev = [

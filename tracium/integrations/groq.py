@@ -39,7 +39,7 @@ effect.  Call :func:`unpatch` to restore the original methods.
 
 Install with::
 
-    pip install "tracium[groq]"
+    pip install "agentobs[groq]"
 """
 
 from __future__ import annotations
@@ -363,7 +363,7 @@ def _require_groq() -> Any:  # noqa: ANN401
     except ImportError as exc:
         raise ImportError(
             "The 'groq' package is required for tracium Groq integration.\n"
-            "Install it with: pip install 'tracium[groq]'"
+            "Install it with: pip install 'agentobs[groq]'"
         ) from exc
 
 

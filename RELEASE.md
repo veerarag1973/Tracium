@@ -1,4 +1,5 @@
 # Tracium SDK — Release Runbook
+# PyPI distribution: agentobs  |  Import: tracium
 # Version: 1.0.0 — 2026-03-04
 #
 # STATUS: READY TO PUBLISH
@@ -64,11 +65,12 @@
 #
 #   4. Upload to TestPyPI and smoke-test:
 #        python -m twine upload --repository testpypi dist/*
-#        pip install --index-url https://test.pypi.org/simple/ tracium==1.0.0
+#        pip install --index-url https://test.pypi.org/simple/ agentobs==1.0.0
 #        python -c "import tracium; print(tracium.__version__)"
 #
 #   5. Upload to PyPI:
 #        python -m twine upload dist/*
+#        # Users then: pip install agentobs
 #
 #   6. Tag the release:
 #        git tag v1.0.0

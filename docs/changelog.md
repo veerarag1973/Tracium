@@ -48,7 +48,7 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- **Package renamed** from `llm-toolkit-schema` to `tracium` — install with `pip install tracium`. The old package name is a deprecated shim that re-exports from `tracium` and emits a `DeprecationWarning`.
+- **Package renamed** from `llm-toolkit-schema` to `tracium` — PyPI distribution is `agentobs` (`pip install agentobs`), import name is `tracium`. The old package name is a deprecated shim that re-exports from `tracium` and emits a `DeprecationWarning`.
 - **Schema version** bumped to `2.0` (SpanForge Observability Standard RFC-0001 v2.0).
 - **36 canonical `EventType` values** registered (RFC-0001 Appendix B).
 - **11 namespace payload modules** ship 42 v2.0 dataclasses under `tracium.namespaces.*`.
