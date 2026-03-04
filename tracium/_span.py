@@ -17,13 +17,10 @@ Design notes
 from __future__ import annotations
 
 import os
-import sys
 import threading
 import time
-import traceback
 from dataclasses import dataclass, field
-from types import TracebackType
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import TYPE_CHECKING, Any
 
 from tracium.namespaces.trace import (
     AgentRunPayload,
@@ -40,13 +37,16 @@ from tracium.namespaces.trace import (
     ToolCall,
 )
 
+if TYPE_CHECKING:
+    from types import TracebackType
+
 __all__ = [
-    "Span",
-    "SpanContextManager",
     "AgentRunContext",
     "AgentRunContextManager",
     "AgentStepContext",
     "AgentStepContextManager",
+    "Span",
+    "SpanContextManager",
 ]
 
 # ---------------------------------------------------------------------------
@@ -76,21 +76,21 @@ def _now_ns() -> int:
 _local = threading.local()
 
 
-def _span_stack() -> List["Span"]:
+def _span_stack() -> list[Span]:
     """Return the per-thread span stack, creating it on first access."""
     if not hasattr(_local, "span_stack"):
         _local.span_stack = []
     return _local.span_stack
 
 
-def _run_stack() -> List["AgentRunContext"]:
+def _run_stack() -> list[AgentRunContext]:
     """Return the per-thread agent-run stack, creating it on first access."""
     if not hasattr(_local, "run_stack"):
         _local.run_stack = []
     return _local.run_stack
 
 
-def _step_list() -> List["AgentStepContext"]:
+def _step_list() -> list[AgentStepContext]:
     """Return the per-thread step accumulator for the active agent run."""
     if not hasattr(_local, "step_list"):
         _local.step_list = []
@@ -137,26 +137,26 @@ class Span:
     name: str
     span_id: str = field(default_factory=_span_id)
     trace_id: str = field(default_factory=_trace_id)
-    parent_span_id: Optional[str] = None
-    agent_run_id: Optional[str] = None
-    model: Optional[str] = None
+    parent_span_id: str | None = None
+    agent_run_id: str | None = None
+    model: str | None = None
     operation: str = "chat"
-    attributes: Dict[str, Any] = field(default_factory=dict)
+    attributes: dict[str, Any] = field(default_factory=dict)
     start_ns: int = field(default_factory=_now_ns)
-    end_ns: Optional[int] = None
-    duration_ms: Optional[float] = None
+    end_ns: int | None = None
+    duration_ms: float | None = None
     status: str = "ok"
-    error: Optional[str] = None
-    error_type: Optional[str] = None
-    token_usage: Optional[TokenUsage] = None
-    cost: Optional[CostBreakdown] = None
-    tool_calls: List[ToolCall] = field(default_factory=list)
+    error: str | None = None
+    error_type: str | None = None
+    token_usage: TokenUsage | None = None
+    cost: CostBreakdown | None = None
+    tool_calls: list[ToolCall] = field(default_factory=list)
 
     # ------------------------------------------------------------------
     # Mutation methods (call from inside ``with tracer.span(...) as s:``)
     # ------------------------------------------------------------------
 
-    def set_attribute(self, key: str, value: Any) -> None:
+    def set_attribute(self, key: str, value: Any) -> None:  # noqa: ANN401
         """Add or update a key-value attribute on this span.
 
         Args:
@@ -205,13 +205,13 @@ class Span:
         duration_ms = (end_ns - self.start_ns) / 1_000_000.0
 
         # Resolve ModelInfo from the model name string.
-        model_info: Optional[ModelInfo] = None
+        model_info: ModelInfo | None = None
         if self.model:
             model_info = _resolve_model_info(self.model)
 
         # Resolve operation enum.
         try:
-            operation: Union[GenAIOperationName, str] = GenAIOperationName(self.operation)
+            operation: GenAIOperationName | str = GenAIOperationName(self.operation)
         except ValueError:
             operation = self.operation
 
@@ -260,15 +260,15 @@ class SpanContextManager:
     def __init__(
         self,
         name: str,
-        model: Optional[str] = None,
+        model: str | None = None,
         operation: str = "chat",
-        attributes: Optional[Dict[str, Any]] = None,
+        attributes: dict[str, Any] | None = None,
     ) -> None:
         self._name = name
         self._model = model
         self._operation = operation
         self._initial_attributes = dict(attributes or {})
-        self._span: Optional[Span] = None
+        self._span: Span | None = None
 
     # ------------------------------------------------------------------
     # Context manager protocol
@@ -306,9 +306,9 @@ class SpanContextManager:
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> bool:
         assert self._span is not None, "SpanContextManager.__exit__ called before __enter__"
 
@@ -324,12 +324,13 @@ class SpanContextManager:
             stack.pop()
 
         # Emit the event.
+        _s = None
         try:
-            from tracium import _stream  # noqa: PLC0415
-            _stream.emit_span(self._span)
-        except Exception:  # noqa: BLE001
-            # Never let emission failures propagate into user code.
-            pass
+            from tracium import _stream as _s  # noqa: PLC0415
+            _s.emit_span(self._span)
+        except Exception as exc:
+            if _s is not None:
+                _s._handle_export_error(exc)
 
         # Do NOT suppress the original exception.
         return False
@@ -349,23 +350,23 @@ class AgentStepContext:
     step_index: int
     span_id: str = field(default_factory=_span_id)
     trace_id: str = field(default_factory=_trace_id)
-    parent_span_id: Optional[str] = None
+    parent_span_id: str | None = None
     operation: str = "invoke_agent"
     start_ns: int = field(default_factory=_now_ns)
-    end_ns: Optional[int] = None
-    duration_ms: Optional[float] = None
+    end_ns: int | None = None
+    duration_ms: float | None = None
     status: str = "ok"
-    error: Optional[str] = None
-    error_type: Optional[str] = None
-    model: Optional[str] = None
-    token_usage: Optional[TokenUsage] = None
-    cost: Optional[CostBreakdown] = None
-    tool_calls: List[ToolCall] = field(default_factory=list)
-    reasoning_steps: List[ReasoningStep] = field(default_factory=list)
-    decision_points: List[DecisionPoint] = field(default_factory=list)
-    attributes: Dict[str, Any] = field(default_factory=dict)
+    error: str | None = None
+    error_type: str | None = None
+    model: str | None = None
+    token_usage: TokenUsage | None = None
+    cost: CostBreakdown | None = None
+    tool_calls: list[ToolCall] = field(default_factory=list)
+    reasoning_steps: list[ReasoningStep] = field(default_factory=list)
+    decision_points: list[DecisionPoint] = field(default_factory=list)
+    attributes: dict[str, Any] = field(default_factory=dict)
 
-    def set_attribute(self, key: str, value: Any) -> None:
+    def set_attribute(self, key: str, value: Any) -> None:  # noqa: ANN401
         if not isinstance(key, str) or not key:
             raise ValueError("set_attribute: key must be a non-empty string")
         self.attributes[key] = value
@@ -384,7 +385,7 @@ class AgentStepContext:
         end_ns = self.end_ns if self.end_ns is not None else _now_ns()
         duration_ms = (end_ns - self.start_ns) / 1_000_000.0
         try:
-            operation: Union[GenAIOperationName, str] = GenAIOperationName(self.operation)
+            operation: GenAIOperationName | str = GenAIOperationName(self.operation)
         except ValueError:
             operation = self.operation
         return AgentStepPayload(
@@ -416,12 +417,12 @@ class AgentStepContextManager:
         self,
         step_name: str,
         operation: str = "invoke_agent",
-        attributes: Optional[Dict[str, Any]] = None,
+        attributes: dict[str, Any] | None = None,
     ) -> None:
         self._step_name = step_name
         self._operation = operation
         self._initial_attributes = dict(attributes or {})
-        self._ctx: Optional[AgentStepContext] = None
+        self._ctx: AgentStepContext | None = None
 
     def __enter__(self) -> AgentStepContext:
         run_stack = _run_stack()
@@ -458,9 +459,9 @@ class AgentStepContextManager:
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> bool:
         assert self._ctx is not None
 
@@ -474,11 +475,13 @@ class AgentStepContextManager:
             run_stack[-1].record_step(self._ctx)
 
         # Emit agent step event.
+        _s = None
         try:
-            from tracium import _stream  # noqa: PLC0415
-            _stream.emit_agent_step(self._ctx)
-        except Exception:  # noqa: BLE001
-            pass
+            from tracium import _stream as _s  # noqa: PLC0415
+            _s.emit_agent_step(self._ctx)
+        except Exception as exc:
+            if _s is not None:
+                _s._handle_export_error(exc)
 
         return False
 
@@ -497,13 +500,13 @@ class AgentRunContext:
     trace_id: str = field(default_factory=_trace_id)
     root_span_id: str = field(default_factory=_span_id)
     start_ns: int = field(default_factory=_now_ns)
-    end_ns: Optional[int] = None
-    duration_ms: Optional[float] = None
+    end_ns: int | None = None
+    duration_ms: float | None = None
     status: str = "ok"
-    error: Optional[str] = None
-    termination_reason: Optional[str] = None
+    error: str | None = None
+    termination_reason: str | None = None
     _step_count: int = field(default=0, init=False, repr=False)
-    _steps: List[AgentStepContext] = field(default_factory=list, init=False, repr=False)
+    _steps: list[AgentStepContext] = field(default_factory=list, init=False, repr=False)
 
     def next_step_index(self) -> int:
         idx = self._step_count
@@ -579,7 +582,7 @@ class AgentRunContextManager:
 
     def __init__(self, agent_name: str) -> None:
         self._agent_name = agent_name
-        self._ctx: Optional[AgentRunContext] = None
+        self._ctx: AgentRunContext | None = None
 
     def __enter__(self) -> AgentRunContext:
         self._ctx = AgentRunContext(
@@ -594,9 +597,9 @@ class AgentRunContextManager:
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> bool:
         assert self._ctx is not None
 
@@ -608,11 +611,13 @@ class AgentRunContextManager:
         if run_stack and run_stack[-1] is self._ctx:
             run_stack.pop()
 
+        _s = None
         try:
-            from tracium import _stream  # noqa: PLC0415
-            _stream.emit_agent_run(self._ctx)
-        except Exception:  # noqa: BLE001
-            pass
+            from tracium import _stream as _s  # noqa: PLC0415
+            _s.emit_agent_run(self._ctx)
+        except Exception as exc:
+            if _s is not None:
+                _s._handle_export_error(exc)
 
         return False
 
@@ -637,7 +642,7 @@ def _resolve_model_info(model_name: str) -> ModelInfo:
         system = GenAISystem.COHERE
     elif name_lower.startswith("mistral") or name_lower.startswith("mixtral"):
         system = GenAISystem.MISTRAL_AI
-    elif name_lower.startswith("llama") or name_lower.startswith("phi") or name_lower.startswith("qwen"):
+    elif name_lower.startswith("llama") or name_lower.startswith("phi") or name_lower.startswith("qwen"):  # noqa: E501
         system = GenAISystem.OLLAMA
     else:
         system = GenAISystem.OPENAI

@@ -5,12 +5,9 @@ Phase 5 SDK coverage target.
 
 from __future__ import annotations
 
-import io
 import json
-import sys
 import threading
-from pathlib import Path
-from typing import Generator
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -23,10 +20,11 @@ from tracium.exporters.console import (
     _format_tokens,
     _get,
     _status_colour,
-    _use_colour,
 )
 from tracium.types import EventType
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -34,17 +32,17 @@ from tracium.types import EventType
 
 
 def _make_event(**kw) -> Event:
-    defaults = dict(
-        event_type=EventType.TRACE_SPAN_COMPLETED,
-        source="test-service@1.0.0",
-        payload={
+    defaults = {
+        "event_type": EventType.TRACE_SPAN_COMPLETED,
+        "source": "test-service@1.0.0",
+        "payload": {
             "span_id": "a" * 16,
             "trace_id": "b" * 32,
             "span_name": "test-span",
             "status": "ok",
             "duration_ms": 42.5,
         },
-    )
+    }
     defaults.update(kw)
     return Event(**defaults)
 
@@ -77,7 +75,7 @@ class TestSyncJSONLExporter:
                 exp.export(_make_event())
         finally:
             exp.close()
-        lines = [l for l in path.read_text().strip().split("\n") if l]
+        lines = [l for l in path.read_text().strip().split("\n") if l]  # noqa: E741
         assert len(lines) == 5
         for line in lines:
             json.loads(line)  # all valid JSON
@@ -97,7 +95,7 @@ class TestSyncJSONLExporter:
             exp2.export(_make_event())
         finally:
             exp2.close()
-        lines = [l for l in path.read_text().strip().split("\n") if l]
+        lines = [l for l in path.read_text().strip().split("\n") if l]  # noqa: E741
         assert len(lines) == 3
 
     def test_write_mode_truncates(self, tmp_path: Path) -> None:
@@ -109,14 +107,14 @@ class TestSyncJSONLExporter:
             exp.export(_make_event())
         finally:
             exp.close()
-        lines = [l for l in path.read_text().strip().split("\n") if l]
+        lines = [l for l in path.read_text().strip().split("\n") if l]  # noqa: E741
         assert len(lines) == 1
         parsed = json.loads(lines[0])
         assert "old" not in parsed
 
     def test_invalid_mode_raises(self) -> None:
         with pytest.raises(ValueError, match="mode"):
-            SyncJSONLExporter("/tmp/test.jsonl", mode="r")
+            SyncJSONLExporter("/tmp/test.jsonl", mode="r")  # noqa: S108
 
     def test_export_after_close_raises(self, tmp_path: Path) -> None:
         path = tmp_path / "closed.jsonl"
@@ -198,7 +196,7 @@ class TestSyncJSONLExporter:
             t.join()
         exp.close()
         assert not errors
-        lines = [l for l in path.read_text().strip().split("\n") if l]
+        lines = [l for l in path.read_text().strip().split("\n") if l]  # noqa: E741
         assert len(lines) == 50
 
     def test_event_id_in_exported_json(self, tmp_path: Path) -> None:
@@ -397,19 +395,19 @@ class TestConsoleHelpers:
         assert _format_duration({"duration_ms": None}) is None
 
     def test_status_colour_ok(self) -> None:
-        from tracium.exporters.console import _GREEN
+        from tracium.exporters.console import _GREEN  # noqa: PLC0415
         assert _status_colour("ok") == _GREEN
 
     def test_status_colour_error(self) -> None:
-        from tracium.exporters.console import _RED
+        from tracium.exporters.console import _RED  # noqa: PLC0415
         assert _status_colour("error") == _RED
 
     def test_status_colour_timeout(self) -> None:
-        from tracium.exporters.console import _RED
+        from tracium.exporters.console import _RED  # noqa: PLC0415
         assert _status_colour("timeout") == _RED
 
     def test_status_colour_unknown(self) -> None:
-        from tracium.exporters.console import _YELLOW
+        from tracium.exporters.console import _YELLOW  # noqa: PLC0415
         assert _status_colour("pending") == _YELLOW
 
     def test_format_event_returns_string(self) -> None:
@@ -459,9 +457,9 @@ class TestConsoleHelpers:
 @pytest.mark.unit
 class TestExportersInit:
     def test_sync_jsonl_exporter_importable(self) -> None:
-        from tracium.exporters import SyncJSONLExporter as J
+        from tracium.exporters import SyncJSONLExporter as J  # noqa: PLC0415
         assert J is SyncJSONLExporter
 
     def test_sync_console_exporter_importable(self) -> None:
-        from tracium.exporters import SyncConsoleExporter as C
+        from tracium.exporters import SyncConsoleExporter as C  # noqa: PLC0415
         assert C is SyncConsoleExporter

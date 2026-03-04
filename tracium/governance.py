@@ -1,4 +1,4 @@
-"""Schema governance policies for llm-toolkit-schema events.
+"""Schema governance policies for traciumema events.
 
 Provides a policy engine that can:
 
@@ -31,17 +31,18 @@ from __future__ import annotations
 import threading
 import warnings
 from dataclasses import dataclass, field
-from typing import Callable, FrozenSet, Optional, Set
+from typing import TYPE_CHECKING, Callable
 
-from tracium.event import Event
+if TYPE_CHECKING:
+    from tracium.event import Event
 
 __all__ = [
     "EventGovernancePolicy",
     "GovernanceViolationError",
     "GovernanceWarning",
+    "check_event",
     "get_global_policy",
     "set_global_policy",
-    "check_event",
 ]
 
 
@@ -105,9 +106,9 @@ class EventGovernancePolicy:
         policy.check_event(event)   # raises or warns as appropriate
     """
 
-    blocked_types: Set[str] = field(default_factory=set)
-    warn_deprecated: Set[str] = field(default_factory=set)
-    custom_rules: list[Callable[[Event], Optional[str]]] = field(default_factory=list)
+    blocked_types: set[str] = field(default_factory=set)
+    warn_deprecated: set[str] = field(default_factory=set)
+    custom_rules: list[Callable[[Event], str | None]] = field(default_factory=list)
     strict_unknown: bool = False
 
     def check_event(self, event: Event) -> None:
@@ -176,7 +177,7 @@ class EventGovernancePolicy:
             raise ValueError("event_type must be a non-empty string")
         self.warn_deprecated.add(event_type)
 
-    def add_rule(self, rule: Callable[[Event], Optional[str]]) -> None:
+    def add_rule(self, rule: Callable[[Event], str | None]) -> None:
         """Append a custom governance rule callable.
 
         Args:
@@ -194,7 +195,7 @@ class EventGovernancePolicy:
     # Introspection helpers
     # ------------------------------------------------------------------
 
-    def blocked(self) -> FrozenSet[str]:
+    def blocked(self) -> frozenset[str]:
         """Return an immutable snapshot of blocked event types.
 
         Returns:
@@ -202,7 +203,7 @@ class EventGovernancePolicy:
         """
         return frozenset(self.blocked_types)
 
-    def deprecated(self) -> FrozenSet[str]:
+    def deprecated(self) -> frozenset[str]:
         """Return an immutable snapshot of deprecated event types.
 
         Returns:
@@ -224,10 +225,10 @@ class EventGovernancePolicy:
 # ---------------------------------------------------------------------------
 
 _GLOBAL_LOCK = threading.Lock()
-_GLOBAL_POLICY: Optional[EventGovernancePolicy] = None
+_GLOBAL_POLICY: EventGovernancePolicy | None = None
 
 
-def get_global_policy() -> Optional[EventGovernancePolicy]:
+def get_global_policy() -> EventGovernancePolicy | None:
     """Return the currently installed global governance policy, or ``None``.
 
     Returns:
@@ -238,7 +239,7 @@ def get_global_policy() -> Optional[EventGovernancePolicy]:
         return _GLOBAL_POLICY
 
 
-def set_global_policy(policy: Optional[EventGovernancePolicy]) -> None:
+def set_global_policy(policy: EventGovernancePolicy | None) -> None:
     """Install *policy* as the global governance policy.
 
     Pass ``None`` to disable global governance enforcement.
@@ -262,7 +263,7 @@ def set_global_policy(policy: Optional[EventGovernancePolicy]) -> None:
             f"policy must be an EventGovernancePolicy or None, got {type(policy).__name__!r}"
         )
     with _GLOBAL_LOCK:
-        global _GLOBAL_POLICY
+        global _GLOBAL_POLICY  # noqa: PLW0603
         _GLOBAL_POLICY = policy
 
 

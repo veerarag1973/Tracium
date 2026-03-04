@@ -9,7 +9,7 @@ Core exporters (RFC-0001 §14)
   (zero dependencies; builds OTLP wire format from stdlib).
 * :class:`~tracium.export.otel_bridge.OTelBridgeExporter` — OTel SDK bridge
   that emits real OTel spans via a configured ``TracerProvider``.
-  Requires ``pip install "llm-toolkit-schema[otel]"``.
+  Requires ``pip install "agentobs[otel]"``.
 * :class:`~tracium.export.webhook.WebhookExporter` — HTTP webhook with
   HMAC-SHA256 request signing.
 * :class:`~tracium.export.jsonl.JSONLExporter` — NDJSON for local development
@@ -25,11 +25,11 @@ from tracium.export.otlp import OTLPExporter, ResourceAttributes
 from tracium.export.webhook import WebhookExporter
 
 __all__ = [
-    "OTLPExporter",
-    "ResourceAttributes",
-    "WebhookExporter",
-    "JSONLExporter",
     "DatadogExporter",
     "DatadogResourceAttributes",
     "GrafanaLokiExporter",
+    "JSONLExporter",
+    "OTLPExporter",
+    "ResourceAttributes",
+    "WebhookExporter",
 ]

@@ -14,34 +14,32 @@ from __future__ import annotations
 
 import pytest
 
-pytest.importorskip("tracium.compliance._compat", reason="compliance submodules not yet ported to tracium")
-
 from tracium import Event, EventType
 from tracium.compliance import (
-    CompatibilityResult,
-    CompatibilityViolation,
     ChainIntegrityResult,
     ChainIntegrityViolation,
+    CompatibilityResult,
+    CompatibilityViolation,
     IsolationResult,
     IsolationViolation,
-    test_compatibility as run_compat_check,
     verify_chain_integrity,
     verify_events_scoped,
     verify_tenant_isolation,
+)
+from tracium.compliance import (
+    test_compatibility as run_compat_check,
 )
 from tracium.compliance._compat import _check_event
 from tracium.compliance.test_chain import _check_monotonic_timestamps
 from tracium.compliance.test_isolation import _check_org_disjoint
 from tracium.signing import AuditStream
-from tracium.ulid import generate as gen_ulid
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
 
-_SECRET = "test-org-secret"
+_SECRET = "test-org-secret"  # noqa: S105
 _SOURCE = "llm-trace@0.3.1"
 
 
@@ -437,7 +435,7 @@ class TestTestCompatibility:
         violations = _check_event(evt)
         chk2 = [v for v in violations if v.check_id == "CHK-2"]
         assert len(chk2) == 1
-        assert "CHK-2" == chk2[0].check_id
+        assert chk2[0].check_id == "CHK-2"
 
     def test_bad_source_pattern_chk3_violation(self) -> None:
         """Source that doesn't match the semver pattern triggers CHK-3."""

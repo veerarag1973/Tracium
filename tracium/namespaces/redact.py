@@ -9,12 +9,12 @@ RedactAppliedPayload        llm.redact.applied
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 __all__ = [
-    "RedactPiiDetectedPayload",
-    "RedactPhiDetectedPayload",
     "RedactAppliedPayload",
+    "RedactPhiDetectedPayload",
+    "RedactPiiDetectedPayload",
 ]
 
 _VALID_SENSITIVITY_LEVELS = frozenset({"LOW", "MEDIUM", "HIGH", "PII", "PHI"})
@@ -24,12 +24,12 @@ _VALID_SENSITIVITY_LEVELS = frozenset({"LOW", "MEDIUM", "HIGH", "PII", "PHI"})
 class RedactPiiDetectedPayload:
     """RFC-0001 — PII was detected in an LLM input or output field."""
 
-    detected_categories: List[str]   # minItems=1 — e.g. ["email", "phone"]
-    field_names: List[str]           # minItems=1 — field paths where PII found
+    detected_categories: list[str]   # minItems=1 — e.g. ["email", "phone"]
+    field_names: list[str]           # minItems=1 — field paths where PII found
     sensitivity_level: str           # "LOW"|"MEDIUM"|"HIGH"|"PII"|"PHI"
-    detection_count: Optional[int] = None
-    detector: Optional[str] = None
-    subject_event_id: Optional[str] = None
+    detection_count: int | None = None
+    detector: str | None = None
+    subject_event_id: str | None = None
 
     def __post_init__(self) -> None:
         if not self.detected_categories:
@@ -38,11 +38,12 @@ class RedactPiiDetectedPayload:
             raise ValueError("RedactPiiDetectedPayload.field_names must be non-empty")
         if self.sensitivity_level not in _VALID_SENSITIVITY_LEVELS:
             raise ValueError(
-                f"RedactPiiDetectedPayload.sensitivity_level must be one of {sorted(_VALID_SENSITIVITY_LEVELS)}"
+                f"RedactPiiDetectedPayload.sensitivity_level must be one of {sorted(_VALID_SENSITIVITY_LEVELS)}"  # noqa: E501
             )
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "detected_categories": list(self.detected_categories),
             "field_names": list(self.field_names),
             "sensitivity_level": self.sensitivity_level,
@@ -56,7 +57,8 @@ class RedactPiiDetectedPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "RedactPiiDetectedPayload":
+    def from_dict(cls, data: dict[str, Any]) -> RedactPiiDetectedPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             detected_categories=list(data["detected_categories"]),
             field_names=list(data["field_names"]),
@@ -74,13 +76,13 @@ class RedactPhiDetectedPayload:
     ``sensitivity_level`` MUST always be ``"PHI"`` for this payload type.
     """
 
-    detected_categories: List[str]
-    field_names: List[str]
+    detected_categories: list[str]
+    field_names: list[str]
     sensitivity_level: str = "PHI"   # MUST be "PHI"
-    detection_count: Optional[int] = None
-    detector: Optional[str] = None
-    subject_event_id: Optional[str] = None
-    hipaa_covered: Optional[bool] = None
+    detection_count: int | None = None
+    detector: str | None = None
+    subject_event_id: str | None = None
+    hipaa_covered: bool | None = None
 
     def __post_init__(self) -> None:
         if not self.detected_categories:
@@ -90,8 +92,9 @@ class RedactPhiDetectedPayload:
         if self.sensitivity_level != "PHI":
             raise ValueError("RedactPhiDetectedPayload.sensitivity_level MUST be 'PHI'")
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "detected_categories": list(self.detected_categories),
             "field_names": list(self.field_names),
             "sensitivity_level": self.sensitivity_level,
@@ -107,7 +110,8 @@ class RedactPhiDetectedPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "RedactPhiDetectedPayload":
+    def from_dict(cls, data: dict[str, Any]) -> RedactPhiDetectedPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             detected_categories=list(data["detected_categories"]),
             field_names=list(data["field_names"]),
@@ -126,22 +130,23 @@ class RedactAppliedPayload:
     policy_min_sensitivity: str  # "LOW"|"MEDIUM"|"HIGH"|"PII"|"PHI"
     redacted_by: str
     redacted_count: int
-    redacted_field_names: List[str] = field(default_factory=list)
-    subject_event_id: Optional[str] = None
-    verified: Optional[bool] = None
+    redacted_field_names: list[str] = field(default_factory=list)
+    subject_event_id: str | None = None
+    verified: bool | None = None
 
     def __post_init__(self) -> None:
         if self.policy_min_sensitivity not in _VALID_SENSITIVITY_LEVELS:
             raise ValueError(
-                f"RedactAppliedPayload.policy_min_sensitivity must be one of {sorted(_VALID_SENSITIVITY_LEVELS)}"
+                f"RedactAppliedPayload.policy_min_sensitivity must be one of {sorted(_VALID_SENSITIVITY_LEVELS)}"  # noqa: E501
             )
         if not isinstance(self.redacted_by, str) or not self.redacted_by:
             raise ValueError("RedactAppliedPayload.redacted_by must be non-empty")
         if not isinstance(self.redacted_count, int) or self.redacted_count < 0:
             raise ValueError("RedactAppliedPayload.redacted_count must be a non-negative int")
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "policy_min_sensitivity": self.policy_min_sensitivity,
             "redacted_by": self.redacted_by,
             "redacted_count": self.redacted_count,
@@ -155,7 +160,8 @@ class RedactAppliedPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "RedactAppliedPayload":
+    def from_dict(cls, data: dict[str, Any]) -> RedactAppliedPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             policy_min_sensitivity=data["policy_min_sensitivity"],
             redacted_by=data["redacted_by"],

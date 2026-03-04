@@ -9,7 +9,7 @@ PromptVersionChangedPayload llm.prompt.version.changed
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 __all__ = [
     "PromptRenderedPayload",
@@ -18,6 +18,7 @@ __all__ = [
 ]
 
 _VALID_SOURCES = frozenset({"registry", "file", "database", "remote_url", "inline"})
+_SHA256_HEX_LEN = 64  # SHA-256 hex digest length (characters)
 
 
 @dataclass
@@ -31,23 +32,24 @@ class PromptRenderedPayload:
     template_id: str
     version: str
     rendered_hash: str  # 64 lowercase hex chars, SHA-256 of rendered text
-    variable_count: Optional[int] = None
-    variable_names: List[str] = field(default_factory=list)
-    char_count: Optional[int] = None
-    token_estimate: Optional[int] = None
-    language: Optional[str] = None
-    span_id: Optional[str] = None
+    variable_count: int | None = None
+    variable_names: list[str] = field(default_factory=list)
+    char_count: int | None = None
+    token_estimate: int | None = None
+    language: str | None = None
+    span_id: str | None = None
 
     def __post_init__(self) -> None:
         if not self.template_id:
             raise ValueError("PromptRenderedPayload.template_id must be non-empty")
         if not self.version:
             raise ValueError("PromptRenderedPayload.version must be non-empty")
-        if not self.rendered_hash or len(self.rendered_hash) != 64:
+        if not self.rendered_hash or len(self.rendered_hash) != _SHA256_HEX_LEN:
             raise ValueError("PromptRenderedPayload.rendered_hash must be 64 hex chars (SHA-256)")
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "template_id": self.template_id,
             "version": self.version,
             "rendered_hash": self.rendered_hash,
@@ -67,7 +69,8 @@ class PromptRenderedPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "PromptRenderedPayload":
+    def from_dict(cls, data: dict[str, Any]) -> PromptRenderedPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             template_id=data["template_id"],
             version=data["version"],
@@ -88,9 +91,9 @@ class PromptTemplateLoadedPayload:
     template_id: str
     version: str
     source: str  # "registry"|"file"|"database"|"remote_url"|"inline"
-    template_hash: Optional[str] = None  # 64 hex chars
-    load_duration_ms: Optional[float] = None
-    cache_hit: Optional[bool] = None
+    template_hash: str | None = None  # 64 hex chars
+    load_duration_ms: float | None = None
+    cache_hit: bool | None = None
 
     def __post_init__(self) -> None:
         if not self.template_id:
@@ -98,12 +101,13 @@ class PromptTemplateLoadedPayload:
         if not self.version:
             raise ValueError("PromptTemplateLoadedPayload.version must be non-empty")
         if self.source not in _VALID_SOURCES:
-            raise ValueError(f"PromptTemplateLoadedPayload.source must be one of {sorted(_VALID_SOURCES)}")
-        if self.template_hash is not None and len(self.template_hash) != 64:
+            raise ValueError(f"PromptTemplateLoadedPayload.source must be one of {sorted(_VALID_SOURCES)}")  # noqa: E501
+        if self.template_hash is not None and len(self.template_hash) != _SHA256_HEX_LEN:
             raise ValueError("PromptTemplateLoadedPayload.template_hash must be 64 hex chars")
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "template_id": self.template_id,
             "version": self.version,
             "source": self.source,
@@ -117,13 +121,14 @@ class PromptTemplateLoadedPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "PromptTemplateLoadedPayload":
+    def from_dict(cls, data: dict[str, Any]) -> PromptTemplateLoadedPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             template_id=data["template_id"],
             version=data["version"],
             source=data["source"],
             template_hash=data.get("template_hash"),
-            load_duration_ms=float(data["load_duration_ms"]) if "load_duration_ms" in data else None,
+            load_duration_ms=float(data["load_duration_ms"]) if "load_duration_ms" in data else None,  # noqa: E501
             cache_hit=bool(data["cache_hit"]) if "cache_hit" in data else None,
         )
 
@@ -136,9 +141,9 @@ class PromptVersionChangedPayload:
     previous_version: str
     new_version: str
     change_reason: str
-    changed_by: Optional[str] = None
-    previous_hash: Optional[str] = None  # 64 hex chars
-    new_hash: Optional[str] = None       # 64 hex chars
+    changed_by: str | None = None
+    previous_hash: str | None = None  # 64 hex chars
+    new_hash: str | None = None       # 64 hex chars
 
     def __post_init__(self) -> None:
         if not self.template_id:
@@ -150,8 +155,9 @@ class PromptVersionChangedPayload:
         if not self.change_reason:
             raise ValueError("PromptVersionChangedPayload.change_reason must be non-empty")
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "template_id": self.template_id,
             "previous_version": self.previous_version,
             "new_version": self.new_version,
@@ -166,7 +172,8 @@ class PromptVersionChangedPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "PromptVersionChangedPayload":
+    def from_dict(cls, data: dict[str, Any]) -> PromptVersionChangedPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             template_id=data["template_id"],
             previous_version=data["previous_version"],

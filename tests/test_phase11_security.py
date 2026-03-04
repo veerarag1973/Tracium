@@ -12,10 +12,8 @@ from __future__ import annotations
 
 import json
 import time
-from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
+from typing import TYPE_CHECKING
+from unittest.mock import patch
 
 import tracium
 from tracium import configure, tracer
@@ -24,15 +22,17 @@ from tracium.event import Event
 from tracium.redact import RedactionPolicy, Sensitivity
 from tracium.signing import verify_chain
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
-_SECRET = "phase11-test-signing-key-xyz"
+_SECRET = "phase11-test-signing-key-xyz"  # noqa: S105
 
 
-def _emit_spans(n: int, tmp_path: Path, signing_key: str | None = None, redaction_policy=None) -> list[dict]:
+def _emit_spans(n: int, tmp_path: Path, signing_key: str | None = None, redaction_policy=None) -> list[dict]:  # noqa: E501
     """Configure Tracium, emit n spans, return parsed JSONL dicts."""
     jsonl = tmp_path / "events.jsonl"
     kwargs: dict = {
@@ -53,7 +53,7 @@ def _emit_spans(n: int, tmp_path: Path, signing_key: str | None = None, redactio
     # Give any async writes a tiny moment (JSONL is sync, but be safe)
     time.sleep(0.01)
 
-    lines = [l for l in jsonl.read_text(encoding="utf-8").splitlines() if l.strip()]
+    lines = [l for l in jsonl.read_text(encoding="utf-8").splitlines() if l.strip()]  # noqa: E741
     results = [json.loads(line) for line in lines]
 
     # Close the cached exporter to avoid ResourceWarning from unclosed file handles.
@@ -129,7 +129,7 @@ class TestSigningChain:
             pass
 
         time.sleep(0.01)
-        second_events = [json.loads(l) for l in jsonl2.read_text().splitlines() if l.strip()]
+        second_events = [json.loads(l) for l in jsonl2.read_text().splitlines() if l.strip()]  # noqa: E741
         assert len(second_events) == 1
         # After reset, chain starts fresh — no prev_id
         assert second_events[0].get("prev_id") is None
@@ -157,10 +157,10 @@ class TestSigningChain:
 class TestRedactionPipeline:
     def test_redaction_policy_apply_called(self, tmp_path):
         """RedactionPolicy.apply() must be invoked for each emitted event."""
-        from tracium.redact import RedactionPolicy as _RP  # noqa: PLC0415
+        from tracium.redact import RedactionPolicy as _RP  # noqa: N814, PLC0415
 
         with patch.object(_RP, "apply", autospec=True, wraps=_RP.apply) as mock_apply:
-            _emit_spans(2, tmp_path, redaction_policy=RedactionPolicy(min_sensitivity=Sensitivity.PII))
+            _emit_spans(2, tmp_path, redaction_policy=RedactionPolicy(min_sensitivity=Sensitivity.PII))  # noqa: E501
             assert mock_apply.call_count == 2, (
                 f"apply called {mock_apply.call_count} times, expected 2"
             )
@@ -173,13 +173,13 @@ class TestRedactionPipeline:
 
     def test_redaction_before_signing(self, tmp_path):
         """Redaction must run before signing so signatures cover the redacted payload."""
-        from tracium.redact import RedactionPolicy as _RP  # noqa: PLC0415
+        from tracium.redact import RedactionPolicy as _RP  # noqa: N814, PLC0415
 
         call_order: list[str] = []
         policy = RedactionPolicy(min_sensitivity=Sensitivity.PII)
         original_apply = _RP.apply
 
-        def spy_apply(self, event: Event):  # noqa: ANN001
+        def spy_apply(self, event: Event):
             call_order.append("redact")
             return original_apply(self, event)
 

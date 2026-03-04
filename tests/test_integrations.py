@@ -5,15 +5,13 @@ from __future__ import annotations
 import sys
 import types
 import uuid
-import warnings
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from tracium import Event, EventType
-from tracium.ulid import generate as gen_ulid
-
+if TYPE_CHECKING:
+    from tracium import Event
 
 # ---------------------------------------------------------------------------
 # Helpers: inject fake langchain / llamaindex modules
@@ -54,15 +52,14 @@ class TestLLMSchemaCallbackHandler:
         _inject_fake_langchain()
 
     def _make_handler(self) -> Any:
-        from tracium.integrations.langchain import LLMSchemaCallbackHandler
+        from tracium.integrations.langchain import LLMSchemaCallbackHandler  # noqa: PLC0415
 
         return LLMSchemaCallbackHandler(source="test-app", org_id="org-1")
 
     def test_import_error_without_langchain(self) -> None:
         """Verify ImportError is raised when langchain is not installed."""
         with patch.dict(sys.modules, {"langchain_core": None, "langchain": None}):
-            from importlib import reload
-            import tracium.integrations.langchain as lc_mod
+            import tracium.integrations.langchain as lc_mod  # noqa: PLC0415
 
             with pytest.raises(ImportError, match="LangChain"):
                 lc_mod._require_langchain()
@@ -91,7 +88,7 @@ class TestLLMSchemaCallbackHandler:
         run_id = uuid.uuid4()
 
         response = MagicMock()
-        response.llm_output = {"token_usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15}}
+        response.llm_output = {"token_usage": {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15}}  # noqa: E501
 
         handler.on_llm_end(response=response, run_id=run_id)
         assert len(handler.events) == 1
@@ -154,10 +151,10 @@ class TestLLMSchemaCallbackHandler:
 
     def test_exporter_called(self) -> None:
         """When an exporter is provided, it should receive the event."""
-        import asyncio
+        import asyncio  # noqa: PLC0415
 
         _inject_fake_langchain()
-        from tracium.integrations.langchain import LLMSchemaCallbackHandler
+        from tracium.integrations.langchain import LLMSchemaCallbackHandler  # noqa: PLC0415
 
         exported: list[Any] = []
 
@@ -191,14 +188,13 @@ class TestLLMSchemaEventHandler:
         _inject_fake_llamaindex()
 
     def _make_handler(self) -> Any:
-        from tracium.integrations.llamaindex import LLMSchemaEventHandler
+        from tracium.integrations.llamaindex import LLMSchemaEventHandler  # noqa: PLC0415
 
         return LLMSchemaEventHandler(source="rag-app", org_id="org-2")
 
     def test_import_error_without_llamaindex(self) -> None:
         with patch.dict(sys.modules, {"llama_index": None, "llama_index.core": None}):
-            from importlib import reload
-            import tracium.integrations.llamaindex as li_mod
+            import tracium.integrations.llamaindex as li_mod  # noqa: PLC0415
 
             with pytest.raises(ImportError, match="LlamaIndex"):
                 li_mod._require_llamaindex()
@@ -211,7 +207,7 @@ class TestLLMSchemaEventHandler:
 
     def test_on_event_start_llm(self) -> None:
         handler = self._make_handler()
-        event_id = handler.on_event_start("LLM", payload={"model_dict": {"model": "gpt-4o"}}, event_id="ev-1")
+        event_id = handler.on_event_start("LLM", payload={"model_dict": {"model": "gpt-4o"}}, event_id="ev-1")  # noqa: E501
         assert event_id == "ev-1"
         assert len(handler.events) == 1
         assert handler.events[0].event_type == "llm.trace.span.started"
@@ -226,7 +222,7 @@ class TestLLMSchemaEventHandler:
 
     def test_on_event_start_tool(self) -> None:
         handler = self._make_handler()
-        handler.on_event_start("FUNCTION_CALL", payload={"tool": {"name": "search"}}, event_id="ev-2")
+        handler.on_event_start("FUNCTION_CALL", payload={"tool": {"name": "search"}}, event_id="ev-2")  # noqa: E501
         assert handler.events[0].event_type == "llm.trace.tool_call.started"
 
     def test_on_event_end_tool(self) -> None:
@@ -293,13 +289,13 @@ class TestLangChainAdditionalCoverage:
         _inject_fake_langchain()
 
     def _make_handler(self, exporter: Any = None) -> Any:
-        from tracium.integrations.langchain import LLMSchemaCallbackHandler
+        from tracium.integrations.langchain import LLMSchemaCallbackHandler  # noqa: PLC0415
 
         return LLMSchemaCallbackHandler(source="test-app", org_id="org-1", exporter=exporter)
 
     def test_require_langchain_fallback_to_langchain_callbacks(self) -> None:
         """Line 45: fallback when langchain_core unavailable, langchain.callbacks present."""
-        import types
+        import types  # noqa: PLC0415
 
         # Stub a minimal langchain.callbacks module (not langchain_core).
         fake_langchain = types.ModuleType("langchain")
@@ -315,15 +311,14 @@ class TestLangChainAdditionalCoverage:
                 "langchain.callbacks": fake_lc_callbacks,
             },
         ):
-            from importlib import reload
-            import tracium.integrations.langchain as lc_mod
+            import tracium.integrations.langchain as lc_mod  # noqa: PLC0415
 
             result = lc_mod._require_langchain()
             assert result is fake_lc_callbacks
 
     def test_on_llm_start_with_running_event_loop(self) -> None:
         """Line 128: loop.create_task called when invoked inside a running event loop."""
-        import asyncio
+        import asyncio  # noqa: PLC0415
 
         exported: list[Any] = []
 
@@ -392,13 +387,13 @@ class TestLlamaIndexAdditionalCoverage:
         _inject_fake_llamaindex()
 
     def _make_handler(self, exporter: Any = None) -> Any:
-        from tracium.integrations.llamaindex import LLMSchemaEventHandler
+        from tracium.integrations.llamaindex import LLMSchemaEventHandler  # noqa: PLC0415
 
         return LLMSchemaEventHandler(source="rag-app", org_id="org-2", exporter=exporter)
 
     def test_require_llamaindex_fallback_to_legacy_callbacks(self) -> None:
         """Line 43: fallback when llama_index.core.callbacks unavailable."""
-        import types
+        import types  # noqa: PLC0415
 
         fake_llama = types.ModuleType("llama_index")
         fake_callbacks = types.ModuleType("llama_index.callbacks")
@@ -413,15 +408,14 @@ class TestLlamaIndexAdditionalCoverage:
                 "llama_index.callbacks": fake_callbacks,
             },
         ):
-            from importlib import reload
-            import tracium.integrations.llamaindex as li_mod
+            import tracium.integrations.llamaindex as li_mod  # noqa: PLC0415
 
             result = li_mod._require_llamaindex()
             assert result is fake_callbacks
 
     def test_make_event_with_running_event_loop(self) -> None:
         """Lines 116-119: loop.create_task called when loop is running."""
-        import asyncio
+        import asyncio  # noqa: PLC0415
 
         exported: list[Any] = []
 
@@ -441,7 +435,7 @@ class TestLlamaIndexAdditionalCoverage:
 
     def test_cb_event_type_str_enum_value(self) -> None:
         """Line 128: _cb_event_type_str returns str(event_type.value) for enum-like objects."""
-        from tracium.integrations.llamaindex import LLMSchemaEventHandler
+        from tracium.integrations.llamaindex import LLMSchemaEventHandler  # noqa: PLC0415
 
         class FakeEnum:
             value = "LLM"
@@ -480,7 +474,7 @@ class TestLlamaIndexAdditionalCoverage:
 
     def test_make_event_with_exporter_loop_not_running(self) -> None:
         """Lines 118->122: exporter present but loop.is_running() is False (sync call)."""
-        import asyncio
+        import asyncio  # noqa: PLC0415
 
         exported: list[Any] = []
 

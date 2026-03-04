@@ -6,7 +6,7 @@ import warnings
 
 import pytest
 
-from tracium import Event, EventType, Tags
+from tracium import Event, EventType
 from tracium.governance import (
     EventGovernancePolicy,
     GovernanceViolationError,
@@ -158,7 +158,6 @@ class TestCustomRules:
 
         def counting_rule(e: Event) -> None:
             call_count[0] += 1
-            return None
 
         policy.add_rule(counting_rule)
         policy.add_rule(counting_rule)

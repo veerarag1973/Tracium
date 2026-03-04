@@ -6,14 +6,15 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 
+from tests.conftest import FIXED_TIMESTAMP
 from tracium import Event, EventType
 from tracium.redact import (
-    PIINotRedactedError,
     PII_TYPES,
+    PIINotRedactedError,
     Redactable,
     RedactionPolicy,
     RedactionResult,
@@ -25,8 +26,6 @@ from tracium.redact import (
     contains_pii,
 )
 
-from tests.conftest import FIXED_TIMESTAMP
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -35,7 +34,7 @@ _PII_EMAIL = "alice@example.com"
 _SOURCE = "promptlock@1.0.0"
 
 
-def _simple_event(payload: Dict[str, Any]) -> Event:
+def _simple_event(payload: dict[str, Any]) -> Event:
     return Event(
         event_type=EventType.PROMPT_RENDERED,
         source=_SOURCE,
@@ -52,7 +51,7 @@ def _simple_event(payload: Dict[str, Any]) -> Event:
 @pytest.mark.unit
 class TestSensitivity:
     def test_all_five_levels_exist(self) -> None:
-        assert set(s.value for s in Sensitivity) == {"low", "medium", "high", "pii", "phi"}
+        assert {s.value for s in Sensitivity} == {"low", "medium", "high", "pii", "phi"}
 
     def test_string_values(self) -> None:
         assert Sensitivity.LOW.value == "low"
@@ -97,18 +96,18 @@ class TestSensitivity:
 
     def test_eq_with_string(self) -> None:
         assert Sensitivity.PII == "pii"
-        assert "pii" == Sensitivity.PII
+        assert Sensitivity.PII == "pii"
 
     def test_eq_with_same_sensitivity(self) -> None:
         assert Sensitivity.PII == Sensitivity.PII
 
     def test_eq_with_different_sensitivity(self) -> None:
-        assert not (Sensitivity.PII == Sensitivity.PHI)
+        assert Sensitivity.PII != Sensitivity.PHI
 
     def test_hash_consistent(self) -> None:
         assert hash(Sensitivity.PII) == hash("pii")
         s1 = {Sensitivity.PII, Sensitivity.PHI}
-        assert len(s1) == 2  # noqa: PLR2004
+        assert len(s1) == 2
 
     def test_is_str_subclass(self) -> None:
         assert isinstance(Sensitivity.PII, str)
@@ -182,7 +181,7 @@ class TestRedactable:
 @pytest.mark.unit
 class TestPIINotRedactedError:
     def test_is_tracium_error(self) -> None:
-        from tracium.exceptions import LLMSchemaError
+        from tracium.exceptions import LLMSchemaError  # noqa: PLC0415
         err = PIINotRedactedError(count=2)
         assert isinstance(err, LLMSchemaError)
 
@@ -237,7 +236,7 @@ class TestRedactionPolicyDefaults:
         assert policy.redacted_by == "policy:corp"
 
     def test_immutable_frozen_dataclass(self) -> None:
-        from dataclasses import FrozenInstanceError
+        from dataclasses import FrozenInstanceError  # noqa: PLC0415
         policy = RedactionPolicy()
         with pytest.raises(FrozenInstanceError):
             policy.redacted_by = "changed"  # type: ignore[misc]
@@ -259,7 +258,7 @@ class TestRedactionPolicyDefaults:
 
 
 # ===========================================================================
-# RedactionPolicy.apply()
+# RedactionPolicy.apply()  # noqa: ERA001
 # ===========================================================================
 
 
@@ -284,8 +283,8 @@ class TestRedactionPolicyApply:
             }
         )
         result = policy.apply(event)
-        assert result.redaction_count == 2  # noqa: PLR2004
-        assert result.event.payload["__redaction_count"] == 2  # noqa: PLR2004
+        assert result.redaction_count == 2
+        assert result.event.payload["__redaction_count"] == 2
 
     def test_redaction_metadata_added(self) -> None:
         policy = RedactionPolicy(redacted_by="policy:test")
@@ -380,7 +379,7 @@ class TestRedactionPolicyApply:
         assert result.event.span_id == "b" * 16
 
     def test_tags_preserved(self) -> None:
-        from tracium.event import Tags
+        from tracium.event import Tags  # noqa: PLC0415
         policy = RedactionPolicy()
         event = Event(
             event_type=EventType.PROMPT_RENDERED,
@@ -432,7 +431,7 @@ class TestRedactionPolicyApply:
 @pytest.mark.unit
 class TestRedactionResult:
     def test_immutable(self) -> None:
-        from dataclasses import FrozenInstanceError
+        from dataclasses import FrozenInstanceError  # noqa: PLC0415
         policy = RedactionPolicy()
         event = _simple_event({"x": "y"})
         result = policy.apply(event)
@@ -450,7 +449,7 @@ class TestRedactionResult:
 
 
 # ===========================================================================
-# contains_pii()
+# contains_pii()  # noqa: ERA001
 # ===========================================================================
 
 
@@ -487,7 +486,7 @@ class TestContainsPii:
 
 
 # ===========================================================================
-# assert_redacted()
+# assert_redacted()  # noqa: ERA001
 # ===========================================================================
 
 
@@ -512,7 +511,7 @@ class TestAssertRedacted:
         )
         with pytest.raises(PIINotRedactedError) as exc_info:
             assert_redacted(event)
-        assert exc_info.value.count == 2  # noqa: PLR2004
+        assert exc_info.value.count == 2
 
     def test_context_appears_in_error_message(self) -> None:
         event = _simple_event({"x": Redactable("v", Sensitivity.PII)})
@@ -521,7 +520,7 @@ class TestAssertRedacted:
         assert "export_step" in str(exc_info.value)
 
     def test_error_message_never_contains_pii_value(self) -> None:
-        secret_value = "very-secret-ssn-123-45-6789"
+        secret_value = "very-secret-ssn-123-45-6789"  # noqa: S105
         event = _simple_event({"ssn": Redactable(secret_value, Sensitivity.PII)})
         with pytest.raises(PIINotRedactedError) as exc_info:
             assert_redacted(event)
@@ -565,7 +564,7 @@ class TestInternalHelpers:
             "nested": {"b": Redactable("v2", Sensitivity.PHI)},
             "items": [Redactable("v3", Sensitivity.HIGH)],
         }
-        assert _count_redactable(data) == 3  # noqa: PLR2004
+        assert _count_redactable(data) == 3
 
     def test_count_redactable_in_tuple(self) -> None:
         data = (Redactable("x", Sensitivity.PII), "plain")
@@ -585,7 +584,7 @@ class TestInternalHelpers:
 @pytest.mark.security
 class TestRedactionSecurity:
     def test_redactable_repr_never_exposes_value(self) -> None:
-        secret = "top-secret-ssn-987-65-4321"
+        secret = "top-secret-ssn-987-65-4321"  # noqa: S105
         r = Redactable(secret, Sensitivity.PII, {"ssn"})
         assert secret not in repr(r)
         assert secret not in str(r)
@@ -596,7 +595,7 @@ class TestRedactionSecurity:
 
     def test_policy_apply_does_not_leak_value_in_metadata(self) -> None:
         """The __redacted_at / __redacted_by fields must not contain PII."""
-        secret = "876-54-3210-ssn-secret"
+        secret = "876-54-3210-ssn-secret"  # noqa: S105
         policy = RedactionPolicy(redacted_by="policy:test")
         event = _simple_event({"ssn": Redactable(secret, Sensitivity.PII)})
         result = policy.apply(event)
@@ -620,7 +619,7 @@ class TestRedactionSecurity:
 @pytest.mark.perf
 class TestRedactionPerformance:
     def test_apply_1000_events_under_500ms(self) -> None:
-        import time
+        import time  # noqa: PLC0415
         policy = RedactionPolicy()
         events = [
             _simple_event(
@@ -635,4 +634,4 @@ class TestRedactionPerformance:
         for event in events:
             policy.apply(event)
         elapsed = time.perf_counter() - t0
-        assert elapsed < 0.5, f"1000 apply() calls took {elapsed:.3f}s > 0.5s"  # noqa: PLR2004
+        assert elapsed < 0.5, f"1000 apply() calls took {elapsed:.3f}s > 0.5s"

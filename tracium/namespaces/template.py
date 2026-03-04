@@ -9,12 +9,12 @@ TemplateValidationFailedPayload llm.template.validation.failed
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 __all__ = [
     "TemplateRegisteredPayload",
-    "TemplateVariableBoundPayload",
     "TemplateValidationFailedPayload",
+    "TemplateVariableBoundPayload",
 ]
 
 _VALID_VALUE_TYPES = frozenset({
@@ -25,6 +25,8 @@ _VALID_FAILURE_TYPES = frozenset({
     "version_not_found", "syntax_error", "schema_violation"
 })
 
+_SHA256_HEX_LEN = 64  # SHA-256 hex digest length (characters)
+
 
 @dataclass
 class TemplateRegisteredPayload:
@@ -33,24 +35,25 @@ class TemplateRegisteredPayload:
     template_id: str
     version: str
     template_hash: str  # 64 lowercase hex chars, SHA-256 of template source
-    variable_names: List[str] = field(default_factory=list)
-    variable_count: Optional[int] = None
-    language: Optional[str] = None
-    char_count: Optional[int] = None
-    registered_by: Optional[str] = None
-    is_active: Optional[bool] = None
-    tags: Optional[Dict[str, str]] = None
+    variable_names: list[str] = field(default_factory=list)
+    variable_count: int | None = None
+    language: str | None = None
+    char_count: int | None = None
+    registered_by: str | None = None
+    is_active: bool | None = None
+    tags: dict[str, str] | None = None
 
     def __post_init__(self) -> None:
         if not self.template_id:
             raise ValueError("TemplateRegisteredPayload.template_id must be non-empty")
         if not self.version:
             raise ValueError("TemplateRegisteredPayload.version must be non-empty")
-        if not self.template_hash or len(self.template_hash) != 64:
-            raise ValueError("TemplateRegisteredPayload.template_hash must be 64 hex chars (SHA-256)")
+        if not self.template_hash or len(self.template_hash) != _SHA256_HEX_LEN:
+            raise ValueError("TemplateRegisteredPayload.template_hash must be 64 hex chars (SHA-256)")  # noqa: E501
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "template_id": self.template_id,
             "version": self.version,
             "template_hash": self.template_hash,
@@ -72,7 +75,8 @@ class TemplateRegisteredPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "TemplateRegisteredPayload":
+    def from_dict(cls, data: dict[str, Any]) -> TemplateRegisteredPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             template_id=data["template_id"],
             version=data["version"],
@@ -98,11 +102,11 @@ class TemplateVariableBoundPayload:
     template_id: str
     version: str
     variable_name: str
-    value_type: Optional[str] = None  # "string"|"integer"|"float"|"boolean"|"array"|"object"|"null"
-    value_length: Optional[int] = None
-    value_hash: Optional[str] = None  # 64 hex chars, SHA-256
-    is_sensitive: Optional[bool] = None
-    span_id: Optional[str] = None
+    value_type: str | None = None  # "string"|"integer"|"float"|"boolean"|"array"|"object"|"null"
+    value_length: int | None = None
+    value_hash: str | None = None  # 64 hex chars, SHA-256
+    is_sensitive: bool | None = None
+    span_id: str | None = None
 
     def __post_init__(self) -> None:
         if not self.template_id:
@@ -112,12 +116,13 @@ class TemplateVariableBoundPayload:
         if not self.variable_name:
             raise ValueError("TemplateVariableBoundPayload.variable_name must be non-empty")
         if self.value_type is not None and self.value_type not in _VALID_VALUE_TYPES:
-            raise ValueError(f"TemplateVariableBoundPayload.value_type must be one of {sorted(_VALID_VALUE_TYPES)}")
-        if self.value_hash is not None and len(self.value_hash) != 64:
-            raise ValueError("TemplateVariableBoundPayload.value_hash must be 64 hex chars (SHA-256)")
+            raise ValueError(f"TemplateVariableBoundPayload.value_type must be one of {sorted(_VALID_VALUE_TYPES)}")  # noqa: E501
+        if self.value_hash is not None and len(self.value_hash) != _SHA256_HEX_LEN:
+            raise ValueError("TemplateVariableBoundPayload.value_hash must be 64 hex chars (SHA-256)")  # noqa: E501
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "template_id": self.template_id,
             "version": self.version,
             "variable_name": self.variable_name,
@@ -135,7 +140,8 @@ class TemplateVariableBoundPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "TemplateVariableBoundPayload":
+    def from_dict(cls, data: dict[str, Any]) -> TemplateVariableBoundPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             template_id=data["template_id"],
             version=data["version"],
@@ -155,7 +161,7 @@ class TemplateValidationFailedPayload:
     template_id: str
     version: str
     failure_reason: str
-    failure_type: Optional[str] = None
+    failure_type: str | None = None
 
     def __post_init__(self) -> None:
         if not self.template_id:
@@ -166,11 +172,12 @@ class TemplateValidationFailedPayload:
             raise ValueError("TemplateValidationFailedPayload.failure_reason must be non-empty")
         if self.failure_type is not None and self.failure_type not in _VALID_FAILURE_TYPES:
             raise ValueError(
-                f"TemplateValidationFailedPayload.failure_type must be one of {sorted(_VALID_FAILURE_TYPES)}"
+                f"TemplateValidationFailedPayload.failure_type must be one of {sorted(_VALID_FAILURE_TYPES)}"  # noqa: E501
             )
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "template_id": self.template_id,
             "version": self.version,
             "failure_reason": self.failure_reason,
@@ -180,7 +187,8 @@ class TemplateValidationFailedPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "TemplateValidationFailedPayload":
+    def from_dict(cls, data: dict[str, Any]) -> TemplateValidationFailedPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             template_id=data["template_id"],
             version=data["version"],

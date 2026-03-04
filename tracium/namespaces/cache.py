@@ -10,14 +10,14 @@ CacheWrittenPayload llm.cache.written
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 from tracium.namespaces.trace import CostBreakdown, ModelInfo, TokenUsage
 
 __all__ = [
+    "CacheEvictedPayload",
     "CacheHitPayload",
     "CacheMissPayload",
-    "CacheEvictedPayload",
     "CacheWrittenPayload",
 ]
 
@@ -34,11 +34,11 @@ class CacheHitPayload:
     key_hash: str
     namespace: str
     similarity_score: float
-    ttl_remaining_seconds: Optional[int] = None
-    cached_model: Optional[ModelInfo] = None
-    cost_saved: Optional[CostBreakdown] = None
-    tokens_saved: Optional[TokenUsage] = None
-    lookup_duration_ms: Optional[float] = None
+    ttl_remaining_seconds: int | None = None
+    cached_model: ModelInfo | None = None
+    cost_saved: CostBreakdown | None = None
+    tokens_saved: TokenUsage | None = None
+    lookup_duration_ms: float | None = None
 
     def __post_init__(self) -> None:
         if not self.key_hash:
@@ -48,8 +48,9 @@ class CacheHitPayload:
         if not (0.0 <= self.similarity_score <= 1.0):
             raise ValueError("CacheHitPayload.similarity_score must be in [0,1]")
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "key_hash": self.key_hash,
             "namespace": self.namespace,
             "similarity_score": self.similarity_score,
@@ -67,16 +68,17 @@ class CacheHitPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "CacheHitPayload":
+    def from_dict(cls, data: dict[str, Any]) -> CacheHitPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             key_hash=data["key_hash"],
             namespace=data["namespace"],
             similarity_score=float(data["similarity_score"]),
-            ttl_remaining_seconds=int(data["ttl_remaining_seconds"]) if "ttl_remaining_seconds" in data else None,
-            cached_model=ModelInfo.from_dict(data["cached_model"]) if "cached_model" in data else None,
-            cost_saved=CostBreakdown.from_dict(data["cost_saved"]) if "cost_saved" in data else None,
-            tokens_saved=TokenUsage.from_dict(data["tokens_saved"]) if "tokens_saved" in data else None,
-            lookup_duration_ms=float(data["lookup_duration_ms"]) if "lookup_duration_ms" in data else None,
+            ttl_remaining_seconds=int(data["ttl_remaining_seconds"]) if "ttl_remaining_seconds" in data else None,  # noqa: E501
+            cached_model=ModelInfo.from_dict(data["cached_model"]) if "cached_model" in data else None,  # noqa: E501
+            cost_saved=CostBreakdown.from_dict(data["cost_saved"]) if "cost_saved" in data else None,  # noqa: E501
+            tokens_saved=TokenUsage.from_dict(data["tokens_saved"]) if "tokens_saved" in data else None,  # noqa: E501
+            lookup_duration_ms=float(data["lookup_duration_ms"]) if "lookup_duration_ms" in data else None,  # noqa: E501
         )
 
 
@@ -86,9 +88,9 @@ class CacheMissPayload:
 
     key_hash: str
     namespace: str
-    best_similarity_score: Optional[float] = None
-    similarity_threshold: Optional[float] = None
-    lookup_duration_ms: Optional[float] = None
+    best_similarity_score: float | None = None
+    similarity_threshold: float | None = None
+    lookup_duration_ms: float | None = None
 
     def __post_init__(self) -> None:
         if not self.key_hash:
@@ -96,8 +98,9 @@ class CacheMissPayload:
         if not self.namespace:
             raise ValueError("CacheMissPayload.namespace must be non-empty")
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {"key_hash": self.key_hash, "namespace": self.namespace}
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {"key_hash": self.key_hash, "namespace": self.namespace}
         if self.best_similarity_score is not None:
             d["best_similarity_score"] = self.best_similarity_score
         if self.similarity_threshold is not None:
@@ -107,13 +110,14 @@ class CacheMissPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "CacheMissPayload":
+    def from_dict(cls, data: dict[str, Any]) -> CacheMissPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             key_hash=data["key_hash"],
             namespace=data["namespace"],
-            best_similarity_score=float(data["best_similarity_score"]) if "best_similarity_score" in data else None,
-            similarity_threshold=float(data["similarity_threshold"]) if "similarity_threshold" in data else None,
-            lookup_duration_ms=float(data["lookup_duration_ms"]) if "lookup_duration_ms" in data else None,
+            best_similarity_score=float(data["best_similarity_score"]) if "best_similarity_score" in data else None,  # noqa: E501
+            similarity_threshold=float(data["similarity_threshold"]) if "similarity_threshold" in data else None,  # noqa: E501
+            lookup_duration_ms=float(data["lookup_duration_ms"]) if "lookup_duration_ms" in data else None,  # noqa: E501
         )
 
 
@@ -124,7 +128,7 @@ class CacheEvictedPayload:
     key_hash: str
     namespace: str
     eviction_reason: str
-    entry_age_seconds: Optional[int] = None
+    entry_age_seconds: int | None = None
 
     def __post_init__(self) -> None:
         if not self.key_hash:
@@ -133,11 +137,12 @@ class CacheEvictedPayload:
             raise ValueError("CacheEvictedPayload.namespace must be non-empty")
         if self.eviction_reason not in _VALID_EVICTION_REASONS:
             raise ValueError(
-                f"CacheEvictedPayload.eviction_reason must be one of {sorted(_VALID_EVICTION_REASONS)}"
+                f"CacheEvictedPayload.eviction_reason must be one of {sorted(_VALID_EVICTION_REASONS)}"  # noqa: E501
             )
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "key_hash": self.key_hash,
             "namespace": self.namespace,
             "eviction_reason": self.eviction_reason,
@@ -147,12 +152,13 @@ class CacheEvictedPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "CacheEvictedPayload":
+    def from_dict(cls, data: dict[str, Any]) -> CacheEvictedPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             key_hash=data["key_hash"],
             namespace=data["namespace"],
             eviction_reason=data["eviction_reason"],
-            entry_age_seconds=int(data["entry_age_seconds"]) if "entry_age_seconds" in data else None,
+            entry_age_seconds=int(data["entry_age_seconds"]) if "entry_age_seconds" in data else None,  # noqa: E501
         )
 
 
@@ -163,9 +169,9 @@ class CacheWrittenPayload:
     key_hash: str
     namespace: str
     ttl_seconds: int
-    model: Optional[ModelInfo] = None
-    response_token_count: Optional[int] = None
-    write_duration_ms: Optional[float] = None
+    model: ModelInfo | None = None
+    response_token_count: int | None = None
+    write_duration_ms: float | None = None
 
     def __post_init__(self) -> None:
         if not self.key_hash:
@@ -175,8 +181,9 @@ class CacheWrittenPayload:
         if not isinstance(self.ttl_seconds, int) or self.ttl_seconds < 0:
             raise ValueError("CacheWrittenPayload.ttl_seconds must be a non-negative int")
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "key_hash": self.key_hash,
             "namespace": self.namespace,
             "ttl_seconds": self.ttl_seconds,
@@ -190,12 +197,13 @@ class CacheWrittenPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "CacheWrittenPayload":
+    def from_dict(cls, data: dict[str, Any]) -> CacheWrittenPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             key_hash=data["key_hash"],
             namespace=data["namespace"],
             ttl_seconds=int(data["ttl_seconds"]),
             model=ModelInfo.from_dict(data["model"]) if "model" in data else None,
-            response_token_count=int(data["response_token_count"]) if "response_token_count" in data else None,
-            write_duration_ms=float(data["write_duration_ms"]) if "write_duration_ms" in data else None,
+            response_token_count=int(data["response_token_count"]) if "response_token_count" in data else None,  # noqa: E501
+            write_duration_ms=float(data["write_duration_ms"]) if "write_duration_ms" in data else None,  # noqa: E501
         )

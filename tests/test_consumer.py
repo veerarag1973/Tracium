@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Generator
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -15,6 +15,9 @@ from tracium.consumer import (
     get_registry,
     register_consumer,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 
 @pytest.fixture(autouse=True)
@@ -67,7 +70,7 @@ class TestRegister:
 
     def test_register_invalid_version_raises(self) -> None:
         registry = ConsumerRegistry()
-        with pytest.raises(ValueError, match="MAJOR.MINOR"):
+        with pytest.raises(ValueError, match="MAJOR.MINOR"):  # noqa: RUF043
             registry.register("tool", namespaces=["trace"], schema_version="bad")
 
     def test_register_multiple(self) -> None:
@@ -164,7 +167,7 @@ class TestCompatibilityChecking:
 
     def test_check_compatible_invalid_version_raises(self) -> None:
         registry = ConsumerRegistry()
-        with pytest.raises(ValueError, match="MAJOR.MINOR"):
+        with pytest.raises(ValueError, match="MAJOR.MINOR"):  # noqa: RUF043
             registry.check_compatible("bad-version")
 
 

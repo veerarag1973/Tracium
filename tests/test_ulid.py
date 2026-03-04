@@ -12,27 +12,25 @@ from __future__ import annotations
 import re
 import threading
 import time
-from typing import List
 from unittest.mock import patch
 
 import pytest
 
 from tracium.exceptions import ULIDError
 from tracium.ulid import (
-    ULID_LENGTH,
-    ULID_REGEX,
     _ALPHABET,
     _MAX_TIMESTAMP,
-    _ULIDGenerator,
+    ULID_LENGTH,
+    ULID_REGEX,
     _encode_ulid,
     _now_ms,
     _secure_random_80,
     _spin_until_next_ms,
+    _ULIDGenerator,
     extract_timestamp_ms,
     generate,
     validate,
 )
-
 
 # ---------------------------------------------------------------------------
 # Alphabet & constants
@@ -42,10 +40,10 @@ from tracium.ulid import (
 @pytest.mark.unit
 class TestConstants:
     def test_alphabet_length(self) -> None:
-        assert len(_ALPHABET) == 32  # noqa: PLR2004
+        assert len(_ALPHABET) == 32
 
     def test_alphabet_no_duplicates(self) -> None:
-        assert len(set(_ALPHABET)) == 32  # noqa: PLR2004
+        assert len(set(_ALPHABET)) == 32
 
     def test_alphabet_excludes_confusing_chars(self) -> None:
         """Crockford Base32 excludes I, L, O, U."""
@@ -53,7 +51,7 @@ class TestConstants:
             assert ch not in _ALPHABET, f"Confusing character {ch!r} found in alphabet"
 
     def test_ulid_length_constant(self) -> None:
-        assert ULID_LENGTH == 26  # noqa: PLR2004
+        assert ULID_LENGTH == 26
 
     def test_max_timestamp(self) -> None:
         # 2^48 - 1
@@ -93,7 +91,7 @@ class TestEncodeUlid:
         assert len(result) == ULID_LENGTH
 
     def test_encodes_known_timestamp(self) -> None:
-        """Timestamp 0 should produce ten '0' characters at position 0–9."""
+        """Timestamp 0 should produce ten '0' characters at position 0–9."""  # noqa: RUF002
         result = _encode_ulid(0, 1)
         assert result[:10] == "0" * 10
 
@@ -188,7 +186,7 @@ class TestGenerate:
 
     def test_unique(self) -> None:
         results = {generate() for _ in range(1000)}
-        assert len(results) == 1000  # noqa: PLR2004
+        assert len(results) == 1000
 
     def test_uppercase(self) -> None:
         ulid = generate()
@@ -233,17 +231,17 @@ class TestMonotonicity:
         gen = _ULIDGenerator()
         forward_ms = _now_ms() + 10_000  # 10 seconds in the future
 
-        first: List[str] = []
+        first: list[str] = []
         with patch("tracium.ulid._now_ms", return_value=forward_ms):
             for _ in range(5):
-                first.append(gen.generate())
+                first.append(gen.generate())  # noqa: PERF401
 
         # Now simulate clock going backwards
         backward_ms = forward_ms - 5_000  # 5 seconds back
-        second: List[str] = []
+        second: list[str] = []
         with patch("tracium.ulid._now_ms", return_value=backward_ms):
             for _ in range(5):
-                second.append(gen.generate())
+                second.append(gen.generate())  # noqa: PERF401
 
         # All second should be >= all first
         assert all(s >= f for s in second for f in first), (
@@ -265,7 +263,7 @@ class TestMonotonicity:
         # the clock will actually advance on second call, which is fine).
         # Instead, set last_rand to rand_max directly and check:
         object.__setattr__(gen, "_last_rand", rand_max)
-        with patch("tracium.ulid._now_ms", return_value=fixed_ms - 1):
+        with patch("tracium.ulid._now_ms", return_value=fixed_ms - 1):  # noqa: SIM117
             with pytest.raises(ULIDError, match="Random segment overflow"):
                 gen.generate()
 
@@ -309,7 +307,7 @@ class TestMonotonicity:
 class TestThreadSafety:
     def test_concurrent_generation_unique(self) -> None:
         """Concurrent generate() calls across threads must produce unique IDs."""
-        results: List[str] = []
+        results: list[str] = []
         lock = threading.Lock()
 
         def worker() -> None:
@@ -369,4 +367,4 @@ class TestULIDPerformance:
         for _ in range(1000):
             generate()
         elapsed_ms = (time.perf_counter() - start) * 1000
-        assert elapsed_ms < 50, f"ULID generation too slow: {elapsed_ms:.1f}ms for 1000 ULIDs"  # noqa: PLR2004
+        assert elapsed_ms < 50, f"ULID generation too slow: {elapsed_ms:.1f}ms for 1000 ULIDs"

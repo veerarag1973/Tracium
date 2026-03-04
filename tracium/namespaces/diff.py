@@ -8,7 +8,7 @@ DiffRegressionFlaggedPayload llm.diff.regression.flagged
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 __all__ = [
     "DiffComputedPayload",
@@ -30,12 +30,12 @@ class DiffComputedPayload:
     target_event_id: str
     diff_type: str        # "prompt"|"response"|"template"|"token_usage"|"cost"
     similarity_score: float
-    added_tokens: Optional[int] = None
-    removed_tokens: Optional[int] = None
-    diff_algorithm: Optional[str] = None
-    ref_content_hash: Optional[str] = None    # 64 hex chars
-    target_content_hash: Optional[str] = None # 64 hex chars
-    computation_duration_ms: Optional[float] = None
+    added_tokens: int | None = None
+    removed_tokens: int | None = None
+    diff_algorithm: str | None = None
+    ref_content_hash: str | None = None    # 64 hex chars
+    target_content_hash: str | None = None # 64 hex chars
+    computation_duration_ms: float | None = None
 
     def __post_init__(self) -> None:
         if not self.ref_event_id:
@@ -43,14 +43,15 @@ class DiffComputedPayload:
         if not self.target_event_id:
             raise ValueError("DiffComputedPayload.target_event_id must be non-empty")
         if self.diff_type not in _VALID_DIFF_TYPES:
-            raise ValueError(f"DiffComputedPayload.diff_type must be one of {sorted(_VALID_DIFF_TYPES)}")
+            raise ValueError(f"DiffComputedPayload.diff_type must be one of {sorted(_VALID_DIFF_TYPES)}")  # noqa: E501
         if not (0.0 <= self.similarity_score <= 1.0):
             raise ValueError("DiffComputedPayload.similarity_score must be in [0,1]")
         if self.diff_algorithm is not None and self.diff_algorithm not in _VALID_ALGORITHMS:
-            raise ValueError(f"DiffComputedPayload.diff_algorithm must be one of {sorted(_VALID_ALGORITHMS)}")
+            raise ValueError(f"DiffComputedPayload.diff_algorithm must be one of {sorted(_VALID_ALGORITHMS)}")  # noqa: E501
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "ref_event_id": self.ref_event_id,
             "target_event_id": self.target_event_id,
             "diff_type": self.diff_type,
@@ -71,7 +72,8 @@ class DiffComputedPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "DiffComputedPayload":
+    def from_dict(cls, data: dict[str, Any]) -> DiffComputedPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             ref_event_id=data["ref_event_id"],
             target_event_id=data["target_event_id"],
@@ -82,7 +84,7 @@ class DiffComputedPayload:
             diff_algorithm=data.get("diff_algorithm"),
             ref_content_hash=data.get("ref_content_hash"),
             target_content_hash=data.get("target_content_hash"),
-            computation_duration_ms=float(data["computation_duration_ms"]) if "computation_duration_ms" in data else None,
+            computation_duration_ms=float(data["computation_duration_ms"]) if "computation_duration_ms" in data else None,  # noqa: E501
         )
 
 
@@ -96,8 +98,8 @@ class DiffRegressionFlaggedPayload:
     similarity_score: float
     threshold: float
     severity: str  # "low"|"medium"|"high"|"critical"
-    diff_event_id: Optional[str] = None
-    alert_target: Optional[str] = None
+    diff_event_id: str | None = None
+    alert_target: str | None = None
 
     def __post_init__(self) -> None:
         if not self.ref_event_id:
@@ -105,16 +107,17 @@ class DiffRegressionFlaggedPayload:
         if not self.target_event_id:
             raise ValueError("DiffRegressionFlaggedPayload.target_event_id must be non-empty")
         if self.diff_type not in _VALID_DIFF_TYPES:
-            raise ValueError(f"DiffRegressionFlaggedPayload.diff_type must be one of {sorted(_VALID_DIFF_TYPES)}")
+            raise ValueError(f"DiffRegressionFlaggedPayload.diff_type must be one of {sorted(_VALID_DIFF_TYPES)}")  # noqa: E501
         if not (0.0 <= self.similarity_score <= 1.0):
             raise ValueError("DiffRegressionFlaggedPayload.similarity_score must be in [0,1]")
         if not (0.0 <= self.threshold <= 1.0):
             raise ValueError("DiffRegressionFlaggedPayload.threshold must be in [0,1]")
         if self.severity not in _VALID_SEVERITIES:
-            raise ValueError(f"DiffRegressionFlaggedPayload.severity must be one of {sorted(_VALID_SEVERITIES)}")
+            raise ValueError(f"DiffRegressionFlaggedPayload.severity must be one of {sorted(_VALID_SEVERITIES)}")  # noqa: E501
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "ref_event_id": self.ref_event_id,
             "target_event_id": self.target_event_id,
             "diff_type": self.diff_type,
@@ -129,7 +132,8 @@ class DiffRegressionFlaggedPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "DiffRegressionFlaggedPayload":
+    def from_dict(cls, data: dict[str, Any]) -> DiffRegressionFlaggedPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             ref_event_id=data["ref_event_id"],
             target_event_id=data["target_event_id"],

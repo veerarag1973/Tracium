@@ -6,7 +6,7 @@ published JSON Schema specification in ``schemas/v1.0/schema.json``.
 It uses the optional ``jsonschema`` library when available for full Draft 2020-12
 validation.  If ``jsonschema`` is not installed, a lightweight structural check
 is performed using only the Python standard library — external dependencies are
-strictly optional in line with *llm-toolkit-schema*'s zero-required-dependency policy.
+strictly optional in line with *tracium*'s zero-required-dependency policy.
 
 Usage
 -----
@@ -35,12 +35,12 @@ from __future__ import annotations
 import json
 import pathlib
 import re
-from typing import Any, Dict, Optional
+from typing import Any
 
 from tracium.event import Event
 from tracium.exceptions import SchemaValidationError
 
-__all__: list[str] = ["validate_event", "load_schema"]
+__all__: list[str] = ["load_schema", "validate_event"]
 
 # ---------------------------------------------------------------------------
 # Schema path
@@ -81,18 +81,18 @@ _SIGNATURE_RE: re.Pattern[str] = re.compile(r"^hmac-sha256:[0-9a-f]{64}$")
 # Schema loader
 # ---------------------------------------------------------------------------
 
-_CACHED_SCHEMA: Optional[Dict[str, Any]] = None
+_CACHED_SCHEMA: dict[str, Any] | None = None
 
 
-def load_schema() -> Dict[str, Any]:
+def load_schema() -> dict[str, Any]:
     """Load and cache the v1.0 JSON Schema from disk.
 
-    Returns
+    Returns:
     -------
     dict
         Parsed JSON Schema as a plain Python dict.
 
-    Raises
+    Raises:
     ------
     FileNotFoundError
         If ``schemas/v1.0/schema.json`` cannot be found relative to the
@@ -118,11 +118,11 @@ def load_schema() -> Dict[str, Any]:
 
 
 def _check_string_field(
-    doc: Dict[str, Any],
+    doc: dict[str, Any],
     field: str,
     *,
     required: bool = True,
-    pattern: Optional[re.Pattern[str]] = None,
+    pattern: re.Pattern[str] | None = None,
     min_length: int = 1,
 ) -> None:
     """Validate a single string field in *doc*."""
@@ -155,7 +155,7 @@ def _check_string_field(
         )
 
 
-def _stdlib_validate(doc: Dict[str, Any]) -> None:
+def _stdlib_validate(doc: dict[str, Any]) -> None:
     """Perform structural validation without the ``jsonschema`` library.
 
     Checks required fields, types, and regex patterns as per the published
@@ -245,14 +245,14 @@ def validate_event(event: Event) -> None:
     event:
         The :class:`~tracium.event.Event` instance to validate.
 
-    Raises
+    Raises:
     ------
     SchemaValidationError
         If the event does not conform to the envelope schema.
     FileNotFoundError
         If the schema file is missing from the installed distribution.
 
-    Examples
+    Examples:
     --------
     ::
 

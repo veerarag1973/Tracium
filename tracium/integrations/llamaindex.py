@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import asyncio
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from tracium.event import Event
 from tracium.ulid import generate as gen_ulid
@@ -45,17 +45,19 @@ def _require_llamaindex() -> Any:  # noqa: ANN401
     """
     # Try modern llama_index.core first.
     try:
+        import sys  # noqa: PLC0415
+
         import llama_index.core  # noqa: PLC0415
         import llama_index.core.callbacks  # noqa: PLC0415
-        import sys
         return sys.modules["llama_index.core.callbacks"]
     except ImportError:
         pass
     # Fall back to legacy llama_index package.
     try:
+        import sys  # noqa: PLC0415
+
         import llama_index  # noqa: PLC0415
-        import llama_index.callbacks  # noqa: PLC0415
-        import sys
+        import llama_index.callbacks  # noqa: PLC0415, F401
         return sys.modules["llama_index.callbacks"]
     except ImportError:
         pass
@@ -70,7 +72,7 @@ def _require_llamaindex() -> Any:  # noqa: ANN401
 # ---------------------------------------------------------------------------
 
 #: Maps LlamaIndex CBEventType string → (start_event_type, end_event_type)
-_CB_TYPE_MAP: Dict[str, tuple[str, str]] = {
+_CB_TYPE_MAP: dict[str, tuple[str, str]] = {
     "LLM": ("llm.trace.span.started", "llm.trace.span.completed"),
     "FUNCTION_CALL": ("llm.trace.tool_call.started", "llm.trace.tool_call.completed"),
     "QUERY": ("llm.trace.query.started", "llm.trace.query.completed"),
@@ -106,15 +108,15 @@ class LLMSchemaEventHandler:
         self,
         source: str,
         *,
-        org_id: Optional[str] = None,
-        exporter: Optional[Any] = None,
+        org_id: str | None = None,
+        exporter: Any | None = None,  # noqa: ANN401
     ) -> None:
         self._source = source
         self._org_id = org_id
         self._exporter = exporter
-        self.events: List[Event] = []
+        self.events: list[Event] = []
         # Tracks start monotonic time by event_id
-        self._start_times: Dict[str, float] = {}
+        self._start_times: dict[str, float] = {}
 
     # ------------------------------------------------------------------
     # Static helpers
@@ -142,7 +144,7 @@ class LLMSchemaEventHandler:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _make_event(self, event_type: str, payload: Dict[str, Any]) -> Event:
+    def _make_event(self, event_type: str, payload: dict[str, Any]) -> Event:
         """Create a Tracium event, append it, and optionally schedule async export.
 
         Args:
@@ -164,13 +166,13 @@ class LLMSchemaEventHandler:
         if self._exporter is not None:
             try:
                 loop = asyncio.get_running_loop()
-                loop.create_task(self._exporter.export(event))
+                loop.create_task(self._exporter.export(event))  # noqa: RUF006
             except RuntimeError:
                 pass  # no event loop configured
 
         return event
 
-    def _duration_ms(self, event_id: str) -> Optional[float]:
+    def _duration_ms(self, event_id: str) -> float | None:
         """Return elapsed milliseconds since *event_id* was started, or ``None``.
 
         Args:
@@ -190,11 +192,11 @@ class LLMSchemaEventHandler:
 
     def on_event_start(
         self,
-        event_type: Any,
+        event_type: Any,  # noqa: ANN401
         *,
-        payload: Optional[Dict[str, Any]] = None,
-        event_id: Optional[str] = None,
-        **kwargs: Any,
+        payload: dict[str, Any] | None = None,
+        event_id: str | None = None,
+        **kwargs: Any,  # noqa: ANN401
     ) -> str:
         """Called when a LlamaIndex callback event begins.
 
@@ -222,7 +224,7 @@ class LLMSchemaEventHandler:
 
         start_et, _ = type_map
         payload = payload or {}
-        event_payload: Dict[str, Any] = {"event_id": event_id}
+        event_payload: dict[str, Any] = {"event_id": event_id}
 
         if et == "LLM":
             model_dict = payload.get("model_dict") or {}
@@ -240,11 +242,11 @@ class LLMSchemaEventHandler:
 
     def on_event_end(
         self,
-        event_type: Any,
+        event_type: Any,  # noqa: ANN401
         *,
-        payload: Optional[Dict[str, Any]] = None,
-        event_id: Optional[str] = None,
-        **kwargs: Any,
+        payload: dict[str, Any] | None = None,
+        event_id: str | None = None,
+        **kwargs: Any,  # noqa: ANN401
     ) -> None:
         """Called when a LlamaIndex callback event ends.
 
@@ -263,9 +265,9 @@ class LLMSchemaEventHandler:
             return
 
         _, end_et = type_map
-        duration: Optional[float] = self._duration_ms(event_id) if event_id else None
+        duration: float | None = self._duration_ms(event_id) if event_id else None
         payload = payload or {}
-        event_payload: Dict[str, Any] = {
+        event_payload: dict[str, Any] = {
             "event_id": event_id,
             "duration_ms": duration,
         }
@@ -287,7 +289,7 @@ class LLMSchemaEventHandler:
 
         self._make_event(end_et, event_payload)
 
-    def start_trace(self, trace_id: Optional[str] = None, **kwargs: Any) -> None:
+    def start_trace(self, trace_id: str | None = None, **kwargs: Any) -> None:  # noqa: ANN401
         """No-op — LlamaIndex trace lifecycle hook.
 
         Args:
@@ -298,9 +300,9 @@ class LLMSchemaEventHandler:
 
     def end_trace(
         self,
-        trace_id: Optional[str] = None,
-        trace_map: Optional[Dict[str, Any]] = None,
-        **kwargs: Any,
+        trace_id: str | None = None,
+        trace_map: dict[str, Any] | None = None,
+        **kwargs: Any,  # noqa: ANN401
     ) -> None:
         """No-op — LlamaIndex trace lifecycle hook.
 

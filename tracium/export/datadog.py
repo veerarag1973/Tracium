@@ -31,6 +31,7 @@ Usage::
 from __future__ import annotations
 
 import asyncio
+import ipaddress
 import json
 import random
 import urllib.error
@@ -38,15 +39,19 @@ import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Sequence
+from typing import TYPE_CHECKING, Any
 
-from tracium.event import Event
 from tracium.exceptions import ExportError
 
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from tracium.event import Event
+
 __all__ = [
+    "_METRIC_FIELDS",
     "DatadogExporter",
     "DatadogResourceAttributes",
-    "_METRIC_FIELDS",
 ]
 
 # ---------------------------------------------------------------------------
@@ -89,9 +94,9 @@ class DatadogResourceAttributes:
     service: str
     env: str
     version: str = "0.0.0"
-    extra: Dict[str, str] = field(default_factory=dict)
+    extra: dict[str, str] = field(default_factory=dict)
 
-    def to_tags(self) -> List[str]:
+    def to_tags(self) -> list[str]:
         """Return a list of ``"key:value"`` tag strings."""
         tags = [
             f"service:{self.service}",
@@ -108,18 +113,33 @@ class DatadogResourceAttributes:
 # ---------------------------------------------------------------------------
 
 
-def _validate_http_url(url: str, param_name: str = "url") -> None:
+def _is_private_ip_literal(host: str) -> bool:
+    try:
+        addr = ipaddress.ip_address(host)
+    except ValueError:
+        return False
+    return addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_multicast
+
+
+def _validate_http_url(url: str, param_name: str = "url", *, allow_private_addresses: bool = False) -> None:  # noqa: E501
     parsed = urllib.parse.urlparse(url)
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
         raise ValueError(
             f"{param_name} must be a valid http:// or https:// URL; got {url!r}"
         )
+    if not allow_private_addresses:
+        host = parsed.hostname or ""
+        if _is_private_ip_literal(host):
+            raise ValueError(
+                f"{param_name} resolves to a private/loopback/link-local IP address "
+                f"({host!r}).  Set allow_private_addresses=True to permit this."
+            )
 
 
 def _validate_dd_site(dd_site: str) -> None:
     """Raise *ValueError* if *dd_site* is not a plain hostname (no scheme, no spaces, has a dot)."""
     if not dd_site:
-        raise ValueError("dd_site must be a non-empty hostname (e.g. 'datadoghq.com'), got empty string")
+        raise ValueError("dd_site must be a non-empty hostname (e.g. 'datadoghq.com'), got empty string")  # noqa: E501
     if "/" in dd_site:
         raise ValueError(
             f"dd_site must be a plain hostname without a URL scheme or path; got {dd_site!r}"
@@ -149,8 +169,11 @@ def _iso_to_epoch_ns(ts: str) -> int:
         ts_clean += ".000000"
     try:
         dt = datetime.strptime(ts_clean, "%Y-%m-%dT%H:%M:%S.%f").replace(tzinfo=timezone.utc)
-    except ValueError:
-        dt = datetime.now(tz=timezone.utc)
+    except ValueError as exc:
+        raise ExportError(
+            "datadog",
+            f"cannot parse event timestamp {ts!r}: {exc}",
+        ) from exc
     return int(dt.timestamp() * 1_000_000_000)
 
 
@@ -169,7 +192,7 @@ def _make_span_id() -> int:
     return random.getrandbits(64)
 
 
-def _trace_id_to_int(trace_id: Optional[str]) -> int:
+def _trace_id_to_int(trace_id: str | None) -> int:
     """Convert a hex trace-id string to an unsigned 64-bit integer (low 64 bits)."""
     if not trace_id:
         return _make_span_id()
@@ -180,7 +203,7 @@ def _trace_id_to_int(trace_id: Optional[str]) -> int:
         return _make_span_id()
 
 
-def _span_id_to_int(span_id: Optional[str]) -> int:
+def _span_id_to_int(span_id: str | None) -> int:
     """Convert a hex span-id string to an unsigned 64-bit integer."""
     if not span_id:
         return _make_span_id()
@@ -216,29 +239,30 @@ class DatadogExporter:
         ValueError: If any constructor argument fails validation.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         service: str,
         env: str = "production",
         *,
         agent_url: str = "http://localhost:8126",
-        api_key: Optional[str] = None,
-        dd_site: Optional[str] = None,
+        api_key: str | None = None,
+        dd_site: str | None = None,
         timeout: float = 10.0,
+        allow_private_addresses: bool = False,
     ) -> None:
         if not service:
             raise ValueError("service must be a non-empty string")
         if timeout <= 0:
             raise ValueError("timeout must be positive")
-        _validate_http_url(agent_url, "agent_url")
+        _validate_http_url(agent_url, "agent_url", allow_private_addresses=allow_private_addresses)
         if dd_site is not None:
             _validate_dd_site(dd_site)
 
         self._service = service
         self._env = env
         self._agent_url = agent_url.rstrip("/")
-        self._api_key: Optional[str] = api_key
-        self._dd_site: Optional[str] = dd_site
+        self._api_key: str | None = api_key
+        self._dd_site: str | None = dd_site
         self._timeout = timeout
         self._resource = DatadogResourceAttributes(service=service, env=env)
 
@@ -246,7 +270,7 @@ class DatadogExporter:
     # Public conversion API
     # ------------------------------------------------------------------
 
-    def to_dd_span(self, event: Event) -> Dict[str, Any]:
+    def to_dd_span(self, event: Event) -> dict[str, Any]:
         """Convert a Tracium :class:`~tracium.event.Event` to a Datadog APM span dict.
 
         Args:
@@ -261,7 +285,7 @@ class DatadogExporter:
         trace_id = _trace_id_to_int(event.trace_id)
         span_id = _span_id_to_int(event.span_id)
 
-        meta: Dict[str, str] = {
+        meta: dict[str, str] = {
             "llm.source": event.source,
             "llm.event_type": str(event.event_type),
         }
@@ -299,7 +323,7 @@ class DatadogExporter:
             "error": 0,
         }
 
-    def to_dd_metric_series(self, event: Event) -> List[Dict[str, Any]]:
+    def to_dd_metric_series(self, event: Event) -> list[dict[str, Any]]:
         """Extract numeric payload fields as Datadog metric series entries.
 
         Only fields listed in :data:`_METRIC_FIELDS` with non-bool numeric
@@ -311,7 +335,7 @@ class DatadogExporter:
         Returns:
             A list of Datadog metric series dicts (may be empty).
         """
-        series: List[Dict[str, Any]] = []
+        series: list[dict[str, Any]] = []
         ts_sec = _iso_to_epoch_ns(event.timestamp) // 1_000_000_000
         tags = list(self._resource.to_tags())
         if event.org_id:
@@ -377,7 +401,7 @@ class DatadogExporter:
             await self._send_traces(trace_events)
 
         if self._api_key:
-            all_series: List[Dict[str, Any]] = []
+            all_series: list[dict[str, Any]] = []
             for event in events:
                 all_series.extend(self.to_dd_metric_series(event))
             if all_series:
@@ -406,9 +430,9 @@ class DatadogExporter:
             "Datadog-Meta-Lang": "python",
         }
 
-        await asyncio.get_event_loop().run_in_executor(None, lambda: self._do_post(url, payload, headers, "datadog-traces"))
+        await asyncio.get_event_loop().run_in_executor(None, lambda: self._do_post(url, payload, headers, "datadog-traces"))  # noqa: E501
 
-    async def _send_metrics(self, series: List[Dict[str, Any]]) -> None:
+    async def _send_metrics(self, series: list[dict[str, Any]]) -> None:
         """Send *series* to the Datadog Metrics API.
 
         Args:
@@ -424,9 +448,9 @@ class DatadogExporter:
             "Content-Type": "application/json",
             "DD-API-KEY": self._api_key or "",
         }
-        await asyncio.get_event_loop().run_in_executor(None, lambda: self._do_post(url, payload, headers, "datadog-metrics"))
+        await asyncio.get_event_loop().run_in_executor(None, lambda: self._do_post(url, payload, headers, "datadog-metrics"))  # noqa: E501
 
-    def _do_post(self, url: str, body: bytes, headers: Dict[str, str], context: str) -> None:
+    def _do_post(self, url: str, body: bytes, headers: dict[str, str], context: str) -> None:
         """Perform a synchronous HTTP POST (called in executor).
 
         Args:
@@ -438,9 +462,9 @@ class DatadogExporter:
         Raises:
             ExportError: On HTTP or network failure.
         """
-        req = urllib.request.Request(url=url, data=body, headers=headers, method="POST")
+        req = urllib.request.Request(url=url, data=body, headers=headers, method="POST")  # noqa: S310
         try:
-            with urllib.request.urlopen(req, timeout=self._timeout) as resp:
+            with urllib.request.urlopen(req, timeout=self._timeout) as resp:  # noqa: S310
                 resp.read()
         except urllib.error.HTTPError as exc:
             raise ExportError(

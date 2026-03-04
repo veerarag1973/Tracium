@@ -26,7 +26,7 @@ from tracium.signing import sign
 # ---------------------------------------------------------------------------
 
 _SOURCE = "benchmark-tool@1.0.0"
-_SECRET = "benchmark-signing-secret"
+_SECRET = "benchmark-signing-secret"  # noqa: S105
 _PAYLOAD = {"span_name": "llm.chat", "status": "ok", "tokens": 128}
 
 
@@ -75,7 +75,7 @@ def test_nfr_event_creation_and_signing() -> None:
     n = 100
     deadline_seconds = 0.5
 
-    base = _make_event()
+    _make_event()
     start = time.perf_counter()
     prev = None
     for _ in range(n):

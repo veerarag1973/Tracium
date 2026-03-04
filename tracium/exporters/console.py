@@ -31,9 +31,10 @@ from __future__ import annotations
 
 import os
 import sys
-from typing import Optional
+from typing import TYPE_CHECKING
 
-from tracium.event import Event
+if TYPE_CHECKING:
+    from tracium.event import Event
 
 __all__ = ["SyncConsoleExporter"]
 
@@ -73,6 +74,7 @@ def _c(text: str, *codes: str) -> str:
 # ---------------------------------------------------------------------------
 
 _BOX_WIDTH = 56  # inner width (chars between ╔ and ╗)
+_MIN_NAMESPACE_PARTS = 2  # minimum dot-separated parts for namespace extraction
 
 _TL = "╔"  # top-left corner
 _TR = "╗"  # top-right corner
@@ -91,8 +93,7 @@ def _top_bar(title: str) -> str:
     """``╔══ <title> ═════╗`` with padding."""
     inner = f"══ {title} "
     pad = _BOX_WIDTH - len(inner)
-    if pad < 2:
-        pad = 2
+    pad = max(pad, 2)
     return _c(_TL + inner + _H * pad + _TR, _CYAN, _BOLD)
 
 
@@ -124,7 +125,7 @@ def _get(payload: dict, *keys: str, default: str = "") -> str:
     return str(obj)
 
 
-def _format_tokens(payload: dict) -> Optional[str]:
+def _format_tokens(payload: dict) -> str | None:
     tu = payload.get("token_usage")
     if not isinstance(tu, dict):
         return None
@@ -134,7 +135,7 @@ def _format_tokens(payload: dict) -> Optional[str]:
     return f"in={i}  out={o}  total={t}"
 
 
-def _format_cost(payload: dict) -> Optional[str]:
+def _format_cost(payload: dict) -> str | None:
     cost = payload.get("cost")
     if not isinstance(cost, dict):
         return None
@@ -147,7 +148,7 @@ def _format_cost(payload: dict) -> Optional[str]:
     return f"{total:.5f} {currency}"
 
 
-def _format_duration(payload: dict) -> Optional[str]:
+def _format_duration(payload: dict) -> str | None:
     ms = payload.get("duration_ms")
     if ms is None:
         return None
@@ -173,8 +174,8 @@ def _format_event(event: Event) -> str:
     et = event.event_type  # e.g. "llm.trace.span.completed"
 
     # Determine a compact title from event type + span/agent name.
-    kind = et.split(".")[-1] if "." in et else et  # completed / step / etc.
-    namespace_part = et.split(".")[2] if et.count(".") >= 2 else "trace"
+    et.split(".")[-1] if "." in et else et  # completed / step / etc.
+    namespace_part = et.split(".")[2] if et.count(".") >= _MIN_NAMESPACE_PARTS else "trace"
     span_name = (
         payload.get("span_name")
         or payload.get("agent_name")

@@ -43,7 +43,7 @@ Install with::
 from __future__ import annotations
 
 import functools
-from typing import Any, Optional, Tuple
+from typing import Any
 
 from tracium.namespaces.trace import (
     CostBreakdown,
@@ -53,10 +53,10 @@ from tracium.namespaces.trace import (
 )
 
 __all__ = [
-    "patch",
-    "unpatch",
     "is_patched",
     "normalize_response",
+    "patch",
+    "unpatch",
 ]
 
 # Sentinel to prevent double-patching.
@@ -99,7 +99,7 @@ def patch() -> None:
 
     # --- Client.chat ---------------------------------------------------------
     try:
-        from ollama import Client  # type: ignore[import-untyped]
+        from ollama import Client  # type: ignore[import-untyped]  # noqa: PLC0415
 
         _orig_client_chat = Client.chat  # type: ignore[attr-defined]
 
@@ -116,7 +116,7 @@ def patch() -> None:
 
     # --- AsyncClient.chat ----------------------------------------------------
     try:
-        from ollama import AsyncClient  # type: ignore[import-untyped]
+        from ollama import AsyncClient  # type: ignore[import-untyped]  # noqa: PLC0415
 
         _orig_async_chat = AsyncClient.chat  # type: ignore[attr-defined]
 
@@ -153,7 +153,7 @@ def unpatch() -> None:
         del ollama_mod._tracium_orig_chat  # type: ignore[attr-defined]
 
     try:
-        from ollama import Client  # type: ignore[import-untyped]
+        from ollama import Client  # type: ignore[import-untyped]  # noqa: PLC0415
 
         Client.chat = Client._tracium_orig_chat  # type: ignore[attr-defined,method-assign]
         del Client._tracium_orig_chat  # type: ignore[attr-defined]
@@ -161,14 +161,14 @@ def unpatch() -> None:
         pass
 
     try:
-        from ollama import AsyncClient  # type: ignore[import-untyped]
+        from ollama import AsyncClient  # type: ignore[import-untyped]  # noqa: PLC0415
 
         AsyncClient.chat = AsyncClient._tracium_orig_chat  # type: ignore[attr-defined,method-assign]
         del AsyncClient._tracium_orig_chat  # type: ignore[attr-defined]
     except (ImportError, AttributeError):  # pragma: no cover
         pass
 
-    try:
+    try:  # noqa: SIM105
         del ollama_mod._tracium_patched  # type: ignore[attr-defined]
     except AttributeError:  # pragma: no cover
         pass
@@ -188,7 +188,7 @@ def is_patched() -> bool:
 
 def normalize_response(
     response: Any,  # noqa: ANN401
-) -> Tuple[TokenUsage, ModelInfo, CostBreakdown]:
+) -> tuple[TokenUsage, ModelInfo, CostBreakdown]:
     """Extract structured observability data from an Ollama chat response.
 
     Works with both ``ollama.ChatResponse`` objects and any duck-typed mock
@@ -246,12 +246,13 @@ def _require_ollama() -> Any:  # noqa: ANN401
     """Import and return the ``ollama`` module, raising ``ImportError`` if absent."""
     try:
         import ollama  # type: ignore[import-untyped]  # noqa: PLC0415
-        return ollama
     except ImportError as exc:
         raise ImportError(
             "The 'ollama' package is required for tracium Ollama integration.\n"
             "Install it with: pip install 'agentobs[ollama]'"
         ) from exc
+    else:
+        return ollama
 
 
 def _auto_populate_span(response: Any) -> None:  # noqa: ANN401
@@ -281,5 +282,5 @@ def _auto_populate_span(response: Any) -> None:  # noqa: ANN401
         if span.model is None:
             span.model = model_info.name
 
-    except Exception:  # noqa: BLE001
+    except Exception:  # noqa: S110
         pass

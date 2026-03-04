@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import re
 import threading
-from typing import Optional
+import warnings
 
 from tracium.config import get_config
 from tracium.event import Event, Tags
@@ -58,27 +58,51 @@ def _build_source(service_name: str, service_version: str) -> str:
 # ---------------------------------------------------------------------------
 
 _exporter_lock = threading.Lock()
-_cached_exporter: Optional[object] = None  # SyncExporter protocol instance
+_cached_exporter: object | None = None  # SyncExporter protocol instance
 
 # ---------------------------------------------------------------------------
 # Signing chain state
 # ---------------------------------------------------------------------------
 
 _sign_lock = threading.Lock()
-_prev_signed_event: Optional[Event] = None  # last event in the HMAC chain
+_prev_signed_event: Event | None = None  # last event in the HMAC chain
+
+
+def _handle_export_error(exc: Exception) -> None:
+    """Apply the configured ``on_export_error`` policy for *exc*.
+
+    Policies:
+
+    - ``"drop"``  — silently discard the error (opt-in to original behaviour).
+    - ``"warn"``  — emit a :mod:`warnings` ``UserWarning`` (default).
+    - ``"raise"`` — re-raise the exception into caller code.
+    """
+    try:
+        policy = get_config().on_export_error
+    except Exception:
+        policy = "warn"  # safe fallback if config itself is broken
+
+    if policy == "raise":
+        raise exc
+    if policy == "warn":
+        warnings.warn(
+            f"tracium export error ({type(exc).__name__}): {exc}",
+            stacklevel=3,
+        )
+    # "drop": discard silently
 
 
 def _reset_exporter() -> None:
     """Invalidate the cached exporter and reset the HMAC signing chain."""
-    global _cached_exporter, _prev_signed_event
+    global _cached_exporter, _prev_signed_event  # noqa: PLW0603
     with _exporter_lock:
         if _cached_exporter is not None:
             # Flush + close any open file handles before discarding the exporter.
             try:
                 if hasattr(_cached_exporter, "close"):
                     _cached_exporter.close()  # type: ignore[union-attr]
-            except Exception:  # noqa: BLE001
-                pass
+            except Exception as exc:
+                _handle_export_error(exc)
         _cached_exporter = None
     with _sign_lock:
         _prev_signed_event = None
@@ -86,7 +110,7 @@ def _reset_exporter() -> None:
 
 def _active_exporter() -> object:
     """Return the cached exporter, instantiating it from config if necessary."""
-    global _cached_exporter
+    global _cached_exporter  # noqa: PLW0603
     if _cached_exporter is not None:
         return _cached_exporter
     with _exporter_lock:
@@ -110,7 +134,7 @@ def _build_exporter() -> object:
         from tracium.exporters.console import SyncConsoleExporter  # noqa: PLC0415
         return SyncConsoleExporter()
 
-    # Fallback: console
+    # Default fallback: use the console exporter.
     from tracium.exporters.console import SyncConsoleExporter  # noqa: PLC0415
     return SyncConsoleExporter()
 
@@ -123,9 +147,9 @@ def _build_exporter() -> object:
 def _build_event(
     event_type: EventType,
     payload_dict: dict,
-    span_id: Optional[str] = None,
-    trace_id: Optional[str] = None,
-    parent_span_id: Optional[str] = None,
+    span_id: str | None = None,
+    trace_id: str | None = None,
+    parent_span_id: str | None = None,
 ) -> Event:
     """Construct a fully-populated :class:`~tracium.event.Event` envelope."""
     cfg = get_config()
@@ -218,7 +242,7 @@ def emit_agent_run(run: object) -> None:
 
 
 def _dispatch(event: Event) -> None:
-    """Export *event* through the active exporter, swallowing all errors.
+    """Export *event* through the active exporter, handling errors per policy.
 
     Pipeline (in order):
     1. **Redaction** — apply :class:`~tracium.redact.RedactionPolicy` when
@@ -227,8 +251,11 @@ def _dispatch(event: Event) -> None:
     2. **Signing** — sign with HMAC-SHA256 and chain to the previous event
        when ``config.signing_key`` is set.
     3. **Export** — hand the event to the active exporter.
+
+    On failure the error is routed through :func:`_handle_export_error` which
+    applies the ``on_export_error`` policy (``"warn"`` | ``"raise"`` | ``"drop"``).
     """
-    global _prev_signed_event
+    global _prev_signed_event  # noqa: PLW0603
     try:
         cfg = get_config()
 
@@ -251,6 +278,5 @@ def _dispatch(event: Event) -> None:
         # 3. Export.
         exporter = _active_exporter()
         exporter.export(event)  # type: ignore[attr-defined]
-    except Exception:  # noqa: BLE001
-        # Never let exporter errors propagate into user code.
-        pass
+    except Exception as exc:
+        _handle_export_error(exc)

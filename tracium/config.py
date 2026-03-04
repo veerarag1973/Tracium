@@ -33,8 +33,8 @@ from __future__ import annotations
 
 import os
 import threading
-from dataclasses import dataclass, field
-from typing import Any, Optional
+from dataclasses import dataclass
+from typing import Any
 
 __all__ = ["TraciumConfig", "configure", "get_config"]
 
@@ -68,16 +68,21 @@ class TraciumConfig:
                          ``None`` disables signing.
         redaction_policy: :class:`~tracium.redact.RedactionPolicy` instance or
                           ``None`` to disable PII redaction.
+        on_export_error: Policy when an exporter or emission error occurs.
+                         One of ``"warn"`` (emit to ``stderr``, default),
+                         ``"raise"`` (re-raise the exception into caller code),
+                         or ``"drop"`` (silently discard).
     """
 
     exporter: str = "console"
-    endpoint: Optional[str] = None
-    org_id: Optional[str] = None
+    endpoint: str | None = None
+    org_id: str | None = None
     service_name: str = "unknown-service"
     env: str = "production"
     service_version: str = "0.0.0"
-    signing_key: Optional[str] = None
+    signing_key: str | None = None
     redaction_policy: Any = None  # RedactionPolicy | None — avoids circular import
+    on_export_error: str = "warn"  # "warn" | "raise" | "drop"
 
 
 # ---------------------------------------------------------------------------
@@ -98,6 +103,7 @@ def _load_from_env() -> None:
         "TRACIUM_ENV": "env",
         "TRACIUM_SERVICE_VERSION": "service_version",
         "TRACIUM_SIGNING_KEY": "signing_key",
+        "TRACIUM_ON_EXPORT_ERROR": "on_export_error",
     }
     for env_var, field_name in env_map.items():
         value = os.environ.get(env_var)
@@ -124,7 +130,7 @@ def get_config() -> TraciumConfig:
     return _config
 
 
-def configure(**kwargs: Any) -> None:
+def configure(**kwargs: Any) -> None:  # noqa: ANN401
     """Mutate the global :class:`TraciumConfig` singleton.
 
     Accepts the same keyword arguments as :class:`TraciumConfig` field names.

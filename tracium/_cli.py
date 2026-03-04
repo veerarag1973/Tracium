@@ -1,29 +1,29 @@
-"""Command-line interface for llm-toolkit-schema utilities.
+"""Command-line interface for tracium utilities.
 
-This module provides the ``llm-toolkit-schema`` entry-point command.  It is excluded
+This module provides the ``tracium`` entry-point command.  It is excluded
 from coverage measurement because it is a thin integration shim over the
 public library API — all business logic lives in tested library modules.
 
 Entry-point (configured in pyproject.toml)::
 
-    llm-toolkit-schema = "tracium._cli:main"
+    tracium = "tracium._cli:main"
 
 Sub-commands
 ------------
-``llm-toolkit-schema check-compat <events.json>``
+``tracium check-compat <events.json>``
     Load a JSON file containing a list of serialised events and run the
     v1.0 compatibility checklist.  Exits 0 on success, 1 on violations,
     2 on usage/parse errors.
 
-``llm-toolkit-schema list-deprecated``
+``tracium list-deprecated``
     Print all event types registered in the global deprecation registry.
 
-``llm-toolkit-schema migration-roadmap [--json]``
+``tracium migration-roadmap [--json]``
     Print the planned v1 → v2 migration roadmap from
     :func:`~tracium.migrate.v2_migration_roadmap`.  Pass
     ``--json`` to emit JSON for machine consumption.
 
-``llm-toolkit-schema check-consumers``
+``tracium check-consumers``
     Assert that all globally registered consumers are compatible with the
     installed schema version.  Exits 0 on success, 1 on incompatibilities.
 
@@ -56,8 +56,8 @@ from typing import NoReturn
 
 def _cmd_check_compat(args: argparse.Namespace) -> int:
     """Implement the ``check-compat`` sub-command."""
-    from tracium.compliance import test_compatibility
-    from tracium.event import Event
+    from tracium.compliance import test_compatibility  # noqa: PLC0415
+    from tracium.event import Event  # noqa: PLC0415
 
     path = Path(args.file)
     if not path.exists():
@@ -102,7 +102,7 @@ def _cmd_check_compat(args: argparse.Namespace) -> int:
 
 def _cmd_list_deprecated(_args: argparse.Namespace) -> int:
     """Implement the ``list-deprecated`` sub-command."""
-    from tracium.deprecations import list_deprecated
+    from tracium.deprecations import list_deprecated  # noqa: PLC0415
 
     notices = list_deprecated()
     if not notices:
@@ -119,7 +119,7 @@ def _cmd_list_deprecated(_args: argparse.Namespace) -> int:
 
 def _cmd_migration_roadmap(args: argparse.Namespace) -> int:
     """Implement the ``migration-roadmap`` sub-command."""
-    from tracium.migrate import v2_migration_roadmap
+    from tracium.migrate import v2_migration_roadmap  # noqa: PLC0415
 
     roadmap = v2_migration_roadmap()
     if not roadmap:
@@ -147,8 +147,8 @@ def _cmd_migration_roadmap(args: argparse.Namespace) -> int:
         arrow = f" → {r.replacement}" if r.replacement else " (removed)"
         print(f"  [{r.since}→{r.sunset}] {r.event_type}{arrow}")
         if r.migration_notes:
-            import textwrap
-            wrapped = textwrap.fill(r.migration_notes, width=72, initial_indent="    ", subsequent_indent="    ")
+            import textwrap  # noqa: PLC0415
+            wrapped = textwrap.fill(r.migration_notes, width=72, initial_indent="    ", subsequent_indent="    ")  # noqa: E501
             print(wrapped)
         if r.field_renames:
             for old, new in r.field_renames.items():
@@ -159,7 +159,7 @@ def _cmd_migration_roadmap(args: argparse.Namespace) -> int:
 
 def _cmd_check_consumers(_args: argparse.Namespace) -> int:
     """Implement the ``check-consumers`` sub-command."""
-    from tracium.consumer import get_registry
+    from tracium.consumer import get_registry  # noqa: PLC0415
 
     registry = get_registry()
     all_records = registry.all()
@@ -178,10 +178,10 @@ def _cmd_check_consumers(_args: argparse.Namespace) -> int:
     return 1
 
 
-def _read_jsonl_events(path: Path):
+def _read_jsonl_events(path: Path):  # noqa: ANN202
     """Read a JSONL file and return a list of (lineno, Event | Exception) pairs."""
-    from tracium.event import Event
-    from tracium.exceptions import DeserializationError, SchemaValidationError
+    from tracium.event import Event  # noqa: PLC0415
+    from tracium.exceptions import DeserializationError, SchemaValidationError  # noqa: PLC0415
 
     results = []
     for lineno, raw_line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
@@ -192,15 +192,15 @@ def _read_jsonl_events(path: Path):
             obj = json.loads(line)
             event = Event.from_dict(obj)
             results.append((lineno, event))
-        except (json.JSONDecodeError, DeserializationError, SchemaValidationError, KeyError, TypeError) as exc:
+        except (json.JSONDecodeError, DeserializationError, SchemaValidationError, KeyError, TypeError) as exc:  # noqa: E501
             results.append((lineno, exc))
     return results
 
 
 def _cmd_validate(args: argparse.Namespace) -> int:
     """Implement the ``validate`` sub-command."""
-    from tracium.exceptions import SchemaValidationError
-    from tracium.validate import validate_event
+    from tracium.exceptions import SchemaValidationError  # noqa: PLC0415
+    from tracium.validate import validate_event  # noqa: PLC0415
 
     path = Path(args.file)
     if not path.exists():
@@ -233,11 +233,11 @@ def _cmd_validate(args: argparse.Namespace) -> int:
     return 1
 
 
-def _cmd_audit_chain(args: argparse.Namespace) -> int:
+def _cmd_audit_chain(args: argparse.Namespace) -> int:  # noqa: PLR0911
     """Implement the ``audit-chain`` sub-command."""
-    import os
+    import os  # noqa: PLC0415
 
-    from tracium.signing import SigningError, verify_chain
+    from tracium.signing import SigningError, verify_chain  # noqa: PLC0415
 
     path = Path(args.file)
     if not path.exists():
@@ -342,7 +342,7 @@ def _cmd_stats(args: argparse.Namespace) -> int:
             timestamps.append(item.timestamp)
 
     total_events = len(rows) - parse_errors
-    print(f"Events: {total_events}" + (f" ({parse_errors} parse error(s) skipped)" if parse_errors else ""))
+    print(f"Events: {total_events}" + (f" ({parse_errors} parse error(s) skipped)" if parse_errors else ""))  # noqa: E501
     print()
 
     if type_counts:
@@ -367,10 +367,10 @@ def _cmd_stats(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> NoReturn:
-    """Entry point for the ``llm-toolkit-schema`` CLI tool."""
+    """Entry point for the ``tracium`` CLI tool."""
     parser = argparse.ArgumentParser(
-        prog="llm-toolkit-schema",
-        description="llm-toolkit-schema command-line utilities",
+        prog="tracium",
+        description="tracium command-line utilities",
     )
     sub = parser.add_subparsers(dest="command", metavar="<command>")
 

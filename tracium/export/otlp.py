@@ -1,4 +1,4 @@
-"""OTLP-compatible JSON exporter for llm-toolkit-schema events.
+"""OTLP-compatible JSON exporter for tracium events.
 
 Produces OTLP/JSON payloads (spans *or* log records) that can be forwarded to
 any OTLP collector (Datadog, Grafana Tempo, Honeycomb, Elastic, Splunk, …).
@@ -24,30 +24,64 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import ipaddress
 import json
 import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Sequence
+from typing import TYPE_CHECKING, Any
 
-from tracium.event import Event
 from tracium.exceptions import ExportError
 
-__all__ = ["OTLPExporter", "ResourceAttributes", "make_traceparent", "extract_trace_context"]
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
-# Scope name embedded in every OTLP payload.
-_SCOPE_NAME = "llm-toolkit-schema"
+    from tracium.event import Event
+
+__all__ = ["OTLPExporter", "ResourceAttributes", "extract_trace_context", "make_traceparent"]
+
+# Scope name embedded in every OTLP payload (instrumentation scope).
+_SCOPE_NAME = "agentobs"
+
+# Hex-string lengths for W3C TraceContext IDs.
+_TRACE_ID_HEX_LEN = 32
+_SPAN_ID_HEX_LEN = 16
+_TRACEPARENT_PARTS_COUNT = 4
 
 
-def _validate_http_url(url: str, param_name: str = "url") -> None:
+def _is_private_ip_literal(host: str) -> bool:
+    """Return ``True`` if *host* is a private/loopback/link-local **literal** IP.
+
+    DNS hostnames are **not** resolved.
+    """
+    try:
+        addr = ipaddress.ip_address(host)
+    except ValueError:
+        return False
+    return addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_multicast
+
+
+def _validate_http_url(
+    url: str,
+    param_name: str = "url",
+    *,
+    allow_private_addresses: bool = False,
+) -> None:
     """Raise *ValueError* if *url* is not a valid ``http://`` or ``https://`` URL."""
     parsed = urllib.parse.urlparse(url)
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
         raise ValueError(
             f"{param_name} must be a valid http:// or https:// URL; got {url!r}"
         )
+    if not allow_private_addresses:
+        host = parsed.hostname or ""
+        if _is_private_ip_literal(host):
+            raise ValueError(
+                f"{param_name} resolves to a private/loopback/link-local IP address "
+                f"({host!r}).  Set allow_private_addresses=True to permit this."
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -75,11 +109,11 @@ class ResourceAttributes:
 
     service_name: str
     deployment_environment: str = "production"
-    extra: Dict[str, str] = field(default_factory=dict)
+    extra: dict[str, str] = field(default_factory=dict)
 
-    def to_otlp(self) -> List[Dict[str, Any]]:
+    def to_otlp(self) -> list[dict[str, Any]]:
         """Return a list of OTLP ``KeyValue`` dicts for the resource."""
-        attrs: List[Dict[str, Any]] = [
+        attrs: list[dict[str, Any]] = [
             _kv("service.name", self.service_name),
             # deployment.environment.name supersedes deployment.environment (semconv 1.21+)
             _kv("deployment.environment.name", self.deployment_environment),
@@ -94,12 +128,12 @@ class ResourceAttributes:
 # ---------------------------------------------------------------------------
 
 
-def _kv(key: str, value: Any) -> Dict[str, Any]:
+def _kv(key: str, value: Any) -> dict[str, Any]:  # noqa: ANN401
     """Build an OTLP ``{key, value}`` attribute dict."""
     return {"key": key, "value": _otlp_value(value)}
 
 
-def _otlp_value(v: Any) -> Dict[str, Any]:
+def _otlp_value(v: Any) -> dict[str, Any]:  # noqa: ANN401
     """Wrap a Python scalar in the appropriate OTLP ``AnyValue`` dict."""
     if isinstance(v, bool):
         return {"boolValue": v}
@@ -158,7 +192,7 @@ _STATUS_CODE_OK = 1
 _STATUS_CODE_ERROR = 2
 
 
-def _gen_ai_attributes(event: "Event") -> List[Dict[str, Any]]:
+def _gen_ai_attributes(event: Event) -> list[dict[str, Any]]:
     """Build ``gen_ai.*`` OpenTelemetry GenAI semantic convention attributes.
 
     Maps model info, token usage, and operation metadata from the event payload
@@ -172,7 +206,7 @@ def _gen_ai_attributes(event: "Event") -> List[Dict[str, Any]]:
     Returns:
         A (possibly empty) list of OTLP ``KeyValue`` dicts.
     """
-    attrs: List[Dict[str, Any]] = []
+    attrs: list[dict[str, Any]] = []
     payload = event.payload
 
     # gen_ai.operation.name — human-readable span label
@@ -216,7 +250,7 @@ def _gen_ai_attributes(event: "Event") -> List[Dict[str, Any]]:
     return attrs
 
 
-def _map_span_status(event: "Event") -> Dict[str, Any]:
+def _map_span_status(event: Event) -> dict[str, Any]:
     """Map event payload ``status`` to an OTLP ``SpanStatus`` dict.
 
     ``"error"`` and ``"timeout"`` outcomes yield ``STATUS_CODE_ERROR`` (2).
@@ -232,7 +266,7 @@ def _map_span_status(event: "Event") -> Dict[str, Any]:
     payload = event.payload
     status = payload.get("status", "ok")
     if status in ("error", "timeout"):
-        result: Dict[str, Any] = {"code": _STATUS_CODE_ERROR}
+        result: dict[str, Any] = {"code": _STATUS_CODE_ERROR}
         error_msg = payload.get("error")
         if error_msg:
             result["message"] = str(error_msg)
@@ -242,7 +276,7 @@ def _map_span_status(event: "Event") -> Dict[str, Any]:
     return {"code": _STATUS_CODE_OK}
 
 
-def _compute_end_nano(start_nano: int, event: "Event") -> int:
+def _compute_end_nano(start_nano: int, event: Event) -> int:
     """Compute ``endTimeUnixNano`` from start time plus payload ``duration_ms``.
 
     If ``duration_ms`` is absent or cannot be parsed, falls back to
@@ -266,9 +300,9 @@ def _compute_end_nano(start_nano: int, event: "Event") -> int:
 
 
 def _flatten_payload(
-    payload: Dict[str, Any],
+    payload: dict[str, Any],
     prefix: str = "llm.payload",
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Recursively flatten a nested dict to OTLP attribute key-value pairs.
 
     Nested keys are joined with ``"."`` (dot notation).
@@ -280,7 +314,7 @@ def _flatten_payload(
     Returns:
         A list of OTLP ``KeyValue`` dicts.
     """
-    result: List[Dict[str, Any]] = []
+    result: list[dict[str, Any]] = []
     for k, v in payload.items():
         full_key = f"{prefix}.{k}"
         if isinstance(v, dict):
@@ -290,13 +324,13 @@ def _flatten_payload(
     return result
 
 
-def _event_to_attributes(event: Event) -> List[Dict[str, Any]]:
+def _event_to_attributes(event: Event) -> list[dict[str, Any]]:
     """Build the full OTLP attribute list for an :class:`~tracium.event.Event`.
 
     Envelope metadata, identity, tags, integrity fields, and payload are all
     mapped to well-known ``llm.*`` namespace attributes.
     """
-    attrs: List[Dict[str, Any]] = [
+    attrs: list[dict[str, Any]] = [
         _kv("llm.schema_version", event.schema_version),
         _kv("llm.event_id", event.event_id),
         _kv("llm.event_type", event.event_type),
@@ -326,7 +360,7 @@ def _event_to_attributes(event: Event) -> List[Dict[str, Any]]:
     if event.prev_id is not None:
         attrs.append(_kv("llm.prev_id", event.prev_id))
 
-    # Payload (flattened)
+    # Flatten payload fields into span/log attributes.
     attrs.extend(_flatten_payload(event.payload))
 
     # OpenTelemetry GenAI semantic conventions (semconv 1.27+)
@@ -342,7 +376,7 @@ def _event_to_attributes(event: Event) -> List[Dict[str, Any]]:
 
 
 class OTLPExporter:
-    """Async exporter that serialises llm-toolkit-schema events to the OTLP/JSON format.
+    """Async exporter that serialises tracium events to the OTLP/JSON format.
 
     Events that carry a ``trace_id`` are emitted as **OTLP spans**
     (``resourceSpans``).  Events without a ``trace_id`` are emitted as **OTLP
@@ -369,26 +403,27 @@ class OTLPExporter:
         await exporter.export(event)
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         endpoint: str,
         *,
-        headers: Optional[Dict[str, str]] = None,
-        resource_attrs: Optional[ResourceAttributes] = None,
+        headers: dict[str, str] | None = None,
+        resource_attrs: ResourceAttributes | None = None,
         timeout: float = 5.0,
         batch_size: int = 500,
+        allow_private_addresses: bool = False,
     ) -> None:
         if not endpoint:
             raise ValueError("endpoint must be a non-empty string")
-        _validate_http_url(endpoint, "endpoint")
+        _validate_http_url(endpoint, "endpoint", allow_private_addresses=allow_private_addresses)
         if timeout <= 0:
             raise ValueError("timeout must be positive")
         if batch_size < 1:
             raise ValueError("batch_size must be >= 1")
         self._endpoint = endpoint
-        self._headers: Dict[str, str] = dict(headers) if headers else {}
+        self._headers: dict[str, str] = dict(headers) if headers else {}
         self._resource_attrs: ResourceAttributes = resource_attrs or ResourceAttributes(
-            service_name="llm-toolkit-schema"
+            service_name="agentobs"
         )
         self._timeout = timeout
         self._batch_size = batch_size
@@ -397,7 +432,7 @@ class OTLPExporter:
     # Sync mapping API (pure, no I/O — safe to call in hot loops)
     # ------------------------------------------------------------------
 
-    def to_otlp_span(self, event: Event) -> Dict[str, Any]:
+    def to_otlp_span(self, event: Event) -> dict[str, Any]:
         """Map a single event to an OTLP span dict.
 
         If the event has no ``span_id``, a deterministic synthetic ID is derived
@@ -415,7 +450,7 @@ class OTLPExporter:
         span_id = event.span_id or _derive_span_id(event.event_id)
         trace_id = event.trace_id or ("0" * 32)
 
-        span: Dict[str, Any] = {
+        span: dict[str, Any] = {
             "traceId": trace_id,
             "spanId": span_id,
             "name": event.event_type,
@@ -433,7 +468,7 @@ class OTLPExporter:
 
         return span
 
-    def to_otlp_log(self, event: Event) -> Dict[str, Any]:
+    def to_otlp_log(self, event: Event) -> dict[str, Any]:
         """Map a single event to an OTLP log record dict.
 
         Args:
@@ -444,7 +479,7 @@ class OTLPExporter:
         """
         ts_nano = _ts_to_unix_nano(event.timestamp)
 
-        record: Dict[str, Any] = {
+        record: dict[str, Any] = {
             "timeUnixNano": str(ts_nano),
             "observedTimeUnixNano": str(ts_nano),
             "severityNumber": 9,  # SEVERITY_NUMBER_INFO
@@ -464,7 +499,7 @@ class OTLPExporter:
     # Async export API
     # ------------------------------------------------------------------
 
-    async def export(self, event: Event) -> Dict[str, Any]:
+    async def export(self, event: Event) -> dict[str, Any]:
         """Export a single event as an OTLP payload and HTTP POST it.
 
         Span vs log selection is automatic: events with a ``trace_id`` become
@@ -489,7 +524,7 @@ class OTLPExporter:
         await self._send(payload)
         return record
 
-    async def export_batch(self, events: Sequence[Event]) -> List[Dict[str, Any]]:
+    async def export_batch(self, events: Sequence[Event]) -> list[dict[str, Any]]:
         """Export a sequence of events, batching spans and logs separately.
 
         Spans and log records are split into two HTTP requests so each request
@@ -506,10 +541,10 @@ class OTLPExporter:
         Raises:
             ExportError: If any HTTP request fails.
         """
-        spans: List[Dict[str, Any]] = []
-        logs: List[Dict[str, Any]] = []
+        spans: list[dict[str, Any]] = []
+        logs: list[dict[str, Any]] = []
         # Preserve per-type insertion order for the returned list.
-        records: List[Dict[str, Any]] = []
+        records: list[dict[str, Any]] = []
 
         for event in events:
             if event.trace_id is not None:
@@ -533,7 +568,7 @@ class OTLPExporter:
     # OTLP envelope helpers
     # ------------------------------------------------------------------
 
-    def _wrap_spans(self, spans: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _wrap_spans(self, spans: list[dict[str, Any]]) -> dict[str, Any]:
         """Wrap span records in a ``resourceSpans`` OTLP envelope."""
         return {
             "resourceSpans": [
@@ -549,7 +584,7 @@ class OTLPExporter:
             ]
         }
 
-    def _wrap_logs(self, logs: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _wrap_logs(self, logs: list[dict[str, Any]]) -> dict[str, Any]:
         """Wrap log records in a ``resourceLogs`` OTLP envelope."""
         return {
             "resourceLogs": [
@@ -569,7 +604,7 @@ class OTLPExporter:
     # HTTP transport (executor-based, non-blocking)
     # ------------------------------------------------------------------
 
-    async def _send(self, payload: Dict[str, Any]) -> None:
+    async def _send(self, payload: dict[str, Any]) -> None:
         """Serialise *payload* to JSON and POST it to :attr:`_endpoint`.
 
         Runs in a thread-pool executor so the async event loop is not blocked
@@ -587,14 +622,14 @@ class OTLPExporter:
         timeout = self._timeout
 
         def _do_request() -> None:
-            req = urllib.request.Request(
+            req = urllib.request.Request(  # noqa: S310
                 url=endpoint,
                 data=body,
                 headers=request_headers,
                 method="POST",
             )
             try:
-                with urllib.request.urlopen(req, timeout=timeout) as resp:
+                with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310
                     resp.read()
             except urllib.error.HTTPError as exc:
                 raise ExportError(
@@ -654,11 +689,11 @@ def make_traceparent(
             event.trace_id, event.span_id
         )
     """
-    if len(trace_id) != 32 or not all(c in "0123456789abcdef" for c in trace_id):  # noqa: C419
+    if len(trace_id) != _TRACE_ID_HEX_LEN or not all(c in "0123456789abcdef" for c in trace_id):
         raise ValueError(
             f"trace_id must be 32 lowercase hex characters; got {trace_id!r}"
         )
-    if len(span_id) != 16 or not all(c in "0123456789abcdef" for c in span_id):  # noqa: C419
+    if len(span_id) != _SPAN_ID_HEX_LEN or not all(c in "0123456789abcdef" for c in span_id):
         raise ValueError(
             f"span_id must be 16 lowercase hex characters; got {span_id!r}"
         )
@@ -666,9 +701,9 @@ def make_traceparent(
     return f"00-{trace_id}-{span_id}-{flags}"
 
 
-def extract_trace_context(
-    headers: Dict[str, str],
-) -> Optional[Dict[str, Any]]:
+def extract_trace_context(  # noqa: PLR0911
+    headers: dict[str, str],
+) -> dict[str, Any] | None:
     """Extract W3C TraceContext from a ``traceparent`` / ``tracestate`` header dict.
 
     Parses the incoming ``traceparent`` header (case-insensitive key lookup)
@@ -702,17 +737,17 @@ def extract_trace_context(
         return None
 
     parts = traceparent.strip().split("-")
-    if len(parts) != 4:
+    if len(parts) != _TRACEPARENT_PARTS_COUNT:
         return None
     version, trace_id, parent_span_id, trace_flags_hex = parts
     # Only version 00 is supported (future versions may have more parts).
     if version != "00":
         return None
-    if len(trace_id) != 32 or len(parent_span_id) != 16:
+    if len(trace_id) != _TRACE_ID_HEX_LEN or len(parent_span_id) != _SPAN_ID_HEX_LEN:
         return None
-    if not all(c in "0123456789abcdef" for c in trace_id):  # noqa: C419
+    if not all(c in "0123456789abcdef" for c in trace_id):
         return None
-    if not all(c in "0123456789abcdef" for c in parent_span_id):  # noqa: C419
+    if not all(c in "0123456789abcdef" for c in parent_span_id):
         return None
 
     try:
@@ -720,7 +755,7 @@ def extract_trace_context(
     except ValueError:
         return None
 
-    result: Dict[str, Any] = {
+    result: dict[str, Any] = {
         "trace_id": trace_id,
         "span_id": parent_span_id,
         "sampled": bool(flags_int & 0x01),

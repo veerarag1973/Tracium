@@ -10,30 +10,10 @@ from __future__ import annotations
 import pytest
 
 # ---------------------------------------------------------------------------
-# trace.py value objects
-# ---------------------------------------------------------------------------
-from tracium.namespaces.trace import (
-    AgentRunPayload,
-    AgentStepPayload,
-    CostBreakdown,
-    DecisionPoint,
-    GenAIOperationName,
-    GenAISystem,
-    ModelInfo,
-    PricingTier,
-    ReasoningStep,
-    SpanKind,
-    SpanPayload,
-    TokenUsage,
-    ToolCall,
-)
-
-# ---------------------------------------------------------------------------
 # Namespace payloads
 # ---------------------------------------------------------------------------
 from tracium.namespaces.audit import (
     AuditChainTamperedPayload,
-    AuditChainVerifiedPayload,
     AuditKeyRotatedPayload,
 )
 from tracium.namespaces.cache import (
@@ -64,6 +44,25 @@ from tracium.namespaces.redact import RedactPhiDetectedPayload, RedactPiiDetecte
 from tracium.namespaces.template import (
     TemplateRegisteredPayload,
     TemplateVariableBoundPayload,
+)
+
+# ---------------------------------------------------------------------------
+# trace.py value objects
+# ---------------------------------------------------------------------------
+from tracium.namespaces.trace import (
+    AgentRunPayload,
+    AgentStepPayload,
+    CostBreakdown,
+    DecisionPoint,
+    GenAIOperationName,
+    GenAISystem,
+    ModelInfo,
+    PricingTier,
+    ReasoningStep,
+    SpanKind,
+    SpanPayload,
+    TokenUsage,
+    ToolCall,
 )
 
 # ---------------------------------------------------------------------------
@@ -231,13 +230,13 @@ class TestCostBreakdownFull:
 @pytest.mark.unit
 class TestPricingTierFull:
     def _base(self, **kw: object) -> PricingTier:
-        defaults = dict(
-            system=GenAISystem.OPENAI,
-            model="gpt-4o",
-            input_per_million_usd=5.0,
-            output_per_million_usd=15.0,
-            effective_date="2024-01-01",
-        )
+        defaults = {
+            "system": GenAISystem.OPENAI,
+            "model": "gpt-4o",
+            "input_per_million_usd": 5.0,
+            "output_per_million_usd": 15.0,
+            "effective_date": "2024-01-01",
+        }
         defaults.update(kw)
         return PricingTier(**defaults)  # type: ignore[arg-type]
 
@@ -377,7 +376,7 @@ class TestDecisionPointFull:
 @pytest.mark.unit
 class TestSpanPayloadFull:
     def _now(self) -> int:
-        import time
+        import time  # noqa: PLC0415
         return int(time.time_ns())
 
     def test_all_optional_fields_in_to_dict(self) -> None:
@@ -449,7 +448,7 @@ class TestSpanPayloadFull:
 @pytest.mark.unit
 class TestAgentStepPayloadFull:
     def _now(self) -> int:
-        import time
+        import time  # noqa: PLC0415
         return int(time.time_ns())
 
     def test_all_optional_fields_in_to_dict(self) -> None:
@@ -519,7 +518,7 @@ class TestAgentStepPayloadFull:
 @pytest.mark.unit
 class TestAgentRunPayloadFull:
     def _now(self) -> int:
-        import time
+        import time  # noqa: PLC0415
         return int(time.time_ns())
 
     def test_termination_reason_in_to_dict(self) -> None:
@@ -546,13 +545,12 @@ class TestAgentRunPayloadFull:
 
 
 # ===========================================================================
-# Namespace: audit
+# Namespace: audit  # noqa: ERA001
 # ===========================================================================
 
 @pytest.mark.unit
 class TestAuditNamespaceFull:
     def test_key_rotated_with_all_optionals(self) -> None:
-        from tracium.namespaces.audit import AuditKeyRotatedPayload
         p = AuditKeyRotatedPayload(
             key_id="k1",
             previous_key_id="k0",
@@ -566,7 +564,6 @@ class TestAuditNamespaceFull:
         assert "effective_from_event_id" in d
 
     def test_key_rotated_validation_errors(self) -> None:
-        from tracium.namespaces.audit import AuditKeyRotatedPayload
         with pytest.raises(ValueError):
             AuditKeyRotatedPayload(
                 key_id="",
@@ -613,7 +610,7 @@ class TestAuditNamespaceFull:
 
 
 # ===========================================================================
-# Namespace: cache
+# Namespace: cache  # noqa: ERA001
 # ===========================================================================
 
 @pytest.mark.unit
@@ -661,13 +658,13 @@ class TestCacheNamespaceFull:
 
 
 # ===========================================================================
-# Namespace: cost
+# Namespace: cost  # noqa: ERA001
 # ===========================================================================
 
 @pytest.mark.unit
 class TestCostNamespaceFull:
     def test_cost_token_recorded_with_all_optionals(self) -> None:
-        from tracium.namespaces.trace import PricingTier
+        from tracium.namespaces.trace import PricingTier  # noqa: PLC0415
         p = CostTokenRecordedPayload(
             cost=_cost(),
             token_usage=_token_usage(),
@@ -711,7 +708,7 @@ class TestCostNamespaceFull:
 
 
 # ===========================================================================
-# Namespace: diff
+# Namespace: diff  # noqa: ERA001
 # ===========================================================================
 
 @pytest.mark.unit
@@ -739,7 +736,7 @@ class TestDiffNamespaceFull:
 
 
 # ===========================================================================
-# Namespace: eval
+# Namespace: eval  # noqa: ERA001
 # ===========================================================================
 
 @pytest.mark.unit
@@ -814,7 +811,7 @@ class TestEvalNamespaceFull:
 
 
 # ===========================================================================
-# Namespace: fence
+# Namespace: fence  # noqa: ERA001
 # ===========================================================================
 
 @pytest.mark.unit
@@ -864,7 +861,7 @@ class TestFenceNamespaceFull:
 
 
 # ===========================================================================
-# Namespace: guard
+# Namespace: guard  # noqa: ERA001
 # ===========================================================================
 
 @pytest.mark.unit
@@ -898,7 +895,7 @@ class TestGuardNamespaceFull:
 
 
 # ===========================================================================
-# Namespace: prompt
+# Namespace: prompt  # noqa: ERA001
 # ===========================================================================
 
 @pytest.mark.unit
@@ -939,7 +936,7 @@ class TestPromptNamespaceFull:
 
 
 # ===========================================================================
-# Namespace: redact
+# Namespace: redact  # noqa: ERA001
 # ===========================================================================
 
 @pytest.mark.unit
@@ -976,7 +973,7 @@ class TestRedactNamespaceFull:
 
 
 # ===========================================================================
-# Namespace: template
+# Namespace: template  # noqa: ERA001
 # ===========================================================================
 
 @pytest.mark.unit
@@ -1029,7 +1026,7 @@ class TestTemplateNamespaceFull:
 @pytest.mark.unit
 class TestIntegrationsInit:
     def test_integrations_package_importable(self) -> None:
-        try:
-            import tracium.integrations  # noqa: F401
+        try:  # noqa: SIM105
+            import tracium.integrations  # noqa: F401, PLC0415
         except ImportError:
             pass  # optional dependency not installed — still covers the import lines

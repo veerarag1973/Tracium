@@ -17,9 +17,6 @@ Coverage targets
 from __future__ import annotations
 
 import asyncio
-import json
-from pathlib import Path
-from typing import Optional
 
 import pytest
 
@@ -29,6 +26,7 @@ from tracium.governance import (
     EventGovernancePolicy,
     GovernanceViolationError,
 )
+
 try:
     from tracium.namespaces.fence import (
         FencePolicy,
@@ -37,7 +35,7 @@ try:
         ValidationPassedPayload,
     )
 except ImportError:
-    FencePolicy = FenceValidationFailedPayload = RetryTriggeredPayload = ValidationPassedPayload = None  # type: ignore[assignment]
+    FencePolicy = FenceValidationFailedPayload = RetryTriggeredPayload = ValidationPassedPayload = None  # type: ignore[assignment]  # noqa: E501
 try:
     from tracium.namespaces.guard import (
         GuardBlockedPayload,
@@ -54,9 +52,14 @@ try:
         VariableMissingPayload,
     )
 except ImportError:
-    TemplatePolicy = TemplateRenderedPayload = TemplateValidationFailedPayload = VariableMissingPayload = None  # type: ignore[assignment]
+    TemplatePolicy = TemplateRenderedPayload = TemplateValidationFailedPayload = VariableMissingPayload = None  # type: ignore[assignment]  # noqa: E501
+from typing import TYPE_CHECKING
+
 from tracium.stream import EventStream, aiter_file, iter_file
 from tracium.ulid import generate as gen_ulid
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 FIXED_TIMESTAMP = "2026-03-01T12:00:00.000000Z"
 
@@ -110,7 +113,7 @@ class TestGuardPolicy:
         assert result.output_hash == "xyz789"
 
     def test_custom_input_checker_blocks(self) -> None:
-        def checker(h: str) -> Optional[GuardBlockedPayload]:
+        def checker(h: str) -> GuardBlockedPayload | None:
             return GuardBlockedPayload(
                 policy_id="p1",
                 policy_name="blocklist",
@@ -128,7 +131,7 @@ class TestGuardPolicy:
         assert policy.check_input("safe-hash") is None
 
     def test_custom_output_checker_flags(self) -> None:
-        def checker(h: str) -> Optional[GuardFlaggedPayload]:
+        def checker(h: str) -> GuardFlaggedPayload | None:
             return GuardFlaggedPayload(
                 policy_id="p2",
                 policy_name="toxic",
@@ -398,7 +401,7 @@ class TestAiterFile:
         async def _run():
             collected = []
             async for e in aiter_file(f):
-                collected.append(e)
+                collected.append(e)  # noqa: PERF401
             return collected
 
         result = asyncio.run(_run())
@@ -454,7 +457,7 @@ class TestAiterFile:
 
 class TestDatadogExporterDdSiteValidation:
     def test_valid_dd_site_accepted(self) -> None:
-        from tracium.export.datadog import DatadogExporter
+        from tracium.export.datadog import DatadogExporter  # noqa: PLC0415
 
         exp = DatadogExporter(
             service="svc",
@@ -465,7 +468,7 @@ class TestDatadogExporterDdSiteValidation:
         assert exp  # construction succeeds
 
     def test_empty_dd_site_rejected(self) -> None:
-        from tracium.export.datadog import DatadogExporter
+        from tracium.export.datadog import DatadogExporter  # noqa: PLC0415
 
         with pytest.raises(ValueError, match="dd_site"):
             DatadogExporter(
@@ -476,7 +479,7 @@ class TestDatadogExporterDdSiteValidation:
             )
 
     def test_dd_site_with_slash_rejected(self) -> None:
-        from tracium.export.datadog import DatadogExporter
+        from tracium.export.datadog import DatadogExporter  # noqa: PLC0415
 
         with pytest.raises(ValueError, match="dd_site"):
             DatadogExporter(
@@ -487,7 +490,7 @@ class TestDatadogExporterDdSiteValidation:
             )
 
     def test_dd_site_without_dot_rejected(self) -> None:
-        from tracium.export.datadog import DatadogExporter
+        from tracium.export.datadog import DatadogExporter  # noqa: PLC0415
 
         with pytest.raises(ValueError, match="dd_site"):
             DatadogExporter(
@@ -498,7 +501,7 @@ class TestDatadogExporterDdSiteValidation:
             )
 
     def test_dd_site_with_space_rejected(self) -> None:
-        from tracium.export.datadog import DatadogExporter
+        from tracium.export.datadog import DatadogExporter  # noqa: PLC0415
 
         with pytest.raises(ValueError, match="dd_site"):
             DatadogExporter(
@@ -509,7 +512,7 @@ class TestDatadogExporterDdSiteValidation:
             )
 
     def test_eu_dd_site_accepted(self) -> None:
-        from tracium.export.datadog import DatadogExporter
+        from tracium.export.datadog import DatadogExporter  # noqa: PLC0415
 
         exp = DatadogExporter(
             service="svc",
@@ -520,7 +523,7 @@ class TestDatadogExporterDdSiteValidation:
         assert exp
 
     def test_invalid_agent_url_rejected(self) -> None:
-        from tracium.export.datadog import DatadogExporter
+        from tracium.export.datadog import DatadogExporter  # noqa: PLC0415
 
         with pytest.raises(ValueError, match="agent_url"):
             DatadogExporter(
@@ -530,7 +533,7 @@ class TestDatadogExporterDdSiteValidation:
             )
 
     def test_timeout_zero_rejected(self) -> None:
-        from tracium.export.datadog import DatadogExporter
+        from tracium.export.datadog import DatadogExporter  # noqa: PLC0415
 
         with pytest.raises(ValueError, match="timeout"):
             DatadogExporter(
@@ -541,7 +544,7 @@ class TestDatadogExporterDdSiteValidation:
             )
 
     def test_empty_service_rejected(self) -> None:
-        from tracium.export.datadog import DatadogExporter
+        from tracium.export.datadog import DatadogExporter  # noqa: PLC0415
 
         with pytest.raises(ValueError, match="service"):
             DatadogExporter(service="", env="prod")
@@ -600,14 +603,14 @@ class TestFromKafka:
 
     def _make_message(self, event: Event, offset: int = 0):
         """Create a mock Kafka message wrapping a JSON-serialised Event."""
-        from unittest.mock import MagicMock
+        from unittest.mock import MagicMock  # noqa: PLC0415
         msg = MagicMock()
         msg.value = event.to_json()
         msg.offset = offset
         return msg
 
     def _sentinel_message(self, sentinel: str = "STOP"):
-        from unittest.mock import MagicMock
+        from unittest.mock import MagicMock  # noqa: PLC0415
         msg = MagicMock()
         msg.value = sentinel
         msg.offset = 0
@@ -615,7 +618,7 @@ class TestFromKafka:
 
     def test_from_kafka_basic(self) -> None:
         """from_kafka collects events from a mock consumer."""
-        from unittest.mock import MagicMock, patch
+        from unittest.mock import MagicMock, patch  # noqa: PLC0415
         events = [_make_event() for _ in range(3)]
         messages = [self._make_message(e, i) for i, e in enumerate(events)]
 
@@ -633,7 +636,7 @@ class TestFromKafka:
         mock_consumer_instance.close.assert_called_once()
 
     def test_from_kafka_sentinel_stops_consumption(self) -> None:
-        from unittest.mock import MagicMock, patch
+        from unittest.mock import MagicMock, patch  # noqa: PLC0415
         event = _make_event()
         messages = [
             self._make_message(event, 0),
@@ -656,7 +659,7 @@ class TestFromKafka:
         assert len(stream) == 1
 
     def test_from_kafka_max_messages(self) -> None:
-        from unittest.mock import MagicMock, patch
+        from unittest.mock import MagicMock, patch  # noqa: PLC0415
         events = [_make_event() for _ in range(10)]
         messages = [self._make_message(e, i) for i, e in enumerate(events)]
 
@@ -675,7 +678,7 @@ class TestFromKafka:
         assert len(stream) == 3
 
     def test_from_kafka_skip_errors(self) -> None:
-        from unittest.mock import MagicMock, patch
+        from unittest.mock import MagicMock, patch  # noqa: PLC0415
         good_event = _make_event()
 
         bad_msg = MagicMock()
@@ -699,8 +702,9 @@ class TestFromKafka:
         assert len(stream) == 1
 
     def test_from_kafka_raises_on_bad_message_by_default(self) -> None:
-        from unittest.mock import MagicMock, patch
-        from tracium.exceptions import DeserializationError
+        from unittest.mock import MagicMock, patch  # noqa: PLC0415
+
+        from tracium.exceptions import DeserializationError  # noqa: PLC0415
 
         bad_msg = MagicMock()
         bad_msg.value = '{"not": "an event"}'
@@ -713,7 +717,7 @@ class TestFromKafka:
         mock_kafka_module = MagicMock()
         mock_kafka_module.KafkaConsumer.return_value = mock_consumer_instance
 
-        with patch.dict("sys.modules", {"kafka": mock_kafka_module}):
+        with patch.dict("sys.modules", {"kafka": mock_kafka_module}):  # noqa: SIM117
             with pytest.raises(DeserializationError):
                 EventStream.from_kafka("test-topic", "localhost:9092")
 

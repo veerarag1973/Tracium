@@ -9,14 +9,14 @@ FenceMaxRetriesExceededPayload  llm.fence.max_retries.exceeded
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 from tracium.namespaces.trace import CostBreakdown
 
 __all__ = [
-    "FenceValidatedPayload",
-    "FenceRetryTriggeredPayload",
     "FenceMaxRetriesExceededPayload",
+    "FenceRetryTriggeredPayload",
+    "FenceValidatedPayload",
 ]
 
 _VALID_OUTPUT_TYPES = frozenset({"json_schema", "pydantic", "regex", "xml", "custom"})
@@ -29,9 +29,9 @@ class FenceValidatedPayload:
     fence_id: str
     schema_name: str
     attempt: int
-    output_type: Optional[str] = None  # "json_schema"|"pydantic"|"regex"|"xml"|"custom"
-    span_id: Optional[str] = None
-    validation_duration_ms: Optional[float] = None
+    output_type: str | None = None  # "json_schema"|"pydantic"|"regex"|"xml"|"custom"
+    span_id: str | None = None
+    validation_duration_ms: float | None = None
 
     def __post_init__(self) -> None:
         if not self.fence_id:
@@ -41,10 +41,11 @@ class FenceValidatedPayload:
         if not isinstance(self.attempt, int) or self.attempt < 1:
             raise ValueError("FenceValidatedPayload.attempt must be a positive int")
         if self.output_type is not None and self.output_type not in _VALID_OUTPUT_TYPES:
-            raise ValueError(f"FenceValidatedPayload.output_type must be one of {sorted(_VALID_OUTPUT_TYPES)}")
+            raise ValueError(f"FenceValidatedPayload.output_type must be one of {sorted(_VALID_OUTPUT_TYPES)}")  # noqa: E501
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "fence_id": self.fence_id,
             "schema_name": self.schema_name,
             "attempt": self.attempt,
@@ -58,14 +59,15 @@ class FenceValidatedPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "FenceValidatedPayload":
+    def from_dict(cls, data: dict[str, Any]) -> FenceValidatedPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             fence_id=data["fence_id"],
             schema_name=data["schema_name"],
             attempt=int(data["attempt"]),
             output_type=data.get("output_type"),
             span_id=data.get("span_id"),
-            validation_duration_ms=float(data["validation_duration_ms"]) if "validation_duration_ms" in data else None,
+            validation_duration_ms=float(data["validation_duration_ms"]) if "validation_duration_ms" in data else None,  # noqa: E501
         )
 
 
@@ -78,8 +80,8 @@ class FenceRetryTriggeredPayload:
     attempt: int
     max_attempts: int
     violation_summary: str
-    output_type: Optional[str] = None
-    span_id: Optional[str] = None
+    output_type: str | None = None
+    span_id: str | None = None
 
     def __post_init__(self) -> None:
         if not self.fence_id:
@@ -93,10 +95,11 @@ class FenceRetryTriggeredPayload:
         if not self.violation_summary:
             raise ValueError("FenceRetryTriggeredPayload.violation_summary must be non-empty")
         if self.output_type is not None and self.output_type not in _VALID_OUTPUT_TYPES:
-            raise ValueError(f"FenceRetryTriggeredPayload.output_type must be one of {sorted(_VALID_OUTPUT_TYPES)}")
+            raise ValueError(f"FenceRetryTriggeredPayload.output_type must be one of {sorted(_VALID_OUTPUT_TYPES)}")  # noqa: E501
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "fence_id": self.fence_id,
             "schema_name": self.schema_name,
             "attempt": self.attempt,
@@ -110,7 +113,8 @@ class FenceRetryTriggeredPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "FenceRetryTriggeredPayload":
+    def from_dict(cls, data: dict[str, Any]) -> FenceRetryTriggeredPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             fence_id=data["fence_id"],
             schema_name=data["schema_name"],
@@ -130,9 +134,9 @@ class FenceMaxRetriesExceededPayload:
     schema_name: str
     attempts_made: int
     final_violation_summary: str
-    output_type: Optional[str] = None
-    span_id: Optional[str] = None
-    total_extra_cost: Optional[CostBreakdown] = None
+    output_type: str | None = None
+    span_id: str | None = None
+    total_extra_cost: CostBreakdown | None = None
 
     def __post_init__(self) -> None:
         if not self.fence_id:
@@ -142,12 +146,13 @@ class FenceMaxRetriesExceededPayload:
         if not isinstance(self.attempts_made, int) or self.attempts_made < 1:
             raise ValueError("FenceMaxRetriesExceededPayload.attempts_made must be a positive int")
         if not self.final_violation_summary:
-            raise ValueError("FenceMaxRetriesExceededPayload.final_violation_summary must be non-empty")
+            raise ValueError("FenceMaxRetriesExceededPayload.final_violation_summary must be non-empty")  # noqa: E501
         if self.output_type is not None and self.output_type not in _VALID_OUTPUT_TYPES:
-            raise ValueError(f"FenceMaxRetriesExceededPayload.output_type must be one of {sorted(_VALID_OUTPUT_TYPES)}")
+            raise ValueError(f"FenceMaxRetriesExceededPayload.output_type must be one of {sorted(_VALID_OUTPUT_TYPES)}")  # noqa: E501
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "fence_id": self.fence_id,
             "schema_name": self.schema_name,
             "attempts_made": self.attempts_made,
@@ -162,7 +167,8 @@ class FenceMaxRetriesExceededPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "FenceMaxRetriesExceededPayload":
+    def from_dict(cls, data: dict[str, Any]) -> FenceMaxRetriesExceededPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             fence_id=data["fence_id"],
             schema_name=data["schema_name"],
@@ -170,5 +176,5 @@ class FenceMaxRetriesExceededPayload:
             final_violation_summary=data["final_violation_summary"],
             output_type=data.get("output_type"),
             span_id=data.get("span_id"),
-            total_extra_cost=CostBreakdown.from_dict(data["total_extra_cost"]) if "total_extra_cost" in data else None,
+            total_extra_cost=CostBreakdown.from_dict(data["total_extra_cost"]) if "total_extra_cost" in data else None,  # noqa: E501
         )

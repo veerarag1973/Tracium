@@ -16,13 +16,11 @@ Schema for each entry::
 
 from __future__ import annotations
 
-from typing import Dict, List, Optional
-
 __all__ = [
     "OPENAI_PRICING",
+    "PRICING_DATE",
     "get_pricing",
     "list_models",
-    "PRICING_DATE",
 ]
 
 # Effective date of this pricing snapshot
@@ -32,7 +30,7 @@ PRICING_DATE: str = "2026-03-04"
 # Static pricing table  (USD per million tokens)
 # ---------------------------------------------------------------------------
 
-OPENAI_PRICING: Dict[str, Dict[str, float]] = {
+OPENAI_PRICING: dict[str, dict[str, float]] = {
     # ------------------------------------------------------------------
     # GPT-4o family
     # ------------------------------------------------------------------
@@ -182,7 +180,7 @@ OPENAI_PRICING: Dict[str, Dict[str, float]] = {
 # ---------------------------------------------------------------------------
 
 
-def get_pricing(model: str) -> Optional[Dict[str, float]]:
+def get_pricing(model: str) -> dict[str, float] | None:
     """Return the pricing entry for *model*, or ``None`` if unknown.
 
     Performs an exact lookup first, then falls back to stripping trailing
@@ -209,6 +207,6 @@ def get_pricing(model: str) -> Optional[Dict[str, float]]:
     return None
 
 
-def list_models() -> List[str]:
+def list_models() -> list[str]:
     """Return a sorted list of all model names in the pricing table."""
     return sorted(OPENAI_PRICING.keys())

@@ -1,4 +1,4 @@
-"""Core event envelope for llm-toolkit-schema v0.1.
+"""Core event envelope for tracium v0.1.
 
 Every event emitted by every tool in the LLM Developer Toolkit must conform to
 the :class:`Event` class defined here.  This is the canonical Python
@@ -38,18 +38,21 @@ import json
 import re
 import sys
 from types import MappingProxyType
-from typing import Any, Dict, Final, List, Mapping, Optional, Union
+from typing import TYPE_CHECKING, Any, Final
 
 from tracium.exceptions import (
     DeserializationError,
     SchemaValidationError,
     SerializationError,
 )
-from tracium.types import EventType, _EVENT_TYPE_RE  # noqa: PLC2701
+from tracium.types import _EVENT_TYPE_RE, EventType
 from tracium.ulid import generate as _generate_ulid
 from tracium.ulid import validate as _validate_ulid
 
-__all__ = ["Event", "Tags", "SCHEMA_VERSION"]
+if TYPE_CHECKING:
+    from collections.abc import ItemsView, KeysView, Mapping, ValuesView
+
+__all__ = ["SCHEMA_VERSION", "Event", "Tags"]
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -138,7 +141,7 @@ class Tags:
     def __contains__(self, key: object) -> bool:
         return key in self._data
 
-    def __iter__(self):  # type: ignore[override]
+    def __iter__(self):  # type: ignore[override]  # noqa: ANN204
         return iter(self._data)
 
     def __len__(self) -> int:
@@ -154,27 +157,29 @@ class Tags:
             return self._data == other
         return NotImplemented
 
+    __hash__: None = None  # Tags is unhashable (mutable-equivalent semantics)
+
     def __repr__(self) -> str:
         kv = ", ".join(f"{k}={v!r}" for k, v in self._data.items())
         return f"Tags({kv})"
 
-    def get(self, key: str, default: Optional[str] = None) -> Optional[str]:
+    def get(self, key: str, default: str | None = None) -> str | None:
         """Return the value for *key*, or *default* if not present."""
         return self._data.get(key, default)
 
-    def keys(self):  # type: ignore[override]
+    def keys(self) -> KeysView[str]:  # type: ignore[override]
         """Return tag keys."""
         return self._data.keys()
 
-    def values(self):  # type: ignore[override]
+    def values(self) -> ValuesView[str]:  # type: ignore[override]
         """Return tag values."""
         return self._data.values()
 
-    def items(self):  # type: ignore[override]
+    def items(self) -> ItemsView[str, str]:  # type: ignore[override]
         """Return (key, value) pairs."""
         return self._data.items()
 
-    def to_dict(self) -> Dict[str, str]:
+    def to_dict(self) -> dict[str, str]:
         """Return a plain :class:`dict` copy of the tags."""
         return dict(self._data)
 
@@ -224,49 +229,49 @@ class Event:
     """
 
     __slots__ = (
-        "_schema_version",
-        "_event_id",
-        "_event_type",
-        "_timestamp",
-        "_source",
-        "_payload",
-        # Tracing
-        "_trace_id",
-        "_span_id",
-        "_parent_span_id",
-        # Context
-        "_org_id",
-        "_team_id",
         "_actor_id",
-        "_session_id",
-        # Tags
-        "_tags",
         # Integrity (mutated by sign() in Phase 3)
         "_checksum",
-        "_signature",
+        "_event_id",
+        "_event_type",
+        # Context
+        "_org_id",
+        "_parent_span_id",
+        "_payload",
         "_prev_id",
+        "_schema_version",
+        "_session_id",
+        "_signature",
+        "_source",
+        "_span_id",
+        # Tags
+        "_tags",
+        "_team_id",
+        "_timestamp",
+        # Tracing
+        "_trace_id",
     )
 
     def __init__(  # noqa: PLR0913
         self,
         *,
-        event_type: Union[str, EventType],
+        event_type: str | EventType,
         source: str,
-        payload: Dict[str, Any],
+        payload: dict[str, Any],
         schema_version: str = SCHEMA_VERSION,
-        event_id: Optional[str] = None,
-        timestamp: Optional[str] = None,
-        trace_id: Optional[str] = None,
-        span_id: Optional[str] = None,
-        parent_span_id: Optional[str] = None,
-        org_id: Optional[str] = None,
-        team_id: Optional[str] = None,
-        actor_id: Optional[str] = None,
-        session_id: Optional[str] = None,
-        tags: Optional[Tags] = None,
-        checksum: Optional[str] = None,
-        signature: Optional[str] = None,
-        prev_id: Optional[str] = None,
+        event_id: str | None = None,
+        timestamp: str | None = None,
+        trace_id: str | None = None,
+        span_id: str | None = None,
+        parent_span_id: str | None = None,
+        org_id: str | None = None,
+        team_id: str | None = None,
+        actor_id: str | None = None,
+        session_id: str | None = None,
+        tags: Tags | None = None,
+        checksum: str | None = None,
+        signature: str | None = None,
+        prev_id: str | None = None,
     ) -> None:
         """Create a new :class:`Event`.
 
@@ -372,57 +377,57 @@ class Event:
         return MappingProxyType(self._payload)  # type: ignore[return-value]
 
     @property
-    def trace_id(self) -> Optional[str]:
+    def trace_id(self) -> str | None:
         """32-hex-char OpenTelemetry trace ID."""
         return self._trace_id  # type: ignore[return-value]
 
     @property
-    def span_id(self) -> Optional[str]:
+    def span_id(self) -> str | None:
         """16-hex-char OpenTelemetry span ID."""
         return self._span_id  # type: ignore[return-value]
 
     @property
-    def parent_span_id(self) -> Optional[str]:
+    def parent_span_id(self) -> str | None:
         """16-hex-char parent span ID."""
         return self._parent_span_id  # type: ignore[return-value]
 
     @property
-    def org_id(self) -> Optional[str]:
+    def org_id(self) -> str | None:
         """Organisation identifier."""
         return self._org_id  # type: ignore[return-value]
 
     @property
-    def team_id(self) -> Optional[str]:
+    def team_id(self) -> str | None:
         """Team identifier."""
         return self._team_id  # type: ignore[return-value]
 
     @property
-    def actor_id(self) -> Optional[str]:
+    def actor_id(self) -> str | None:
         """User or service-account identifier."""
         return self._actor_id  # type: ignore[return-value]
 
     @property
-    def session_id(self) -> Optional[str]:
+    def session_id(self) -> str | None:
         """Session identifier grouping related events."""
         return self._session_id  # type: ignore[return-value]
 
     @property
-    def tags(self) -> Optional[Tags]:
+    def tags(self) -> Tags | None:
         """Metadata tags."""
         return self._tags  # type: ignore[return-value]
 
     @property
-    def checksum(self) -> Optional[str]:
+    def checksum(self) -> str | None:
         """SHA-256 payload checksum.  Set by ``sign()``."""
         return self._checksum  # type: ignore[return-value]
 
     @property
-    def signature(self) -> Optional[str]:
+    def signature(self) -> str | None:
         """HMAC-SHA256 chain signature.  Set by ``sign()``."""
         return self._signature  # type: ignore[return-value]
 
     @property
-    def prev_id(self) -> Optional[str]:
+    def prev_id(self) -> str | None:
         """ULID of the preceding event in the audit chain.  Set by ``sign()``."""
         return self._prev_id  # type: ignore[return-value]
 
@@ -499,7 +504,7 @@ class Event:
     # Serialisation
     # ------------------------------------------------------------------
 
-    def to_dict(self, *, omit_none: bool = True) -> Dict[str, Any]:
+    def to_dict(self, *, omit_none: bool = True) -> dict[str, Any]:
         """Return a plain :class:`dict` representation.
 
         The dictionary uses the same field names as the JSON wire format.
@@ -513,7 +518,7 @@ class Event:
         Returns:
             An ordered dict with string keys and JSON-serialisable values.
         """
-        raw: Dict[str, Any] = {
+        raw: dict[str, Any] = {
             "schema_version": self._schema_version,
             "event_id": self._event_id,
             "event_type": self._event_type,
@@ -599,10 +604,10 @@ class Event:
     @classmethod
     def from_dict(
         cls,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         *,
         source_hint: str = "<dict>",
-    ) -> "Event":
+    ) -> Event:
         """Construct an :class:`Event` from a plain dictionary.
 
         The dictionary shape matches the output of :meth:`to_dict`.
@@ -627,8 +632,8 @@ class Event:
 
         try:
             tags_raw = data.get("tags")
-            tags: Optional[Tags] = (
-                Tags(**{k: v for k, v in tags_raw.items()})
+            tags: Tags | None = (
+                Tags(**dict(tags_raw.items()))
                 if tags_raw is not None
                 else None
             )
@@ -659,7 +664,7 @@ class Event:
             ) from exc
 
     @classmethod
-    def from_json(cls, json_str: str, *, source_hint: str = "<json>") -> "Event":
+    def from_json(cls, json_str: str, *, source_hint: str = "<json>") -> Event:
         """Construct an :class:`Event` from a JSON string.
 
         Args:
@@ -679,7 +684,7 @@ class Event:
             event.validate()
         """
         try:
-            data: Dict[str, Any] = json.loads(json_str)
+            data: dict[str, Any] = json.loads(json_str)
         except json.JSONDecodeError as exc:
             raise DeserializationError(
                 reason=f"invalid JSON: {exc}",
@@ -811,7 +816,7 @@ def _require_dict(data: object, source_hint: str) -> None:
         )
 
 
-def _require_str(data: Dict[str, Any], key: str, source_hint: str) -> str:
+def _require_str(data: dict[str, Any], key: str, source_hint: str) -> str:
     value = data.get(key)
     if value is None:
         raise DeserializationError(
@@ -827,8 +832,8 @@ def _require_str(data: Dict[str, Any], key: str, source_hint: str) -> str:
 
 
 def _require_dict_field(
-    data: Dict[str, Any], key: str, source_hint: str
-) -> Dict[str, Any]:
+    data: dict[str, Any], key: str, source_hint: str
+) -> dict[str, Any]:
     value = data.get(key)
     if value is None:
         raise DeserializationError(

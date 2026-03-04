@@ -40,8 +40,9 @@ Install with::
 from __future__ import annotations
 
 import functools
-from typing import Any, Optional, Tuple
+from typing import Any
 
+from tracium.integrations._pricing import PRICING_DATE, get_pricing
 from tracium.namespaces.trace import (
     CostBreakdown,
     GenAISystem,
@@ -49,13 +50,11 @@ from tracium.namespaces.trace import (
     TokenUsage,
 )
 
-from tracium.integrations._pricing import PRICING_DATE, get_pricing
-
 __all__ = [
-    "patch",
-    "unpatch",
     "is_patched",
     "normalize_response",
+    "patch",
+    "unpatch",
 ]
 
 # Sentinel attribute set on the openai module to prevent double-patching.
@@ -86,7 +85,9 @@ def patch() -> None:
         return  # already patched
 
     # --- sync ----------------------------------------------------------------
-    from openai.resources.chat.completions import Completions  # type: ignore[import-untyped]
+    from openai.resources.chat.completions import (  # noqa: PLC0415
+        Completions,  # type: ignore[import-untyped]
+    )
 
     _orig_sync = Completions.create  # type: ignore[attr-defined]
 
@@ -101,7 +102,9 @@ def patch() -> None:
 
     # --- async ---------------------------------------------------------------
     try:
-        from openai.resources.chat.completions import AsyncCompletions  # type: ignore[import-untyped]
+        from openai.resources.chat.completions import (  # noqa: PLC0415
+            AsyncCompletions,  # type: ignore[import-untyped]
+        )
 
         _orig_async = AsyncCompletions.create  # type: ignore[attr-defined]
 
@@ -133,7 +136,9 @@ def unpatch() -> None:
         return  # nothing to do
 
     try:
-        from openai.resources.chat.completions import Completions  # type: ignore[import-untyped]
+        from openai.resources.chat.completions import (  # noqa: PLC0415
+            Completions,  # type: ignore[import-untyped]
+        )
 
         Completions.create = Completions._tracium_orig_create  # type: ignore[attr-defined,method-assign]
         del Completions._tracium_orig_create  # type: ignore[attr-defined]
@@ -141,14 +146,16 @@ def unpatch() -> None:
         pass
 
     try:
-        from openai.resources.chat.completions import AsyncCompletions  # type: ignore[import-untyped]
+        from openai.resources.chat.completions import (  # noqa: PLC0415
+            AsyncCompletions,  # type: ignore[import-untyped]
+        )
 
         AsyncCompletions.create = AsyncCompletions._tracium_orig_create  # type: ignore[attr-defined,method-assign]
         del AsyncCompletions._tracium_orig_create  # type: ignore[attr-defined]
     except (ImportError, AttributeError):  # pragma: no cover
         pass
 
-    try:
+    try:  # noqa: SIM105
         del openai_mod._tracium_patched  # type: ignore[attr-defined]
     except AttributeError:  # pragma: no cover
         pass
@@ -168,7 +175,7 @@ def is_patched() -> bool:
 
 def normalize_response(
     response: Any,  # noqa: ANN401
-) -> Tuple[TokenUsage, ModelInfo, CostBreakdown]:
+) -> tuple[TokenUsage, ModelInfo, CostBreakdown]:
     """Extract structured observability data from an OpenAI chat completion.
 
     Works with both ``openai.types.chat.ChatCompletion`` objects and any
@@ -198,8 +205,8 @@ def normalize_response(
     input_tokens: int = 0
     output_tokens: int = 0
     total_tokens: int = 0
-    cached_tokens: Optional[int] = None
-    reasoning_tokens: Optional[int] = None
+    cached_tokens: int | None = None
+    reasoning_tokens: int | None = None
 
     if usage is not None:
         input_tokens = int(getattr(usage, "prompt_tokens", 0) or 0)
@@ -249,20 +256,21 @@ def _require_openai() -> Any:  # noqa: ANN401
     """Import and return the ``openai`` module, raising ``ImportError`` if absent."""
     try:
         import openai  # type: ignore[import-untyped]  # noqa: PLC0415
-        return openai
     except ImportError as exc:
         raise ImportError(
             "The 'openai' package is required for tracium OpenAI integration.\n"
             "Install it with: pip install 'agentobs[openai]'"
         ) from exc
+    else:
+        return openai
 
 
 def _compute_cost(
     model_name: str,
     input_tokens: int,
     output_tokens: int,
-    cached_tokens: Optional[int],
-    reasoning_tokens: Optional[int],
+    cached_tokens: int | None,
+    reasoning_tokens: int | None,
 ) -> CostBreakdown:
     """Compute :class:`~tracium.namespaces.trace.CostBreakdown` from token counts.
 
@@ -353,6 +361,6 @@ def _auto_populate_span(response: Any) -> None:  # noqa: ANN401
         if span.model is None:
             span.model = model_info.name
 
-    except Exception:  # noqa: BLE001
+    except Exception:  # noqa: S110
         # Never let instrumentation errors surface in user code.
         pass

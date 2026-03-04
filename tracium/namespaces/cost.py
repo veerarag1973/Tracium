@@ -13,7 +13,7 @@ CostAttributedPayload
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from tracium.namespaces.trace import (
     CostBreakdown,
@@ -23,9 +23,9 @@ from tracium.namespaces.trace import (
 )
 
 __all__ = [
-    "CostTokenRecordedPayload",
-    "CostSessionRecordedPayload",
     "CostAttributedPayload",
+    "CostSessionRecordedPayload",
+    "CostTokenRecordedPayload",
 ]
 
 _VALID_ATTRIBUTION_TYPES = frozenset({"direct", "proportional", "estimated", "manual"})
@@ -41,9 +41,9 @@ class CostTokenRecordedPayload:
     cost: CostBreakdown
     token_usage: TokenUsage
     model: ModelInfo
-    pricing_tier: Optional[PricingTier] = None
-    span_id: Optional[str] = None
-    agent_run_id: Optional[str] = None
+    pricing_tier: PricingTier | None = None
+    span_id: str | None = None
+    agent_run_id: str | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.cost, CostBreakdown):
@@ -53,8 +53,9 @@ class CostTokenRecordedPayload:
         if not isinstance(self.model, ModelInfo):
             raise TypeError("CostTokenRecordedPayload.model must be a ModelInfo")
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "cost": self.cost.to_dict(),
             "token_usage": self.token_usage.to_dict(),
             "model": self.model.to_dict(),
@@ -68,12 +69,13 @@ class CostTokenRecordedPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "CostTokenRecordedPayload":
+    def from_dict(cls, data: dict[str, Any]) -> CostTokenRecordedPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             cost=CostBreakdown.from_dict(data["cost"]),
             token_usage=TokenUsage.from_dict(data["token_usage"]),
             model=ModelInfo.from_dict(data["model"]),
-            pricing_tier=PricingTier.from_dict(data["pricing_tier"]) if "pricing_tier" in data else None,
+            pricing_tier=PricingTier.from_dict(data["pricing_tier"]) if "pricing_tier" in data else None,  # noqa: E501
             span_id=data.get("span_id"),
             agent_run_id=data.get("agent_run_id"),
         )
@@ -90,8 +92,8 @@ class CostSessionRecordedPayload:
     total_cost: CostBreakdown
     total_token_usage: TokenUsage
     call_count: int
-    session_duration_ms: Optional[float] = None
-    models_used: List[str] = field(default_factory=list)
+    session_duration_ms: float | None = None
+    models_used: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if not isinstance(self.total_cost, CostBreakdown):
@@ -103,8 +105,9 @@ class CostSessionRecordedPayload:
         if self.session_duration_ms is not None and self.session_duration_ms < 0:
             raise ValueError("CostSessionRecordedPayload.session_duration_ms must be non-negative")
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "total_cost": self.total_cost.to_dict(),
             "total_token_usage": self.total_token_usage.to_dict(),
             "call_count": self.call_count,
@@ -116,12 +119,13 @@ class CostSessionRecordedPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "CostSessionRecordedPayload":
+    def from_dict(cls, data: dict[str, Any]) -> CostSessionRecordedPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             total_cost=CostBreakdown.from_dict(data["total_cost"]),
             total_token_usage=TokenUsage.from_dict(data["total_token_usage"]),
             call_count=int(data["call_count"]),
-            session_duration_ms=float(data["session_duration_ms"]) if "session_duration_ms" in data else None,
+            session_duration_ms=float(data["session_duration_ms"]) if "session_duration_ms" in data else None,  # noqa: E501
             models_used=list(data.get("models_used", [])),
         )
 
@@ -137,7 +141,7 @@ class CostAttributedPayload:
     cost: CostBreakdown
     attribution_target: str
     attribution_type: str  # "direct"|"proportional"|"estimated"|"manual"
-    source_event_ids: List[str] = field(default_factory=list)
+    source_event_ids: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if not isinstance(self.cost, CostBreakdown):
@@ -146,11 +150,12 @@ class CostAttributedPayload:
             raise ValueError("CostAttributedPayload.attribution_target must be a non-empty string")
         if self.attribution_type not in _VALID_ATTRIBUTION_TYPES:
             raise ValueError(
-                f"CostAttributedPayload.attribution_type must be one of {sorted(_VALID_ATTRIBUTION_TYPES)}"
+                f"CostAttributedPayload.attribution_type must be one of {sorted(_VALID_ATTRIBUTION_TYPES)}"  # noqa: E501
             )
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "cost": self.cost.to_dict(),
             "attribution_target": self.attribution_target,
             "attribution_type": self.attribution_type,
@@ -160,7 +165,8 @@ class CostAttributedPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "CostAttributedPayload":
+    def from_dict(cls, data: dict[str, Any]) -> CostAttributedPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             cost=CostBreakdown.from_dict(data["cost"]),
             attribution_target=data["attribution_target"],

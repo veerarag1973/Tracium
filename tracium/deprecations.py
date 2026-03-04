@@ -1,4 +1,4 @@
-"""Deprecation registry for llm-toolkit-schema event types.
+"""Deprecation registry for tracium event types.
 
 Tracks which event types are deprecated, their deprecation date, planned
 sunset date, and recommended replacement.  Used by governance policies,
@@ -29,17 +29,16 @@ from __future__ import annotations
 
 import threading
 import warnings
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from dataclasses import dataclass
 
 __all__ = [
     "DeprecationNotice",
     "DeprecationRegistry",
-    "get_registry",
-    "mark_deprecated",
     "get_deprecation_notice",
-    "warn_if_deprecated",
+    "get_registry",
     "list_deprecated",
+    "mark_deprecated",
+    "warn_if_deprecated",
 ]
 
 
@@ -66,8 +65,8 @@ class DeprecationNotice:
     event_type: str
     since: str
     sunset: str
-    replacement: Optional[str] = None
-    notes: Optional[str] = None
+    replacement: str | None = None
+    notes: str | None = None
 
     def format_message(self) -> str:
         """Return a human-readable deprecation message.
@@ -117,7 +116,7 @@ class DeprecationRegistry:
 
     def __init__(self) -> None:
         self._lock = threading.Lock()
-        self._notices: Dict[str, DeprecationNotice] = {}
+        self._notices: dict[str, DeprecationNotice] = {}
 
     def mark_deprecated(
         self,
@@ -125,8 +124,8 @@ class DeprecationRegistry:
         *,
         since: str,
         sunset: str,
-        replacement: Optional[str] = None,
-        notes: Optional[str] = None,
+        replacement: str | None = None,
+        notes: str | None = None,
     ) -> DeprecationNotice:
         """Register *event_type* as deprecated.
 
@@ -164,7 +163,7 @@ class DeprecationRegistry:
             self._notices[event_type.strip()] = notice
         return notice
 
-    def get(self, event_type: str) -> Optional[DeprecationNotice]:
+    def get(self, event_type: str) -> DeprecationNotice | None:
         """Return the :class:`DeprecationNotice` for *event_type*, or ``None``.
 
         Args:
@@ -200,7 +199,7 @@ class DeprecationRegistry:
         if notice is not None:
             warnings.warn(notice.format_message(), DeprecationWarning, stacklevel=3)
 
-    def list_all(self) -> List[DeprecationNotice]:
+    def list_all(self) -> list[DeprecationNotice]:
         """Return a snapshot of all registered deprecation notices.
 
         Returns:
@@ -256,8 +255,8 @@ def mark_deprecated(
     *,
     since: str,
     sunset: str,
-    replacement: Optional[str] = None,
-    notes: Optional[str] = None,
+    replacement: str | None = None,
+    notes: str | None = None,
 ) -> DeprecationNotice:
     """Register *event_type* as deprecated in the global registry.
 
@@ -285,7 +284,7 @@ def mark_deprecated(
     )
 
 
-def get_deprecation_notice(event_type: str) -> Optional[DeprecationNotice]:
+def get_deprecation_notice(event_type: str) -> DeprecationNotice | None:
     """Return the deprecation notice for *event_type* from the global registry.
 
     Args:
@@ -306,7 +305,7 @@ def warn_if_deprecated(event_type: str) -> None:
     _GLOBAL_REGISTRY.warn_if_deprecated(event_type)
 
 
-def list_deprecated() -> List[DeprecationNotice]:
+def list_deprecated() -> list[DeprecationNotice]:
     """Return all globally registered deprecation notices, sorted by event type.
 
     Returns:

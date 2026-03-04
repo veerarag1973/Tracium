@@ -36,15 +36,20 @@ Usage::
 from __future__ import annotations
 
 import asyncio
+import ipaddress
 import json
 import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING, Any
 
-from tracium.event import Event
 from tracium.exceptions import ExportError
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from tracium.event import Event
 
 __all__ = [
     "GrafanaLokiExporter",
@@ -55,12 +60,32 @@ __all__ = [
 # ---------------------------------------------------------------------------
 
 
-def _validate_http_url(url: str, param_name: str = "url") -> None:
+def _is_private_ip_literal(host: str) -> bool:
+    try:
+        addr = ipaddress.ip_address(host)
+    except ValueError:
+        return False
+    return addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_multicast
+
+
+def _validate_http_url(
+    url: str,
+    param_name: str = "url",
+    *,
+    allow_private_addresses: bool = False,
+) -> None:
     parsed = urllib.parse.urlparse(url)
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
         raise ValueError(
             f"{param_name} must be a valid http:// or https:// URL; got {url!r}"
         )
+    if not allow_private_addresses:
+        host = parsed.hostname or ""
+        if _is_private_ip_literal(host):
+            raise ValueError(
+                f"{param_name} resolves to a private/loopback/link-local IP address "
+                f"({host!r}).  Set allow_private_addresses=True to permit this."
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -85,30 +110,31 @@ class GrafanaLokiExporter:
                     positive.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         url: str,
         *,
-        labels: Optional[Dict[str, str]] = None,
+        labels: dict[str, str] | None = None,
         timeout: float = 10.0,
-        tenant_id: Optional[str] = None,
+        tenant_id: str | None = None,
         include_envelope_labels: bool = True,
+        allow_private_addresses: bool = False,
     ) -> None:
         if timeout <= 0:
             raise ValueError("timeout must be positive")
-        _validate_http_url(url, "url")
+        _validate_http_url(url, "url", allow_private_addresses=allow_private_addresses)
 
         self._base_url = url.rstrip("/")
-        self._global_labels: Dict[str, str] = dict(labels or {})
+        self._global_labels: dict[str, str] = dict(labels or {})
         self._timeout = timeout
-        self._tenant_id: Optional[str] = tenant_id
+        self._tenant_id: str | None = tenant_id
         self._include_envelope_labels = include_envelope_labels
 
     # ------------------------------------------------------------------
     # Public conversion API
     # ------------------------------------------------------------------
 
-    def event_to_loki_entry(self, event: Event) -> Dict[str, Any]:
+    def event_to_loki_entry(self, event: Event) -> dict[str, Any]:
         """Convert a Tracium :class:`~tracium.event.Event` to a Loki log entry dict.
 
         The returned dict has shape::
@@ -125,7 +151,7 @@ class GrafanaLokiExporter:
             A dict ready to be included in a Loki push request.
         """
         # Build stream labels
-        stream: Dict[str, str] = {}
+        stream: dict[str, str] = {}
 
         if self._include_envelope_labels:
             # Replace dots with underscores — Loki label values are Prometheus labels
@@ -190,8 +216,11 @@ class GrafanaLokiExporter:
             dt = datetime.strptime(ts_clean, "%Y-%m-%dT%H:%M:%S.%f").replace(
                 tzinfo=timezone.utc
             )
-        except ValueError:
-            dt = datetime.now(tz=timezone.utc)
+        except ValueError as exc:
+            raise ExportError(
+                "grafana_loki",
+                f"cannot parse event timestamp {ts!r}: {exc}",
+            ) from exc
 
         return int(dt.timestamp() * 1_000_000_000)
 
@@ -229,7 +258,7 @@ class GrafanaLokiExporter:
             return 0
 
         # Group by frozenset of stream label items
-        groups: Dict[Any, Tuple[Dict[str, str], List[List[str]]]] = {}
+        groups: dict[Any, tuple[dict[str, str], list[list[str]]]] = {}
         for event in events:
             entry = self.event_to_loki_entry(event)
             stream = entry["stream"]
@@ -238,7 +267,7 @@ class GrafanaLokiExporter:
                 groups[key] = (stream, [])
             groups[key][1].extend(entry["values"])
 
-        streams: List[Dict[str, Any]] = [
+        streams: list[dict[str, Any]] = [
             {"stream": stream_labels, "values": values}
             for (stream_labels, values) in groups.values()
         ]
@@ -274,15 +303,15 @@ class GrafanaLokiExporter:
             ExportError: On HTTP or network failure.
         """
         url = f"{self._base_url}/loki/api/v1/push"
-        headers: Dict[str, str] = {
+        headers: dict[str, str] = {
             "Content-Type": "application/json",
         }
         if self._tenant_id:
             headers["X-Scope-OrgID"] = self._tenant_id
 
-        req = urllib.request.Request(url=url, data=body, headers=headers, method="POST")
+        req = urllib.request.Request(url=url, data=body, headers=headers, method="POST")  # noqa: S310
         try:
-            with urllib.request.urlopen(req, timeout=self._timeout) as resp:
+            with urllib.request.urlopen(req, timeout=self._timeout) as resp:  # noqa: S310
                 resp.read()
         except urllib.error.HTTPError as exc:
             raise ExportError(

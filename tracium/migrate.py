@@ -1,4 +1,4 @@
-"""Migration helpers for llm-toolkit-schema events.
+"""Migration helpers for tracium events.
 
 This module provides forward-migration utilities for transforming events from
 one schema version to the next.  Implementations are added incrementally in
@@ -31,14 +31,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from tracium.event import Event
 
 __all__: list[str] = [
-    "MigrationResult",
     "DeprecationRecord",
+    "MigrationResult",
     "SunsetPolicy",
     "v1_to_v2",
     "v2_migration_roadmap",
@@ -67,8 +67,8 @@ class MigrationResult:
     target_version: str
     event_id: str
     success: bool
-    transformed_fields: Tuple[str, ...] = ()
-    warnings: Tuple[str, ...] = ()
+    transformed_fields: tuple[str, ...] = ()
+    warnings: tuple[str, ...] = ()
 
 
 # ---------------------------------------------------------------------------
@@ -114,8 +114,8 @@ class DeprecationRecord:
     since: str
     sunset: str
     sunset_policy: SunsetPolicy = SunsetPolicy.NEXT_MAJOR
-    replacement: Optional[str] = None
-    migration_notes: Optional[str] = None
+    replacement: str | None = None
+    migration_notes: str | None = None
     field_renames: dict = field(default_factory=dict)  # type: ignore[assignment]
 
     def summary(self) -> str:
@@ -139,13 +139,13 @@ class DeprecationRecord:
 # ---------------------------------------------------------------------------
 
 
-def v2_migration_roadmap() -> List[DeprecationRecord]:
+def v2_migration_roadmap() -> list[DeprecationRecord]:
     """Return the complete list of known v1 → v2 migration changes.
 
     This roadmap captures every event type that will be renamed, restructured,
     or removed when v2.0 ships.  It is intended to be consumed by:
 
-    * The ``llm-toolkit-schema migration-roadmap`` CLI subcommand.
+    * The ``tracium migration-roadmap`` CLI subcommand.
     * Governance tooling that warns operators before sunset.
     * Documentation generators.
 
@@ -158,7 +158,7 @@ def v2_migration_roadmap() -> List[DeprecationRecord]:
         ``SunsetPolicy.UNSCHEDULED`` are candidates for breaking changes but
         have no confirmed removal timeline yet.
     """
-    records: List[DeprecationRecord] = [
+    records: list[DeprecationRecord] = [
         # --- Trace namespace ---
         DeprecationRecord(
             event_type="llm.trace.span.started",
@@ -266,7 +266,7 @@ def v2_migration_roadmap() -> List[DeprecationRecord]:
 # ---------------------------------------------------------------------------
 
 
-def v1_to_v2(event: "Event") -> "Tuple[Event, MigrationResult]":
+def v1_to_v2(event: Event) -> tuple[Event, MigrationResult]:
     """Migrate a v1.0 event to the v2.0 schema.
 
     .. note::

@@ -16,11 +16,8 @@ Coverage targets
 
 from __future__ import annotations
 
-import importlib
-import json
 import sys
-import types
-from typing import Any, Dict
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -30,7 +27,6 @@ from tracium.exceptions import SchemaValidationError
 from tracium.types import EventType
 from tracium.validate import _stdlib_validate, load_schema, validate_event
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -38,11 +34,11 @@ from tracium.validate import _stdlib_validate, load_schema, validate_event
 
 def _minimal_event(**kwargs) -> Event:
     """Build the simplest valid event."""
-    defaults = dict(
-        event_type=EventType.TRACE_SPAN_COMPLETED,
-        source="llm-trace@0.3.1",
-        payload={"span_name": "run", "status": "ok"},
-    )
+    defaults = {
+        "event_type": EventType.TRACE_SPAN_COMPLETED,
+        "source": "llm-trace@0.3.1",
+        "payload": {"span_name": "run", "status": "ok"},
+    }
     defaults.update(kwargs)
     return Event(**defaults)
 
@@ -93,7 +89,7 @@ class TestLoadSchema:
 
     def test_missing_schema_raises_file_not_found(self, tmp_path, monkeypatch):
         """Point schema path at a non-existent file; expect FileNotFoundError."""
-        import tracium.validate as v_module
+        import tracium.validate as v_module  # noqa: PLC0415
 
         original_path = v_module._SCHEMA_PATH
         original_cache = v_module._CACHED_SCHEMA
@@ -120,7 +116,7 @@ class TestValidateEventStdlib:
             validate_event(event)
 
     def _validate_raises(self, event: Event) -> SchemaValidationError:
-        with patch.dict(sys.modules, {"jsonschema": None, "jsonschema.exceptions": None}):
+        with patch.dict(sys.modules, {"jsonschema": None, "jsonschema.exceptions": None}):  # noqa: SIM117
             with pytest.raises(SchemaValidationError) as exc_info:
                 validate_event(event)
         return exc_info.value
@@ -209,7 +205,7 @@ class TestValidateEventStdlib:
 
     # --- Bad non-root input ---
     def test_non_dict_root_raises(self):
-        with patch.dict(sys.modules, {"jsonschema": None, "jsonschema.exceptions": None}):
+        with patch.dict(sys.modules, {"jsonschema": None, "jsonschema.exceptions": None}):  # noqa: SIM117
             with pytest.raises(SchemaValidationError, match="<root>"):
                 _stdlib_validate("not-a-dict")  # type: ignore
 
@@ -297,7 +293,7 @@ class TestValidateEventStdlib:
         assert "source" in exc.field
 
     # Helper to call _stdlib_validate directly
-    def _validate_raises_doc(self, doc: Dict[str, Any]) -> SchemaValidationError:
+    def _validate_raises_doc(self, doc: dict[str, Any]) -> SchemaValidationError:
         with pytest.raises(SchemaValidationError) as exc_info:
             _stdlib_validate(doc)
         return exc_info.value
@@ -314,7 +310,7 @@ class TestValidateEventWithJsonschema:
     @pytest.fixture(autouse=True)
     def _require_jsonschema(self):
         try:
-            import jsonschema  # noqa: F401
+            import jsonschema  # noqa: F401, PLC0415
         except ImportError:
             pytest.skip("jsonschema not installed")
 
@@ -339,8 +335,6 @@ class TestValidateEventWithJsonschema:
 
     def test_jsonschema_validation_error_converted(self):
         """Ensure jsonschema.ValidationError becomes SchemaValidationError."""
-        import jsonschema
-        import jsonschema.exceptions
 
         # Build a doc that fails the pattern check for event_id.
         doc = _minimal_event().to_dict()
@@ -362,15 +356,13 @@ class TestValidateSignedEvent:
     """An event that went through sign() adds checksum/signature/prev_id."""
 
     def test_signed_event_passes_stdlib(self):
-        import hashlib
-        import hmac
 
         event = _minimal_event()
         doc = event.to_dict()
         # Simulate signing fields manually.
         doc["checksum"] = "sha256:" + "a" * 64
         doc["signature"] = "hmac-sha256:" + "b" * 64
-        from tracium.ulid import generate as _gen
+        from tracium.ulid import generate as _gen  # noqa: PLC0415
         doc["prev_id"] = _gen()
 
         _stdlib_validate(doc)  # must not raise
@@ -410,7 +402,7 @@ class TestStdlibValidateBranchCoverage:
             _stdlib_validate(doc)
 
     def test_valid_prev_id_passes(self):
-        from tracium.ulid import generate as _gen
+        from tracium.ulid import generate as _gen  # noqa: PLC0415
         doc = _minimal_event().to_dict()
         doc["prev_id"] = _gen()
         _stdlib_validate(doc)

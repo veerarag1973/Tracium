@@ -1,4 +1,4 @@
-"""JSONL (newline-delimited JSON) file exporter for llm-toolkit-schema events.
+"""JSONL (newline-delimited JSON) file exporter for tracium events.
 
 Ideal for local development, integration tests, and building tamper-evident
 audit trails that can be loaded back via
@@ -27,12 +27,14 @@ Example::
 from __future__ import annotations
 
 import asyncio
-import io
 import sys
 from pathlib import Path
-from typing import IO, Optional, Sequence, Union
+from typing import IO, TYPE_CHECKING, Union
 
-from tracium.event import Event
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from tracium.event import Event
 
 __all__ = ["JSONLExporter"]
 
@@ -65,7 +67,7 @@ class JSONLExporter:
 
     def __init__(
         self,
-        path: Union[_PathLike, str],
+        path: _PathLike | str,
         mode: str = "a",
         encoding: str = "utf-8",
     ) -> None:
@@ -74,7 +76,7 @@ class JSONLExporter:
         self._path_str = str(path)
         self._mode = mode
         self._encoding = encoding
-        self._file: Optional[IO[str]] = None
+        self._file: IO[str] | None = None
         self._lock: asyncio.Lock = asyncio.Lock()
         self._closed: bool = False
 
@@ -97,8 +99,7 @@ class JSONLExporter:
             if self._path_str == "-":
                 self._file = sys.stdout
             else:
-                self._file = open(  # noqa: WPS515
-                    self._path_str,
+                self._file = Path(self._path_str).open(  # noqa: SIM115
                     mode=self._mode,
                     encoding=self._encoding,
                 )
@@ -178,7 +179,7 @@ class JSONLExporter:
     # Async context manager
     # ------------------------------------------------------------------
 
-    async def __aenter__(self) -> "JSONLExporter":
+    async def __aenter__(self) -> JSONLExporter:
         """Enter the async context manager — opens the file lazily."""
         return self
 

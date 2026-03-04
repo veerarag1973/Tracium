@@ -5,14 +5,15 @@ Phase 1 SDK coverage target.
 
 from __future__ import annotations
 
-import os
 import threading
-from typing import Generator
+from typing import TYPE_CHECKING
 
 import pytest
 
 from tracium.config import TraciumConfig, configure, get_config
 
+if TYPE_CHECKING:
+    from collections.abc import Generator
 
 # ---------------------------------------------------------------------------
 # Helpers / fixtures
@@ -175,7 +176,7 @@ class TestEnvVars:
     def test_tracium_exporter_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("TRACIUM_EXPORTER", "jsonl")
         # Force re-import by directly calling _load_from_env
-        import tracium.config as config_mod
+        import tracium.config as config_mod  # noqa: PLC0415
         old = config_mod._config.exporter
         config_mod._load_from_env()
         assert config_mod._config.exporter == "jsonl"
@@ -184,7 +185,7 @@ class TestEnvVars:
 
     def test_tracium_service_name_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("TRACIUM_SERVICE_NAME", "env-service")
-        import tracium.config as config_mod
+        import tracium.config as config_mod  # noqa: PLC0415
         old = config_mod._config.service_name
         config_mod._load_from_env()
         assert config_mod._config.service_name == "env-service"
@@ -192,7 +193,7 @@ class TestEnvVars:
 
     def test_tracium_endpoint_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("TRACIUM_ENDPOINT", "http://localhost:4317")
-        import tracium.config as config_mod
+        import tracium.config as config_mod  # noqa: PLC0415
         old = config_mod._config.endpoint
         config_mod._load_from_env()
         assert config_mod._config.endpoint == "http://localhost:4317"
@@ -200,7 +201,7 @@ class TestEnvVars:
 
     def test_tracium_org_id_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("TRACIUM_ORG_ID", "org_test")
-        import tracium.config as config_mod
+        import tracium.config as config_mod  # noqa: PLC0415
         old = config_mod._config.org_id
         config_mod._load_from_env()
         assert config_mod._config.org_id == "org_test"
@@ -208,7 +209,7 @@ class TestEnvVars:
 
     def test_tracium_env_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("TRACIUM_ENV", "development")
-        import tracium.config as config_mod
+        import tracium.config as config_mod  # noqa: PLC0415
         old = config_mod._config.env
         config_mod._load_from_env()
         assert config_mod._config.env == "development"
@@ -216,7 +217,7 @@ class TestEnvVars:
 
     def test_tracium_service_version_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("TRACIUM_SERVICE_VERSION", "2.0.0")
-        import tracium.config as config_mod
+        import tracium.config as config_mod  # noqa: PLC0415
         old = config_mod._config.service_version
         config_mod._load_from_env()
         assert config_mod._config.service_version == "2.0.0"
@@ -224,7 +225,7 @@ class TestEnvVars:
 
     def test_tracium_signing_key_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("TRACIUM_SIGNING_KEY", "test_key==")
-        import tracium.config as config_mod
+        import tracium.config as config_mod  # noqa: PLC0415
         old = config_mod._config.signing_key
         config_mod._load_from_env()
         assert config_mod._config.signing_key == "test_key=="
@@ -232,7 +233,7 @@ class TestEnvVars:
 
     def test_unset_env_vars_do_not_override(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv("TRACIUM_SERVICE_NAME", raising=False)
-        import tracium.config as config_mod
+        import tracium.config as config_mod  # noqa: PLC0415
         config_mod._config.service_name = "my-service"
         config_mod._load_from_env()
         assert config_mod._config.service_name == "my-service"

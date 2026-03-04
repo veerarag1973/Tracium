@@ -1,4 +1,4 @@
-"""HMAC-SHA256 signing and tamper-evident audit chain for llm-toolkit-schema.
+"""HMAC-SHA256 signing and tamper-evident audit chain for tracium.
 
 Provides compliance-grade audit log integrity without requiring a blockchain
 or external service.  All cryptography uses pure Python stdlib — no network
@@ -75,20 +75,22 @@ import hashlib
 import hmac as _hmac
 import json
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Dict, List, Optional, Sequence
+from typing import TYPE_CHECKING
 
 from tracium.exceptions import SigningError, VerificationError
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from tracium.event import Event
 
 __all__ = [
+    "AuditStream",
+    "ChainVerificationResult",
+    "assert_verified",
     "sign",
     "verify",
     "verify_chain",
-    "assert_verified",
-    "ChainVerificationResult",
-    "AuditStream",
 ]
 
 
@@ -99,8 +101,7 @@ __all__ = [
 
 @dataclass(frozen=True)
 class ChainVerificationResult:
-    """Immutable result returned by :func:`verify_chain` and
-    :meth:`AuditStream.verify`.
+    """Immutable result returned by :func:`verify_chain` and :meth:`AuditStream.verify`.
 
     Attributes:
         valid:          ``True`` only if **all** signatures are valid, **no**
@@ -116,8 +117,8 @@ class ChainVerificationResult:
     """
 
     valid: bool
-    first_tampered: Optional[str]
-    gaps: List[str]
+    first_tampered: str | None
+    gaps: list[str]
     tampered_count: int
 
 
@@ -146,7 +147,7 @@ def _compute_checksum(payload: dict) -> str:
 def _compute_signature(
     event_id: str,
     checksum: str,
-    prev_id: Optional[str],
+    prev_id: str | None,
     org_secret: str,
 ) -> str:
     """Return ``"hmac-sha256:<hex>"`` signature.
@@ -163,8 +164,7 @@ def _compute_signature(
 
 
 def _validate_secret(org_secret: str) -> None:
-    """Raise :exc:`~tracium.exceptions.SigningError` if *org_secret* is
-    empty or whitespace-only.
+    """Raise :exc:`~tracium.exceptions.SigningError` if *org_secret* is empty or whitespace-only.
 
     Security: the value of *org_secret* is **never** included in the error
     message.
@@ -179,12 +179,11 @@ def _validate_secret(org_secret: str) -> None:
 
 
 def sign(
-    event: "Event",
+    event: Event,
     org_secret: str,
-    prev_event: Optional["Event"] = None,
-) -> "Event":
-    """Sign *event*, returning a new event with ``checksum``, ``signature``,
-    and ``prev_id`` set.
+    prev_event: Event | None = None,
+) -> Event:
+    """Sign *event* and return a new event with ``checksum``, ``signature``, and ``prev_id`` set.
 
     The original *event* is not mutated — a new
     :class:`~tracium.event.Event` instance is returned.
@@ -219,7 +218,7 @@ def sign(
 
     _validate_secret(org_secret)
 
-    prev_id: Optional[str] = prev_event.event_id if prev_event is not None else None
+    prev_id: str | None = prev_event.event_id if prev_event is not None else None
     checksum = _compute_checksum(dict(event.payload))
     signature = _compute_signature(event.event_id, checksum, prev_id, org_secret)
 
@@ -244,7 +243,7 @@ def sign(
     )
 
 
-def verify(event: "Event", org_secret: str) -> bool:
+def verify(event: Event, org_secret: str) -> bool:
     """Verify the checksum and HMAC signature of a single signed event.
 
     Uses :func:`hmac.compare_digest` for both comparisons to guard against
@@ -288,7 +287,7 @@ def verify(event: "Event", org_secret: str) -> bool:
     return _hmac.compare_digest(event.signature, expected_signature)
 
 
-def assert_verified(event: "Event", org_secret: str) -> None:
+def assert_verified(event: Event, org_secret: str) -> None:
     """Assert that *event* passes cryptographic verification.
 
     Strict variant of :func:`verify` that raises instead of returning
@@ -311,9 +310,9 @@ def assert_verified(event: "Event", org_secret: str) -> None:
 
 
 def verify_chain(
-    events: Sequence["Event"],
+    events: Sequence[Event],
     org_secret: str,
-    key_map: Optional[Dict[str, str]] = None,
+    key_map: dict[str, str] | None = None,
 ) -> ChainVerificationResult:
     """Verify an entire ordered sequence of signed events as an audit chain.
 
@@ -362,8 +361,8 @@ def verify_chain(
     current_secret = org_secret
     km = key_map or {}
 
-    first_tampered: Optional[str] = None
-    gaps: List[str] = []
+    first_tampered: str | None = None
+    gaps: list[str] = []
     tampered_count = 0
 
     event_list = list(events)
@@ -404,7 +403,9 @@ def verify_chain(
 
 
 class AuditStream:
-    """Sequential event stream that HMAC-signs every appended event and links
+    """Tamper-evident HMAC-signed audit chain stream.
+
+    Sequential event stream that HMAC-signs every appended event and links
     them via ``prev_id``, forming a tamper-evident audit chain.
 
     The signing secret is **never** exposed in :func:`repr`, :func:`str`, or
@@ -430,7 +431,7 @@ class AuditStream:
         assert result.valid
     """
 
-    __slots__ = ("_initial_secret", "_org_secret", "_source", "_events", "_key_map")
+    __slots__ = ("_events", "_initial_secret", "_key_map", "_org_secret", "_source")
 
     def __init__(self, org_secret: str, source: str) -> None:
         _validate_secret(org_secret)
@@ -442,8 +443,9 @@ class AuditStream:
         object.__setattr__(self, "_key_map", {})
 
     def __setattr__(self, name: str, value: object) -> None:  # type: ignore[override]
-        """Block external attribute mutation.  Internal code uses
-        :func:`object.__setattr__` directly.
+        """Block external attribute mutation.
+
+        Internal code uses :func:`object.__setattr__` directly.
         """
         raise AttributeError(
             f"AuditStream is immutable externally — attribute '{name}' cannot be set. "
@@ -465,7 +467,7 @@ class AuditStream:
     # ------------------------------------------------------------------
 
     @property
-    def events(self) -> List["Event"]:
+    def events(self) -> list[Event]:
         """A read-only copy of all signed events in the stream.
 
         Returns a new list each call so callers cannot mutate the internal
@@ -477,9 +479,8 @@ class AuditStream:
     # Mutation methods (guarded)
     # ------------------------------------------------------------------
 
-    def append(self, event: "Event") -> "Event":
-        """Sign *event*, link it to the chain, append, and return the signed
-        event.
+    def append(self, event: Event) -> Event:
+        """Sign *event*, link it to the chain, append, and return the signed event.
 
         The given *event* is not mutated.  A new
         :class:`~tracium.event.Event` with ``checksum``, ``signature``, and
@@ -496,8 +497,8 @@ class AuditStream:
                           (should not happen if the stream was constructed
                           correctly).
         """
-        events_list: List["Event"] = self._events  # type: ignore[assignment]
-        prev_event: Optional["Event"] = events_list[-1] if events_list else None
+        events_list: list[Event] = self._events  # type: ignore[assignment]
+        prev_event: Event | None = events_list[-1] if events_list else None
         signed = sign(event, self._org_secret, prev_event=prev_event)  # type: ignore[arg-type]
         events_list.append(signed)
         return signed
@@ -505,8 +506,8 @@ class AuditStream:
     def rotate_key(
         self,
         new_secret: str,
-        metadata: Optional[Dict[str, str]] = None,
-    ) -> "Event":
+        metadata: dict[str, str] | None = None,
+    ) -> Event:
         """Rotate the signing key: append a key-rotation event and switch keys.
 
         The key-rotation event is signed with the **current** key, ensuring
@@ -535,7 +536,7 @@ class AuditStream:
 
         _validate_secret(new_secret)
 
-        payload: Dict[str, str] = {"rotation_marker": "true"}
+        payload: dict[str, str] = {"rotation_marker": "true"}
         if metadata:
             payload.update(metadata)
 
@@ -549,7 +550,7 @@ class AuditStream:
         signed_rotation = self.append(rotation_event)
 
         # After this event_id, use new_secret for subsequent events
-        key_map: Dict[str, str] = self._key_map  # type: ignore[assignment]
+        key_map: dict[str, str] = self._key_map  # type: ignore[assignment]
         key_map[signed_rotation.event_id] = new_secret
 
         # Switch active key for future appends
@@ -571,7 +572,7 @@ class AuditStream:
             A :class:`ChainVerificationResult` reflecting the state of the
             complete chain.
         """
-        key_map: Dict[str, str] = self._key_map  # type: ignore[assignment]
+        key_map: dict[str, str] = self._key_map  # type: ignore[assignment]
         return verify_chain(
             self._events,  # type: ignore[arg-type]
             org_secret=self._initial_secret,  # type: ignore[arg-type]

@@ -1,6 +1,6 @@
-"""Typed exception hierarchy for llm-toolkit-schema.
+"""Typed exception hierarchy for tracium.
 
-All exceptions raised by llm-toolkit-schema inherit from :class:`LLMSchemaError` so
+All exceptions raised by tracium inherit from :class:`LLMSchemaError` so
 callers can catch the whole family with a single ``except LLMSchemaError``.
 
 Design rules
@@ -15,21 +15,21 @@ Design rules
 from __future__ import annotations
 
 __all__ = [
-    "LLMSchemaError",
-    "SchemaValidationError",
-    "ULIDError",
-    "SerializationError",
     "DeserializationError",
     "EventTypeError",
-    "SigningError",
-    "VerificationError",
     "ExportError",
+    "LLMSchemaError",
+    "SchemaValidationError",
     "SchemaVersionError",
+    "SerializationError",
+    "SigningError",
+    "ULIDError",
+    "VerificationError",
 ]
 
 
 class LLMSchemaError(Exception):
-    """Base class for all llm-toolkit-schema exceptions.
+    """Base class for all tracium exceptions.
 
     All public-facing exceptions derive from this class, enabling callers to
     write a single broad ``except LLMSchemaError`` guard as a safety net while
@@ -141,8 +141,9 @@ class SigningError(LLMSchemaError):
 
 
 class VerificationError(LLMSchemaError):
-    """Raised by :func:`~tracium.signing.assert_verified` if an event fails
-    cryptographic verification.
+    """Raised when an event fails cryptographic verification.
+
+    Raised by :func:`~tracium.signing.assert_verified` on verification failure.
 
     Attributes:
         event_id: The ULID of the event that failed (safe to log).

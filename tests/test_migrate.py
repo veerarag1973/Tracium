@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import pytest
 
+from tracium import Event, EventType
 from tracium.migrate import (
     DeprecationRecord,
     MigrationResult,
@@ -18,8 +19,6 @@ from tracium.migrate import (
     v1_to_v2,
     v2_migration_roadmap,
 )
-from tracium import Event, EventType
-
 
 # ---------------------------------------------------------------------------
 # MigrationResult
@@ -100,7 +99,7 @@ class TestV1ToV2:
 
 
 # ---------------------------------------------------------------------------
-# DeprecationRecord.summary()
+# DeprecationRecord.summary()  # noqa: ERA001
 # ---------------------------------------------------------------------------
 
 
@@ -132,7 +131,7 @@ class TestDeprecationRecordSummary:
 
 
 # ---------------------------------------------------------------------------
-# v2_migration_roadmap()
+# v2_migration_roadmap()  # noqa: ERA001
 # ---------------------------------------------------------------------------
 
 

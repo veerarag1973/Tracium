@@ -1,4 +1,4 @@
-"""Namespaced event type registry for AGENTOBS SDK (RFC-0001 v2.0).
+﻿"""Namespaced event type registry for AGENTOBS SDK (RFC-0001 v2.0).
 
 All built-in event types follow the pattern::
 
@@ -46,16 +46,16 @@ from __future__ import annotations
 
 import re
 from enum import Enum
-from typing import Final, Optional
+from typing import Final
 
 from tracium.exceptions import EventTypeError
 
 __all__ = [
+    "EVENT_TYPE_PATTERN",
     "EventType",
     "is_registered",
     "namespace_of",
     "validate_custom",
-    "EVENT_TYPE_PATTERN",
 ]
 
 # ---------------------------------------------------------------------------
@@ -112,12 +112,13 @@ class EventType(str, Enum):
         assert et.namespace == "llm.trace"
     """
 
-    def __new__(cls, value: str, description: str = "") -> "EventType":  # noqa: ANN001
+    def __new__(cls, value: str, description: str = "") -> EventType:
+        """Construct a new enum member with the given value and description."""
         obj = str.__new__(cls, value)
         obj._value_ = value
         return obj
 
-    def __init__(self, value: str, description: str = "") -> None:  # noqa: ANN001
+    def __init__(self, value: str, description: str = "") -> None:
         self._description = description
 
     def __str__(self) -> str:  # type: ignore[override]
@@ -132,7 +133,7 @@ class EventType(str, Enum):
         return str.__hash__(self)
 
     # ------------------------------------------------------------------
-    # llm.trace.*  — RFC-0001 §8.1–§8.5
+    # llm.trace.*  — RFC-0001 §8.1-§8.5
     # ------------------------------------------------------------------
     TRACE_SPAN_STARTED = (
         "llm.trace.span.started",
@@ -404,7 +405,7 @@ def validate_custom(event_type: str) -> None:
         )
 
 
-def get_by_value(value: str) -> Optional[EventType]:
+def get_by_value(value: str) -> EventType | None:
     """Return the :class:`EventType` matching *value*, or ``None``.
 
     Example::

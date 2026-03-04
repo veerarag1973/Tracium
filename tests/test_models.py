@@ -7,23 +7,21 @@ from __future__ import annotations
 
 import pytest
 
-from tracium import Event, EventType, Tags
-from tracium.event import SCHEMA_VERSION
-from tracium.ulid import generate as gen_ulid
-
 from tests.conftest import (
     FIXED_SPAN_ID,
     FIXED_TIMESTAMP,
     FIXED_TRACE_ID,
-    VALID_ULID,
 )
+from tracium import Event, EventType, Tags
+from tracium.event import SCHEMA_VERSION
+from tracium.ulid import generate as gen_ulid
 
 # Guard: skip entire module if pydantic is not installed
 pytest.importorskip("pydantic")
 
-from pydantic import ValidationError  # noqa: E402 (after importorskip guard)
+from pydantic import ValidationError
 
-from tracium.models import EventModel, TagsModel  # noqa: E402
+from tracium.models import EventModel, TagsModel
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -155,7 +153,7 @@ class TestEventModelConstruction:
 
 
 # ===========================================================================
-# EventModel.from_event()
+# EventModel.from_event()  # noqa: ERA001
 # ===========================================================================
 
 
@@ -210,7 +208,7 @@ class TestEventModelFromEvent:
 
 
 # ===========================================================================
-# EventModel.to_event()
+# EventModel.to_event()  # noqa: ERA001
 # ===========================================================================
 
 
@@ -353,7 +351,7 @@ class TestEventModelValidatorsHappy:
         assert m.parent_span_id == FIXED_SPAN_ID
 
     def test_optional_ids_non_empty(self) -> None:
-        m = EventModel(**_valid_model_kwargs(org_id="org_1", team_id="team_1", actor_id="u", session_id="s"))
+        m = EventModel(**_valid_model_kwargs(org_id="org_1", team_id="team_1", actor_id="u", session_id="s"))  # noqa: E501
         assert m.org_id == "org_1"
 
     def test_prev_id_valid_ulid(self) -> None:

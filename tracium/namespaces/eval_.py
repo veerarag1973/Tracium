@@ -10,15 +10,15 @@ EvalScenarioCompletedPayload    llm.eval.scenario.completed
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from tracium.namespaces.trace import ModelInfo
 
 __all__ = [
-    "EvalScoreRecordedPayload",
     "EvalRegressionDetectedPayload",
-    "EvalScenarioStartedPayload",
     "EvalScenarioCompletedPayload",
+    "EvalScenarioStartedPayload",
+    "EvalScoreRecordedPayload",
 ]
 
 _VALID_SEVERITIES = frozenset({"low", "medium", "high", "critical"})
@@ -32,15 +32,15 @@ class EvalScoreRecordedPayload:
     evaluator: str
     metric_name: str
     score: float
-    score_min: Optional[float] = None
-    score_max: Optional[float] = None
-    threshold: Optional[float] = None
-    passed: Optional[bool] = None
-    subject_event_id: Optional[str] = None
-    subject_type: Optional[str] = None
-    eval_run_id: Optional[str] = None
-    rationale: Optional[str] = None
-    model: Optional[ModelInfo] = None  # judge model
+    score_min: float | None = None
+    score_max: float | None = None
+    threshold: float | None = None
+    passed: bool | None = None
+    subject_event_id: str | None = None
+    subject_type: str | None = None
+    eval_run_id: str | None = None
+    rationale: str | None = None
+    model: ModelInfo | None = None  # judge model
 
     def __post_init__(self) -> None:
         if not isinstance(self.evaluator, str) or not self.evaluator:
@@ -48,8 +48,9 @@ class EvalScoreRecordedPayload:
         if not isinstance(self.metric_name, str) or not self.metric_name:
             raise ValueError("EvalScoreRecordedPayload.metric_name must be non-empty")
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "evaluator": self.evaluator,
             "metric_name": self.metric_name,
             "score": self.score,
@@ -64,7 +65,8 @@ class EvalScoreRecordedPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "EvalScoreRecordedPayload":
+    def from_dict(cls, data: dict[str, Any]) -> EvalScoreRecordedPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             evaluator=data["evaluator"],
             metric_name=data["metric_name"],
@@ -90,19 +92,20 @@ class EvalRegressionDetectedPayload:
     current_score: float
     delta: float
     regression_pct: float
-    severity: Optional[str] = None  # "low"|"medium"|"high"|"critical"
-    affected_model: Optional[ModelInfo] = None
-    eval_run_id: Optional[str] = None
-    sample_count: Optional[int] = None
+    severity: str | None = None  # "low"|"medium"|"high"|"critical"
+    affected_model: ModelInfo | None = None
+    eval_run_id: str | None = None
+    sample_count: int | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.metric_name, str) or not self.metric_name:
             raise ValueError("EvalRegressionDetectedPayload.metric_name must be non-empty")
         if self.severity is not None and self.severity not in _VALID_SEVERITIES:
-            raise ValueError(f"EvalRegressionDetectedPayload.severity must be one of {sorted(_VALID_SEVERITIES)}")
+            raise ValueError(f"EvalRegressionDetectedPayload.severity must be one of {sorted(_VALID_SEVERITIES)}")  # noqa: E501
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "metric_name": self.metric_name,
             "baseline_score": self.baseline_score,
             "current_score": self.current_score,
@@ -120,7 +123,8 @@ class EvalRegressionDetectedPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "EvalRegressionDetectedPayload":
+    def from_dict(cls, data: dict[str, Any]) -> EvalRegressionDetectedPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             metric_name=data["metric_name"],
             baseline_score=float(data["baseline_score"]),
@@ -128,7 +132,7 @@ class EvalRegressionDetectedPayload:
             delta=float(data["delta"]),
             regression_pct=float(data["regression_pct"]),
             severity=data.get("severity"),
-            affected_model=ModelInfo.from_dict(data["affected_model"]) if "affected_model" in data else None,
+            affected_model=ModelInfo.from_dict(data["affected_model"]) if "affected_model" in data else None,  # noqa: E501
             eval_run_id=data.get("eval_run_id"),
             sample_count=int(data["sample_count"]) if "sample_count" in data else None,
         )
@@ -141,9 +145,9 @@ class EvalScenarioStartedPayload:
     scenario_id: str
     scenario_name: str
     evaluator: str
-    dataset_id: Optional[str] = None
-    expected_sample_count: Optional[int] = None
-    metrics: List[str] = field(default_factory=list)
+    dataset_id: str | None = None
+    expected_sample_count: int | None = None
+    metrics: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if not self.scenario_id:
@@ -153,8 +157,9 @@ class EvalScenarioStartedPayload:
         if not self.evaluator:
             raise ValueError("EvalScenarioStartedPayload.evaluator must be non-empty")
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "scenario_id": self.scenario_id,
             "scenario_name": self.scenario_name,
             "evaluator": self.evaluator,
@@ -168,13 +173,14 @@ class EvalScenarioStartedPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "EvalScenarioStartedPayload":
+    def from_dict(cls, data: dict[str, Any]) -> EvalScenarioStartedPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             scenario_id=data["scenario_id"],
             scenario_name=data["scenario_name"],
             evaluator=data["evaluator"],
             dataset_id=data.get("dataset_id"),
-            expected_sample_count=int(data["expected_sample_count"]) if "expected_sample_count" in data else None,
+            expected_sample_count=int(data["expected_sample_count"]) if "expected_sample_count" in data else None,  # noqa: E501
             metrics=list(data.get("metrics", [])),
         )
 
@@ -186,20 +192,21 @@ class EvalScenarioCompletedPayload:
     scenario_id: str
     status: str  # "passed"|"failed"|"error"|"cancelled"
     duration_ms: float
-    completed_sample_count: Optional[int] = None
-    scores_summary: Optional[Dict[str, float]] = None
-    errors: Optional[List[str]] = None
+    completed_sample_count: int | None = None
+    scores_summary: dict[str, float] | None = None
+    errors: list[str] | None = None
 
     def __post_init__(self) -> None:
         if not self.scenario_id:
             raise ValueError("EvalScenarioCompletedPayload.scenario_id must be non-empty")
         if self.status not in _VALID_STATUSES:
-            raise ValueError(f"EvalScenarioCompletedPayload.status must be one of {sorted(_VALID_STATUSES)}")
+            raise ValueError(f"EvalScenarioCompletedPayload.status must be one of {sorted(_VALID_STATUSES)}")  # noqa: E501
         if self.duration_ms < 0:
             raise ValueError("EvalScenarioCompletedPayload.duration_ms must be non-negative")
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "scenario_id": self.scenario_id,
             "status": self.status,
             "duration_ms": self.duration_ms,
@@ -213,12 +220,13 @@ class EvalScenarioCompletedPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "EvalScenarioCompletedPayload":
+    def from_dict(cls, data: dict[str, Any]) -> EvalScenarioCompletedPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             scenario_id=data["scenario_id"],
             status=data["status"],
             duration_ms=float(data["duration_ms"]),
-            completed_sample_count=int(data["completed_sample_count"]) if "completed_sample_count" in data else None,
+            completed_sample_count=int(data["completed_sample_count"]) if "completed_sample_count" in data else None,  # noqa: E501
             scores_summary=dict(data["scores_summary"]) if "scores_summary" in data else None,
             errors=list(data["errors"]) if "errors" in data else None,
         )

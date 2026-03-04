@@ -24,7 +24,7 @@ creates a child span that inherits the parent's ``trace_id``).
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from tracium._span import (
     AgentRunContextManager,
@@ -55,9 +55,9 @@ class Tracer:
         self,
         name: str,
         *,
-        model: Optional[str] = None,
+        model: str | None = None,
         operation: str = "chat",
-        attributes: Optional[Dict[str, Any]] = None,
+        attributes: dict[str, Any] | None = None,
     ) -> SpanContextManager:
         """Create a new :class:`~tracium._span.SpanContextManager`.
 
@@ -119,7 +119,7 @@ class Tracer:
         step_name: str,
         *,
         operation: str = "invoke_agent",
-        attributes: Optional[Dict[str, Any]] = None,
+        attributes: dict[str, Any] | None = None,
     ) -> AgentStepContextManager:
         """Create a single agent-step context manager.
 

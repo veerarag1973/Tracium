@@ -16,7 +16,6 @@ from tracium._span import (
 )
 from tracium._tracer import Tracer, tracer
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -28,7 +27,7 @@ def _clean_stacks() -> None:
 
 
 # ===========================================================================
-# Tracer.span()
+# Tracer.span()  # noqa: ERA001
 # ===========================================================================
 
 
@@ -42,7 +41,7 @@ class TestTracerSpan:
         assert isinstance(cm, SpanContextManager)
 
     def test_enter_yields_span(self) -> None:
-        from tracium._span import Span
+        from tracium._span import Span  # noqa: PLC0415
         with tracer.span("test") as span:
             assert isinstance(span, Span)
 
@@ -68,14 +67,12 @@ class TestTracerSpan:
         assert span.attributes["temperature"] == 0.9
 
     def test_nested_spans_share_trace_id(self) -> None:
-        with tracer.span("outer") as outer:
-            with tracer.span("inner") as inner:
-                assert inner.trace_id == outer.trace_id
+        with tracer.span("outer") as outer, tracer.span("inner") as inner:
+            assert inner.trace_id == outer.trace_id
 
     def test_nested_spans_parent_child_link(self) -> None:
-        with tracer.span("parent") as parent:
-            with tracer.span("child") as child:
-                assert child.parent_span_id == parent.span_id
+        with tracer.span("parent") as parent, tracer.span("child") as child:
+            assert child.parent_span_id == parent.span_id
 
     def test_span_duration_positive(self) -> None:
         with tracer.span("timed"):
@@ -84,13 +81,12 @@ class TestTracerSpan:
         # duration is non-negative
 
     def test_exception_does_not_suppress(self) -> None:
-        with pytest.raises(RuntimeError, match="test error"):
-            with tracer.span("err"):
-                raise RuntimeError("test error")
+        with pytest.raises(RuntimeError, match="test error"), tracer.span("err"):
+            raise RuntimeError("test error")
 
 
 # ===========================================================================
-# Tracer.agent_run()
+# Tracer.agent_run()  # noqa: ERA001
 # ===========================================================================
 
 
@@ -104,7 +100,7 @@ class TestTracerAgentRun:
         assert isinstance(cm, AgentRunContextManager)
 
     def test_enter_yields_agent_run_context(self) -> None:
-        from tracium._span import AgentRunContext
+        from tracium._span import AgentRunContext  # noqa: PLC0415
         with tracer.agent_run("agent") as run:
             assert isinstance(run, AgentRunContext)
 
@@ -126,20 +122,19 @@ class TestTracerAgentRun:
         try:
             with tracer.agent_run("bad-agent") as run:
                 ctx = run
-                raise ValueError("agent fail")
+                raise ValueError("agent fail")  # noqa: TRY301
         except ValueError:
             pass
         assert ctx is not None
         assert ctx.status == "error"
 
     def test_exception_propagates(self) -> None:
-        with pytest.raises(ValueError):
-            with tracer.agent_run("agent"):
-                raise ValueError("propagate me")
+        with pytest.raises(ValueError), tracer.agent_run("agent"):
+            raise ValueError("propagate me")
 
 
 # ===========================================================================
-# Tracer.agent_step()
+# Tracer.agent_step()  # noqa: ERA001
 # ===========================================================================
 
 
@@ -153,28 +148,24 @@ class TestTracerAgentStep:
         assert isinstance(cm, AgentStepContextManager)
 
     def test_step_outside_run_raises(self) -> None:
-        with pytest.raises(RuntimeError):
-            with tracer.agent_step("orphan-step"):
-                pass
+        with pytest.raises(RuntimeError), tracer.agent_step("orphan-step"):
+            pass
 
     def test_step_inside_run_works(self) -> None:
-        from tracium._span import AgentStepContext
-        with tracer.agent_run("agent"):
-            with tracer.agent_step("step") as step:
-                assert isinstance(step, AgentStepContext)
+        from tracium._span import AgentStepContext  # noqa: PLC0415
+        with tracer.agent_run("agent"), tracer.agent_step("step") as step:
+            assert isinstance(step, AgentStepContext)
 
     def test_step_name_set(self) -> None:
-        with tracer.agent_run("agent"):
-            with tracer.agent_step("web-search") as step:
-                assert step.step_name == "web-search"
+        with tracer.agent_run("agent"), tracer.agent_step("web-search") as step:
+            assert step.step_name == "web-search"
 
     def test_step_operation_param(self) -> None:
-        with tracer.agent_run("agent"):
-            with tracer.agent_step("step", operation="chat") as step:
-                assert step.operation == "chat"
+        with tracer.agent_run("agent"), tracer.agent_step("step", operation="chat") as step:
+            assert step.operation == "chat"
 
     def test_step_attributes_param(self) -> None:
-        with tracer.agent_run("agent"):
+        with tracer.agent_run("agent"):  # noqa: SIM117
             with tracer.agent_step("step", attributes={"query": "hello"}) as step:
                 assert step.attributes["query"] == "hello"
 
@@ -216,11 +207,10 @@ class TestTracerSingleton:
 
     def test_tracer_span_and_agent_run_combined(self) -> None:
         _clean_stacks()
-        with tracer.agent_run("agent") as run:
-            with tracer.span("inner-span") as span:
-                span.set_attribute("inside_run", True)
-                with tracer.agent_step("step") as step:
-                    # verify all three context managers are active
-                    assert run.agent_name == "agent"
-                    assert span.name == "inner-span"
-                    assert step.step_name == "step"
+        with tracer.agent_run("agent") as run, tracer.span("inner-span") as span:
+            span.set_attribute("inside_run", True)
+            with tracer.agent_step("step") as step:
+                # verify all three context managers are active
+                assert run.agent_name == "agent"
+                assert span.name == "inner-span"
+                assert step.step_name == "step"

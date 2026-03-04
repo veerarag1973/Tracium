@@ -3,20 +3,18 @@
 from __future__ import annotations
 
 import asyncio
-import json
 from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-pytest.importorskip("tracium.export.datadog", reason="tracium.export.datadog not yet implemented (Phase 8)")
+pytest.importorskip("tracium.export.datadog", reason="tracium.export.datadog not yet implemented (Phase 8)")  # noqa: E501
 
 from tracium import Event, EventType, Tags
 from tracium.exceptions import ExportError
 from tracium.export.datadog import (
     DatadogExporter,
     DatadogResourceAttributes,
-    _METRIC_FIELDS,
 )
 from tracium.ulid import generate as gen_ulid
 
@@ -221,7 +219,7 @@ class TestExportAsync:
     def test_export_raises_on_http_error(
         self, exporter: DatadogExporter, sample_event: Event
     ) -> None:
-        import urllib.error
+        import urllib.error  # noqa: PLC0415
 
         def _fail_urlopen(req: Any, timeout: Any = None) -> Any:
             raise urllib.error.HTTPError(None, 500, "Internal Server Error", {}, None)
@@ -346,7 +344,7 @@ class TestTraceSpanExport:
         self, exporter: DatadogExporter
     ) -> None:
         """_send_traces raises ExportError on HTTP error (covers except HTTPError)."""
-        import urllib.error
+        import urllib.error  # noqa: PLC0415
         event = Event(
             event_type=EventType.TRACE_SPAN_COMPLETED,
             source="test",

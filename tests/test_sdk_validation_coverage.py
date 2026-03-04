@@ -7,26 +7,8 @@ that ``test_sdk_coverage_boost.py`` left uncovered.
 from __future__ import annotations
 
 import time
-import pytest
 
-# ---------------------------------------------------------------------------
-# trace.py validation paths
-# ---------------------------------------------------------------------------
-from tracium.namespaces.trace import (
-    AgentRunPayload,
-    AgentStepPayload,
-    CostBreakdown,
-    DecisionPoint,
-    GenAIOperationName,
-    GenAISystem,
-    ModelInfo,
-    PricingTier,
-    ReasoningStep,
-    SpanKind,
-    SpanPayload,
-    TokenUsage,
-    ToolCall,
-)
+import pytest
 
 # ---------------------------------------------------------------------------
 # Secondary namespace payload classes
@@ -34,7 +16,6 @@ from tracium.namespaces.trace import (
 from tracium.namespaces.diff import DiffComputedPayload, DiffRegressionFlaggedPayload
 from tracium.namespaces.eval_ import (
     EvalRegressionDetectedPayload,
-    EvalScenarioCompletedPayload,
     EvalScenarioStartedPayload,
     EvalScoreRecordedPayload,
 )
@@ -48,6 +29,23 @@ from tracium.namespaces.redact import RedactAppliedPayload, RedactPiiDetectedPay
 from tracium.namespaces.template import (
     TemplateRegisteredPayload,
     TemplateValidationFailedPayload,
+)
+
+# ---------------------------------------------------------------------------
+# trace.py validation paths
+# ---------------------------------------------------------------------------
+from tracium.namespaces.trace import (
+    AgentRunPayload,
+    AgentStepPayload,
+    CostBreakdown,
+    DecisionPoint,
+    GenAISystem,
+    ModelInfo,
+    PricingTier,
+    ReasoningStep,
+    SpanPayload,
+    TokenUsage,
+    ToolCall,
 )
 
 # Shared test fixtures
@@ -677,7 +675,6 @@ class TestEvalScenarioStartedValidation:
 @pytest.mark.unit
 class TestPromptVersionChanged:
     def test_basic_creation(self) -> None:
-        from tracium.namespaces.prompt import PromptVersionChangedPayload
         p = PromptVersionChangedPayload(
             template_id="t1",
             previous_version="1.0",
@@ -689,7 +686,6 @@ class TestPromptVersionChanged:
         assert "changed_by" not in d
 
     def test_with_all_optionals(self) -> None:
-        from tracium.namespaces.prompt import PromptVersionChangedPayload
         p = PromptVersionChangedPayload(
             template_id="t1",
             previous_version="1.0",
@@ -705,7 +701,6 @@ class TestPromptVersionChanged:
         assert "new_hash" in d
 
     def test_from_dict_roundtrip(self) -> None:
-        from tracium.namespaces.prompt import PromptVersionChangedPayload
         p = PromptVersionChangedPayload(
             template_id="t1",
             previous_version="1.0",
@@ -844,7 +839,7 @@ class TestPromptValidation:
             )
 
     def test_invalid_source_raises_for_loaded(self) -> None:
-        from tracium.namespaces.prompt import PromptTemplateLoadedPayload
+        from tracium.namespaces.prompt import PromptTemplateLoadedPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="source"):
             PromptTemplateLoadedPayload(
                 template_id="t1",
@@ -891,7 +886,7 @@ class TestTemplateValidation:
             )
 
     def test_invalid_value_type_raises(self) -> None:
-        from tracium.namespaces.template import TemplateVariableBoundPayload
+        from tracium.namespaces.template import TemplateVariableBoundPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="value_type"):
             TemplateVariableBoundPayload(
                 template_id="t1",
@@ -901,7 +896,7 @@ class TestTemplateValidation:
             )
 
     def test_invalid_value_hash_raises(self) -> None:
-        from tracium.namespaces.template import TemplateVariableBoundPayload
+        from tracium.namespaces.template import TemplateVariableBoundPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="value_hash"):
             TemplateVariableBoundPayload(
                 template_id="t1",

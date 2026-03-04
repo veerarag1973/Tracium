@@ -40,7 +40,7 @@ Install with::
 from __future__ import annotations
 
 import functools
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from tracium.namespaces.trace import (
     CostBreakdown,
@@ -50,10 +50,10 @@ from tracium.namespaces.trace import (
 )
 
 __all__ = [
-    "patch",
-    "unpatch",
     "is_patched",
     "normalize_response",
+    "patch",
+    "unpatch",
 ]
 
 # ---------------------------------------------------------------------------
@@ -63,7 +63,7 @@ __all__ = [
 PRICING_DATE: str = "2026-03-04"
 
 #: Anthropic model pricing — USD per million tokens.
-ANTHROPIC_PRICING: Dict[str, Dict[str, float]] = {
+ANTHROPIC_PRICING: dict[str, dict[str, float]] = {
     # ------------------------------------------------------------------
     # Claude 3.5 family
     # ------------------------------------------------------------------
@@ -143,7 +143,9 @@ def patch() -> None:
 
     # --- sync ----------------------------------------------------------------
     try:
-        from anthropic.resources.messages import Messages  # type: ignore[import-untyped]
+        from anthropic.resources.messages import (  # noqa: PLC0415
+            Messages,  # type: ignore[import-untyped]
+        )
 
         _orig_sync = Messages.create  # type: ignore[attr-defined]
 
@@ -160,7 +162,9 @@ def patch() -> None:
 
     # --- async ---------------------------------------------------------------
     try:
-        from anthropic.resources.messages import AsyncMessages  # type: ignore[import-untyped]
+        from anthropic.resources.messages import (  # noqa: PLC0415
+            AsyncMessages,  # type: ignore[import-untyped]
+        )
 
         _orig_async = AsyncMessages.create  # type: ignore[attr-defined]
 
@@ -192,7 +196,9 @@ def unpatch() -> None:
         return  # nothing to do
 
     try:
-        from anthropic.resources.messages import Messages  # type: ignore[import-untyped]
+        from anthropic.resources.messages import (  # noqa: PLC0415
+            Messages,  # type: ignore[import-untyped]
+        )
 
         Messages.create = Messages._tracium_orig_create  # type: ignore[attr-defined,method-assign]
         del Messages._tracium_orig_create  # type: ignore[attr-defined]
@@ -200,14 +206,16 @@ def unpatch() -> None:
         pass
 
     try:
-        from anthropic.resources.messages import AsyncMessages  # type: ignore[import-untyped]
+        from anthropic.resources.messages import (  # noqa: PLC0415
+            AsyncMessages,  # type: ignore[import-untyped]
+        )
 
         AsyncMessages.create = AsyncMessages._tracium_orig_create  # type: ignore[attr-defined,method-assign]
         del AsyncMessages._tracium_orig_create  # type: ignore[attr-defined]
     except (ImportError, AttributeError):  # pragma: no cover
         pass
 
-    try:
+    try:  # noqa: SIM105
         del anthropic_mod._tracium_patched  # type: ignore[attr-defined]
     except AttributeError:  # pragma: no cover
         pass
@@ -227,7 +235,7 @@ def is_patched() -> bool:
 
 def normalize_response(
     response: Any,  # noqa: ANN401
-) -> Tuple[TokenUsage, ModelInfo, CostBreakdown]:
+) -> tuple[TokenUsage, ModelInfo, CostBreakdown]:
     """Extract structured observability data from an Anthropic message response.
 
     Works with both ``anthropic.types.Message`` objects and any duck-typed
@@ -254,7 +262,7 @@ def normalize_response(
     usage = getattr(response, "usage", None)
     input_tokens: int = 0
     output_tokens: int = 0
-    cached_tokens: Optional[int] = None
+    cached_tokens: int | None = None
 
     if usage is not None:
         input_tokens = int(getattr(usage, "input_tokens", 0) or 0)
@@ -284,7 +292,7 @@ def normalize_response(
     return token_usage, model_info, cost
 
 
-def list_models() -> List[str]:
+def list_models() -> list[str]:
     """Return a sorted list of all Anthropic model names in the pricing table."""
     return sorted(ANTHROPIC_PRICING.keys())
 
@@ -298,15 +306,16 @@ def _require_anthropic() -> Any:  # noqa: ANN401
     """Import and return the ``anthropic`` module, raising ``ImportError`` if absent."""
     try:
         import anthropic  # type: ignore[import-untyped]  # noqa: PLC0415
-        return anthropic
     except ImportError as exc:
         raise ImportError(
             "The 'anthropic' package is required for tracium Anthropic integration.\n"
             "Install it with: pip install 'agentobs[anthropic]'"
         ) from exc
+    else:
+        return anthropic
 
 
-def _get_pricing(model: str) -> Optional[Dict[str, float]]:
+def _get_pricing(model: str) -> dict[str, float] | None:
     """Return the pricing entry for *model*, or ``None`` if unknown.
 
     Performs an exact lookup first, then tries stripping trailing version
@@ -375,5 +384,5 @@ def _auto_populate_span(response: Any) -> None:  # noqa: ANN401
         if span.model is None:
             span.model = model_info.name
 
-    except Exception:  # noqa: BLE001
+    except Exception:  # noqa: S110
         pass

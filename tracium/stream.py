@@ -39,22 +39,19 @@ import asyncio
 import queue as stdlib_queue
 from pathlib import Path
 from typing import (
+    TYPE_CHECKING,
     Any,
-    AsyncIterator,
     Callable,
-    Iterable,
-    Iterator,
-    List,
-    Optional,
     Protocol,
-    Sequence,
-    Union,
     runtime_checkable,
 )
 
 from tracium.event import Event
 
-__all__ = ["EventStream", "Exporter", "iter_file", "aiter_file"]
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator, Iterable, Iterator, Sequence
+
+__all__ = ["EventStream", "Exporter", "aiter_file", "iter_file"]
 
 
 # ---------------------------------------------------------------------------
@@ -72,7 +69,7 @@ class Exporter(Protocol):
     :class:`~tracium.export.jsonl.JSONLExporter`) implement it.
     """
 
-    async def export_batch(self, events: Sequence[Event]) -> Any:
+    async def export_batch(self, events: Sequence[Event]) -> Any:  # noqa: ANN401
         """Export a sequence of events."""
         ...
 
@@ -99,8 +96,8 @@ class EventStream:
         await filtered.drain(exporter)
     """
 
-    def __init__(self, events: Optional[Iterable[Event]] = None) -> None:
-        self._events: List[Event] = list(events) if events is not None else []
+    def __init__(self, events: Iterable[Event] | None = None) -> None:
+        self._events: list[Event] = list(events) if events is not None else []
 
     # ------------------------------------------------------------------
     # Class-method constructors
@@ -109,11 +106,11 @@ class EventStream:
     @classmethod
     def from_file(
         cls,
-        path: Union[str, Path],
+        path: str | Path,
         *,
         encoding: str = "utf-8",
         skip_errors: bool = False,
-    ) -> "EventStream":
+    ) -> EventStream:
         """Load events from a JSONL file.
 
         Each non-empty line is deserialized with
@@ -137,8 +134,8 @@ class EventStream:
         """
         from tracium.exceptions import DeserializationError, LLMSchemaError  # noqa: PLC0415
 
-        events: List[Event] = []
-        with open(str(path), encoding=encoding) as fh:
+        events: list[Event] = []
+        with Path(str(path)).open(encoding=encoding) as fh:
             for lineno, raw_line in enumerate(fh, start=1):
                 line = raw_line.strip()
                 if not line:
@@ -157,10 +154,10 @@ class EventStream:
     @classmethod
     def from_queue(
         cls,
-        q: "stdlib_queue.Queue[Event]",
+        q: stdlib_queue.Queue[Event],
         *,
         sentinel: object = None,
-    ) -> "EventStream":
+    ) -> EventStream:
         """Drain a synchronous :class:`queue.Queue` into an EventStream.
 
         Reads items from *q* until the queue is empty or a *sentinel* value is
@@ -176,7 +173,7 @@ class EventStream:
         Returns:
             A new :class:`EventStream` with all events drained from the queue.
         """
-        events: List[Event] = []
+        events: list[Event] = []
         while True:
             try:
                 item = q.get_nowait()
@@ -190,10 +187,10 @@ class EventStream:
     @classmethod
     async def from_async_queue(
         cls,
-        q: "asyncio.Queue[Event]",
+        q: asyncio.Queue[Event],
         *,
         sentinel: object = None,
-    ) -> "EventStream":
+    ) -> EventStream:
         """Drain an :class:`asyncio.Queue` into an EventStream.
 
         Awaits items from *q* until the *sentinel* value is received.  The
@@ -207,7 +204,7 @@ class EventStream:
         Returns:
             A new :class:`EventStream` with all events from the queue.
         """
-        events: List[Event] = []
+        events: list[Event] = []
         while True:
             item = await q.get()
             if item is sentinel:
@@ -218,8 +215,8 @@ class EventStream:
     @classmethod
     async def from_async_iter(
         cls,
-        aiter: "AsyncIterator[Event]",
-    ) -> "EventStream":
+        aiter: AsyncIterator[Event],
+    ) -> EventStream:
         """Consume an async iterator into an EventStream.
 
         Args:
@@ -228,23 +225,20 @@ class EventStream:
         Returns:
             A new :class:`EventStream`.
         """
-        events: List[Event] = []
-        async for event in aiter:
-            events.append(event)
-        return cls(events)
+        return cls([event async for event in aiter])
 
     @classmethod
-    def from_kafka(
+    def from_kafka(  # noqa: PLR0913
         cls,
         topic: str,
-        bootstrap_servers: Union[str, List[str]],
+        bootstrap_servers: str | list[str],
         *,
-        group_id: Optional[str] = None,
+        group_id: str | None = None,
         sentinel: object = None,
-        max_messages: Optional[int] = None,
+        max_messages: int | None = None,
         poll_timeout_ms: int = 1000,
         skip_errors: bool = False,
-    ) -> "EventStream":
+    ) -> EventStream:
         """Consume messages from a Kafka topic into an EventStream.
 
         Each Kafka message value is deserialised as a UTF-8 JSON string and
@@ -252,7 +246,7 @@ class EventStream:
 
         Requires ``kafka-python >= 2.0`` to be installed.  Install it with::
 
-            pip install "llm-toolkit-schema[kafka]"
+            pip install "agentobs[kafka]"
 
         Consumption stops when:
 
@@ -297,11 +291,11 @@ class EventStream:
             )
         """
         try:
-            from kafka import KafkaConsumer  # type: ignore[import-untyped]
+            from kafka import KafkaConsumer  # type: ignore[import-untyped]  # noqa: PLC0415
         except ImportError as exc:  # pragma: no cover
             raise ImportError(
                 "kafka-python is required for EventStream.from_kafka(). "
-                'Install it with: pip install "llm-toolkit-schema[kafka]"'
+                'Install it with: pip install "agentobs[kafka]"'
             ) from exc
 
         from tracium.exceptions import DeserializationError, LLMSchemaError  # noqa: PLC0415
@@ -316,7 +310,7 @@ class EventStream:
             enable_auto_commit=group_id is not None,
         )
 
-        events: List[Event] = []
+        events: list[Event] = []
         try:
             for message in consumer:
                 value = message.value
@@ -345,9 +339,8 @@ class EventStream:
     def filter(
         self,
         predicate: Callable[[Event], bool],
-    ) -> "EventStream":
-        """Return a new stream containing only events for which *predicate*
-        returns ``True``.
+    ) -> EventStream:
+        """Return a new stream containing only events for which *predicate* returns ``True``.
 
         Args:
             predicate: A callable that accepts an :class:`~tracium.event.Event`
@@ -358,9 +351,8 @@ class EventStream:
         """
         return EventStream(e for e in self._events if predicate(e))
 
-    def filter_by_type(self, *event_types: str) -> "EventStream":
-        """Return a new stream containing only events whose ``event_type``
-        matches one of the supplied strings (exact match).
+    def filter_by_type(self, *event_types: str) -> EventStream:
+        """Return a new stream with events matching one of the supplied ``event_type`` strings.
 
         Args:
             *event_types: One or more event type strings.
@@ -371,16 +363,15 @@ class EventStream:
         type_set = frozenset(event_types)
         return EventStream(e for e in self._events if e.event_type in type_set)
 
-    def filter_by_tags(self, **tags: str) -> "EventStream":
-        """Return a new stream keeping only events whose tags include **all**
-        supplied key-value pairs.
+    def filter_by_tags(self, **tags: str) -> EventStream:
+        """Return a filtered stream keeping only events whose tags include all supplied key-value pairs.
 
         Args:
             **tags: Tag key=value pairs that must all be present.
 
         Returns:
             New :class:`EventStream`.
-        """
+        """  # noqa: E501
         def _matches(event: Event) -> bool:
             if event.tags is None:
                 return False
@@ -396,7 +387,7 @@ class EventStream:
     async def route(
         self,
         exporter: Exporter,
-        predicate: Optional[Callable[[Event], bool]] = None,
+        predicate: Callable[[Event], bool] | None = None,
     ) -> int:
         """Dispatch matching events to *exporter* as a single batch.
 
@@ -408,10 +399,7 @@ class EventStream:
         Returns:
             Number of events dispatched.
         """
-        if predicate is None:
-            subset = self._events
-        else:
-            subset = [e for e in self._events if predicate(e)]
+        subset = self._events if predicate is None else [e for e in self._events if predicate(e)]
 
         if subset:
             await exporter.export_batch(subset)
@@ -440,7 +428,7 @@ class EventStream:
     def __len__(self) -> int:
         return len(self._events)
 
-    def __getitem__(self, index: Union[int, slice]) -> "Union[Event, EventStream]":
+    def __getitem__(self, index: int | slice) -> Event | EventStream:
         result = self._events[index]
         if isinstance(index, slice):
             return EventStream(result)  # type: ignore[arg-type]
@@ -454,6 +442,8 @@ class EventStream:
             return NotImplemented
         return self._events == other._events
 
+    __hash__: None = None  # EventStream is unhashable (mutable container)
+
 
 # ---------------------------------------------------------------------------
 # Module-level streaming generators (avoid full in-memory accumulation)
@@ -461,14 +451,12 @@ class EventStream:
 
 
 def iter_file(
-    path: Union[str, Path],
+    path: str | Path,
     *,
     encoding: str = "utf-8",
     skip_errors: bool = False,
 ) -> Iterator[Event]:
-    """Yield :class:`~tracium.event.Event` objects one at a time
-    from a newline-delimited JSON file *without* loading the entire file into
-    memory.
+    """Yield :class:`~tracium.event.Event` objects from a NDJSON file one at a time.
 
     Unlike :meth:`EventStream.from_file`, this function is a **generator**;
     each event is parsed and yielded individually so that very large log files
@@ -494,7 +482,7 @@ def iter_file(
     """
     from tracium.exceptions import DeserializationError, LLMSchemaError  # noqa: PLC0415
 
-    with open(path, encoding=encoding) as fh:
+    with Path(path).open(encoding=encoding) as fh:
         for lineno, raw in enumerate(fh, start=1):
             line = raw.strip()
             if not line:
@@ -511,7 +499,7 @@ def iter_file(
 
 
 async def aiter_file(
-    path: Union[str, Path],
+    path: str | Path,
     *,
     encoding: str = "utf-8",
     skip_errors: bool = False,
@@ -542,7 +530,7 @@ async def aiter_file(
     """
     from tracium.exceptions import DeserializationError, LLMSchemaError  # noqa: PLC0415
 
-    lines: List[str] = await asyncio.to_thread(
+    lines: list[str] = await asyncio.to_thread(
         lambda: Path(path).read_text(encoding=encoding).splitlines()
     )
     for lineno, raw in enumerate(lines, start=1):

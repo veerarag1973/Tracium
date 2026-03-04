@@ -4,20 +4,19 @@ from __future__ import annotations
 
 import datetime
 import json
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 
 from tracium import Event, EventType, Tags
 from tracium.ulid import generate as gen_ulid
 
-
 # ---------------------------------------------------------------------------
 # Timestamp helpers
 # ---------------------------------------------------------------------------
 
 
-def make_timestamp(
+def make_timestamp(  # noqa: PLR0913
     year: int = 2026,
     month: int = 3,
     day: int = 1,
@@ -45,7 +44,7 @@ FIXED_SPAN_ID   = "b" * 16  # 16 lowercase hex chars
 
 
 @pytest.fixture()
-def minimal_event_kwargs() -> Dict[str, Any]:
+def minimal_event_kwargs() -> dict[str, Any]:
     """Return the minimum set of kwargs required to build a valid Event."""
     return {
         "event_type": EventType.TRACE_SPAN_COMPLETED,
@@ -57,13 +56,13 @@ def minimal_event_kwargs() -> Dict[str, Any]:
 
 
 @pytest.fixture()
-def minimal_event(minimal_event_kwargs: Dict[str, Any]) -> Event:
+def minimal_event(minimal_event_kwargs: dict[str, Any]) -> Event:
     """A fully valid minimal Event."""
     return Event(**minimal_event_kwargs)
 
 
 @pytest.fixture()
-def full_event(minimal_event_kwargs: Dict[str, Any]) -> Event:
+def full_event(minimal_event_kwargs: dict[str, Any]) -> Event:
     """An Event with all optional fields populated."""
     return Event(
         **minimal_event_kwargs,
@@ -81,7 +80,7 @@ def full_event(minimal_event_kwargs: Dict[str, Any]) -> Event:
 
 
 @pytest.fixture()
-def event_dict(minimal_event: Event) -> Dict[str, Any]:
+def event_dict(minimal_event: Event) -> dict[str, Any]:
     """A dict representation of a valid event (round-trip source)."""
     return json.loads(minimal_event.to_json())
 

@@ -6,10 +6,10 @@
 from __future__ import annotations
 
 import time
-from typing import List
 
 import pytest
 
+from tests.conftest import FIXED_SPAN_ID, FIXED_TIMESTAMP, FIXED_TRACE_ID
 from tracium import Event, EventType, Tags
 from tracium.exceptions import SigningError, VerificationError
 from tracium.signing import (
@@ -25,28 +25,26 @@ from tracium.signing import (
     verify_chain,
 )
 
-from tests.conftest import FIXED_SPAN_ID, FIXED_TIMESTAMP, FIXED_TRACE_ID
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
-_SECRET = "test-hmac-secret-v1"
+_SECRET = "test-hmac-secret-v1"  # noqa: S105
 _SOURCE = "signing-daemon@1.0.0"
 
 
 def _event(**kwargs) -> Event:
-    defaults = dict(
-        event_type=EventType.TRACE_SPAN_COMPLETED,
-        source=_SOURCE,
-        payload={"span_name": "run", "status": "ok"},
-        timestamp=FIXED_TIMESTAMP,
-    )
+    defaults = {
+        "event_type": EventType.TRACE_SPAN_COMPLETED,
+        "source": _SOURCE,
+        "payload": {"span_name": "run", "status": "ok"},
+        "timestamp": FIXED_TIMESTAMP,
+    }
     defaults.update(kwargs)
     return Event(**defaults)
 
 
-def _chain(n: int, secret: str = _SECRET) -> List[Event]:
+def _chain(n: int, secret: str = _SECRET) -> list[Event]:
     """Build and return a fully signed chain of *n* events."""
     stream = AuditStream(org_secret=secret, source=_SOURCE)
     for i in range(n):
@@ -95,7 +93,7 @@ class TestCryptoHelpers:
     def test_checksum_is_64_hex_after_prefix(self) -> None:
         cs = _compute_checksum({"key": "val"})
         digest = cs[len("sha256:"):]
-        assert len(digest) == 64  # noqa: PLR2004
+        assert len(digest) == 64
         assert all(c in "0123456789abcdef" for c in digest)
 
     def test_same_payload_same_checksum(self) -> None:
@@ -125,7 +123,7 @@ class TestCryptoHelpers:
     def test_signature_hex_length(self) -> None:
         sig = _compute_signature("eid", "sha256:abc", "prev", _SECRET)
         digest = sig[len("hmac-sha256:"):]
-        assert len(digest) == 64  # noqa: PLR2004
+        assert len(digest) == 64
 
     def test_signature_changes_with_prev_id(self) -> None:
         s1 = _compute_signature("eid", "sha256:abc", None, _SECRET)
@@ -139,7 +137,7 @@ class TestCryptoHelpers:
 
 
 # ===========================================================================
-# sign()
+# sign()  # noqa: ERA001
 # ===========================================================================
 
 
@@ -216,7 +214,7 @@ class TestSign:
 
 
 # ===========================================================================
-# verify()
+# verify()  # noqa: ERA001
 # ===========================================================================
 
 
@@ -234,7 +232,7 @@ class TestVerify:
     def test_missing_signature_returns_false(self) -> None:
         # Build event with checksum but no signature
         event = _event()
-        from tracium.signing import _compute_checksum as _cc
+        from tracium.signing import _compute_checksum as _cc  # noqa: PLC0415
         payload_copy = dict(event.payload)
         cs = _cc(payload_copy)
         # Manually create event with checksum but no signature
@@ -311,7 +309,7 @@ class TestVerify:
 
 
 # ===========================================================================
-# assert_verified()
+# assert_verified()  # noqa: ERA001
 # ===========================================================================
 
 
@@ -328,7 +326,7 @@ class TestAssertVerified:
         assert exc_info.value.event_id == event.event_id
 
     def test_verification_error_is_tracium_error(self) -> None:
-        from tracium.exceptions import LLMSchemaError
+        from tracium.exceptions import LLMSchemaError  # noqa: PLC0415
         err = VerificationError(event_id="01ARYZ3NDEKTSV4RRFFQ69G5FA")
         assert isinstance(err, LLMSchemaError)
 
@@ -351,7 +349,7 @@ class TestAssertVerified:
 @pytest.mark.unit
 class TestChainVerificationResult:
     def test_immutable_frozen_dataclass(self) -> None:
-        from dataclasses import FrozenInstanceError
+        from dataclasses import FrozenInstanceError  # noqa: PLC0415
         result = ChainVerificationResult(
             valid=True, first_tampered=None, gaps=[], tampered_count=0
         )
@@ -369,7 +367,7 @@ class TestChainVerificationResult:
 
 
 # ===========================================================================
-# verify_chain()
+# verify_chain()  # noqa: ERA001
 # ===========================================================================
 
 
@@ -431,7 +429,7 @@ class TestVerifyChain:
                 prev_id=e.prev_id,
             )
         result = verify_chain(chain, org_secret=_SECRET)
-        assert result.tampered_count == 2  # noqa: PLR2004
+        assert result.tampered_count == 2
         assert result.first_tampered == chain[0].event_id  # earliest tampered
 
     def test_first_event_with_prev_id_is_a_gap(self) -> None:
@@ -450,7 +448,7 @@ class TestVerifyChain:
             signature=e.signature,
             prev_id="01ARYZ3NDEKTSV4RRFFQ69G5FA",  # non-None but fake
         )
-        modified_chain = [head_with_prev] + chain[1:]
+        modified_chain = [head_with_prev, *chain[1:]]
         result = verify_chain(modified_chain, org_secret=_SECRET)
         assert e.event_id in result.gaps
 
@@ -458,16 +456,16 @@ class TestVerifyChain:
         """Removing event[1] from the chain breaks event[2].prev_id linkage."""
         chain = _chain(4)
         # Delete event at index 1
-        truncated = [chain[0]] + chain[2:]
+        truncated = [chain[0], *chain[2:]]
         result = verify_chain(truncated, org_secret=_SECRET)
         assert result.valid is False
         assert chain[2].event_id in result.gaps
 
     def test_wrong_key_flags_all_events_as_tampered(self) -> None:
         chain = _chain(3)
-        result = verify_chain(chain, org_secret="wrong-key")
+        result = verify_chain(chain, org_secret="wrong-key")  # noqa: S106
         assert result.valid is False
-        assert result.tampered_count == 3  # noqa: PLR2004
+        assert result.tampered_count == 3
 
     def test_empty_secret_raises(self) -> None:
         with pytest.raises(SigningError):
@@ -481,7 +479,7 @@ class TestVerifyChain:
         """Chain with one key rotation segment verifies with key_map."""
         stream = AuditStream(org_secret=_SECRET, source=_SOURCE)
         stream.append(_event(payload={"i": 0, "status": "ok"}))
-        rotation_event = stream.rotate_key("new-secret-v2")
+        stream.rotate_key("new-secret-v2")
         stream.append(_event(payload={"i": 1, "status": "ok"}))
 
         result = stream.verify()
@@ -522,7 +520,7 @@ class TestAuditStreamConstruction:
 
     def test_whitespace_secret_raises(self) -> None:
         with pytest.raises(SigningError):
-            AuditStream(org_secret="   ", source=_SOURCE)
+            AuditStream(org_secret="   ", source=_SOURCE)  # noqa: S106
 
     def test_repr_never_exposes_secret(self) -> None:
         stream = AuditStream(org_secret=_SECRET, source=_SOURCE)
@@ -544,7 +542,7 @@ class TestAuditStreamConstruction:
 
 
 # ===========================================================================
-# AuditStream.append()
+# AuditStream.append()  # noqa: ERA001
 # ===========================================================================
 
 
@@ -571,7 +569,7 @@ class TestAuditStreamAppend:
         stream = AuditStream(org_secret=_SECRET, source=_SOURCE)
         for i in range(5):
             stream.append(_event(payload={"i": i}))
-        assert len(stream) == 5  # noqa: PLR2004
+        assert len(stream) == 5
 
     def test_events_property_returns_copy(self) -> None:
         stream = AuditStream(org_secret=_SECRET, source=_SOURCE)
@@ -595,7 +593,7 @@ class TestAuditStreamAppend:
 
 
 # ===========================================================================
-# AuditStream.rotate_key()
+# AuditStream.rotate_key()  # noqa: ERA001
 # ===========================================================================
 
 
@@ -642,10 +640,10 @@ class TestAuditStreamRotateKey:
         stream.append(_event())
         stream.rotate_key("new-secret")
         # 1 regular + 1 rotation event
-        assert len(stream) == 2  # noqa: PLR2004
+        assert len(stream) == 2
 
     def test_multiple_rotations_chain_verifies(self) -> None:
-        stream = AuditStream(org_secret="key-1", source=_SOURCE)
+        stream = AuditStream(org_secret="key-1", source=_SOURCE)  # noqa: S106
         stream.append(_event(payload={"seq": 0}))
         stream.rotate_key("key-2")
         stream.append(_event(payload={"seq": 1}))
@@ -662,7 +660,7 @@ class TestAuditStreamRotateKey:
 
 
 # ===========================================================================
-# AuditStream.verify()
+# AuditStream.verify()  # noqa: ERA001
 # ===========================================================================
 
 
@@ -716,8 +714,8 @@ class TestAuditEventTypes:
         assert len(EventType.AUDIT_KEY_ROTATED.description) > 0
 
     def test_audit_reserved_namespace(self) -> None:
-        from tracium.types import validate_custom
-        from tracium.exceptions import EventTypeError
+        from tracium.exceptions import EventTypeError  # noqa: PLC0415
+        from tracium.types import validate_custom  # noqa: PLC0415
         with pytest.raises(EventTypeError):
             validate_custom("llm.audit.custom.event")
 
@@ -730,7 +728,7 @@ class TestAuditEventTypes:
 @pytest.mark.unit
 class TestSigningError:
     def test_is_tracium_error(self) -> None:
-        from tracium.exceptions import LLMSchemaError
+        from tracium.exceptions import LLMSchemaError  # noqa: PLC0415
         err = SigningError("bad key")
         assert isinstance(err, LLMSchemaError)
 
@@ -757,7 +755,7 @@ class TestSigningError:
 @pytest.mark.security
 class TestSigningSecurity:
     def test_audit_stream_repr_never_exposes_secret(self) -> None:
-        secret = "ultra-sensitive-secret-xyz"
+        secret = "ultra-sensitive-secret-xyz"  # noqa: S105
         stream = AuditStream(org_secret=secret, source=_SOURCE)
         assert secret not in repr(stream)
         assert secret not in str(stream)
@@ -833,7 +831,7 @@ class TestSigningPerformance:
         signed = sign(event, _SECRET)
         verify(signed, _SECRET)
         elapsed_ms = (time.perf_counter() - t0) * 1000
-        assert elapsed_ms < 5, f"sign+verify took {elapsed_ms:.2f}ms > 5ms"  # noqa: PLR2004
+        assert elapsed_ms < 5, f"sign+verify took {elapsed_ms:.2f}ms > 5ms"
 
     def test_verify_chain_1000_events_reasonable(self) -> None:
         """Verify 1000-event chain completes in reasonable time."""
@@ -842,4 +840,4 @@ class TestSigningPerformance:
         result = verify_chain(chain, org_secret=_SECRET)
         elapsed = time.perf_counter() - t0
         assert result.valid is True
-        assert elapsed < 5.0, f"verify_chain(1000) took {elapsed:.2f}s > 5s"  # noqa: PLR2004
+        assert elapsed < 5.0, f"verify_chain(1000) took {elapsed:.2f}s > 5s"

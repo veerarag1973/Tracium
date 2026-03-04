@@ -23,11 +23,11 @@ Available integrations
 from __future__ import annotations
 
 __all__: list[str] = [
-    "openai",
     "anthropic",
-    "ollama",
     "groq",
-    "together",
     "langchain",
     "llamaindex",
+    "ollama",
+    "openai",
+    "together",
 ]

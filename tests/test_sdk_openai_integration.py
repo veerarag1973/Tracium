@@ -9,7 +9,7 @@ from __future__ import annotations
 import asyncio
 import sys
 import types
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -23,8 +23,8 @@ def _make_usage(
     prompt_tokens: int = 100,
     completion_tokens: int = 50,
     total_tokens: int = 150,
-    cached_tokens: Optional[int] = None,
-    reasoning_tokens: Optional[int] = None,
+    cached_tokens: int | None = None,
+    reasoning_tokens: int | None = None,
 ) -> Any:
     """Build a mock OpenAI ``CompletionUsage`` object."""
     usage = MagicMock()
@@ -43,13 +43,13 @@ def _make_usage(
     return usage
 
 
-def _make_response(
+def _make_response(  # noqa: PLR0913
     model: str = "gpt-4o",
     prompt_tokens: int = 100,
     completion_tokens: int = 50,
     total_tokens: int = 150,
-    cached_tokens: Optional[int] = None,
-    reasoning_tokens: Optional[int] = None,
+    cached_tokens: int | None = None,
+    reasoning_tokens: int | None = None,
 ) -> Any:
     """Build a mock ``ChatCompletion`` response object."""
     resp = MagicMock()
@@ -71,20 +71,20 @@ def _make_response(
 
 class TestPricingTable:
     def test_known_models_present(self) -> None:
-        from tracium.integrations._pricing import OPENAI_PRICING
+        from tracium.integrations._pricing import OPENAI_PRICING  # noqa: PLC0415
 
         for model in ("gpt-4o", "gpt-4o-mini", "o1", "o3-mini", "gpt-3.5-turbo"):
             assert model in OPENAI_PRICING, f"{model} missing from pricing table"
 
     def test_every_entry_has_input_output(self) -> None:
-        from tracium.integrations._pricing import OPENAI_PRICING
+        from tracium.integrations._pricing import OPENAI_PRICING  # noqa: PLC0415
 
         for model, p in OPENAI_PRICING.items():
             assert "input" in p, f"{model}: missing 'input'"
             assert "output" in p, f"{model}: missing 'output'"
 
     def test_get_pricing_exact_match(self) -> None:
-        from tracium.integrations._pricing import get_pricing
+        from tracium.integrations._pricing import get_pricing  # noqa: PLC0415
 
         p = get_pricing("gpt-4o")
         assert p is not None
@@ -92,12 +92,12 @@ class TestPricingTable:
         assert p["output"] == 10.00
 
     def test_get_pricing_unknown_returns_none(self) -> None:
-        from tracium.integrations._pricing import get_pricing
+        from tracium.integrations._pricing import get_pricing  # noqa: PLC0415
 
         assert get_pricing("nonexistent-model-xyz") is None
 
     def test_get_pricing_cached_input(self) -> None:
-        from tracium.integrations._pricing import get_pricing
+        from tracium.integrations._pricing import get_pricing  # noqa: PLC0415
 
         p = get_pricing("gpt-4o-mini")
         assert p is not None
@@ -105,21 +105,21 @@ class TestPricingTable:
         assert p["cached_input"] == 0.075
 
     def test_get_pricing_o1_has_reasoning(self) -> None:
-        from tracium.integrations._pricing import get_pricing
+        from tracium.integrations._pricing import get_pricing  # noqa: PLC0415
 
         p = get_pricing("o1")
         assert p is not None
         assert "reasoning" in p
 
     def test_get_pricing_embedding_zero_output(self) -> None:
-        from tracium.integrations._pricing import get_pricing
+        from tracium.integrations._pricing import get_pricing  # noqa: PLC0415
 
         p = get_pricing("text-embedding-3-small")
         assert p is not None
         assert p["output"] == 0.0
 
     def test_list_models_returns_sorted_list(self) -> None:
-        from tracium.integrations._pricing import list_models
+        from tracium.integrations._pricing import list_models  # noqa: PLC0415
 
         models = list_models()
         assert isinstance(models, list)
@@ -127,13 +127,13 @@ class TestPricingTable:
         assert "gpt-4o" in models
 
     def test_pricing_date_is_set(self) -> None:
-        from tracium.integrations._pricing import PRICING_DATE
+        from tracium.integrations._pricing import PRICING_DATE  # noqa: PLC0415
 
         assert len(PRICING_DATE) == 10  # YYYY-MM-DD
         assert PRICING_DATE.startswith("20")
 
     def test_all_prices_non_negative(self) -> None:
-        from tracium.integrations._pricing import OPENAI_PRICING
+        from tracium.integrations._pricing import OPENAI_PRICING  # noqa: PLC0415
 
         for model, p in OPENAI_PRICING.items():
             for field, val in p.items():
@@ -147,10 +147,10 @@ class TestPricingTable:
 
 class TestNormalizeResponse:
     def test_basic_usage(self) -> None:
-        from tracium.integrations.openai import normalize_response
-        from tracium.namespaces.trace import GenAISystem
+        from tracium.integrations.openai import normalize_response  # noqa: PLC0415
+        from tracium.namespaces.trace import GenAISystem  # noqa: PLC0415
 
-        resp = _make_response(model="gpt-4o", prompt_tokens=100, completion_tokens=50, total_tokens=150)
+        resp = _make_response(model="gpt-4o", prompt_tokens=100, completion_tokens=50, total_tokens=150)  # noqa: E501
         token_usage, model_info, cost = normalize_response(resp)
 
         assert token_usage.input_tokens == 100
@@ -167,7 +167,7 @@ class TestNormalizeResponse:
         assert cost.total_cost_usd > 0
 
     def test_with_cached_tokens(self) -> None:
-        from tracium.integrations.openai import normalize_response
+        from tracium.integrations.openai import normalize_response  # noqa: PLC0415
 
         resp = _make_response(
             model="gpt-4o",
@@ -182,7 +182,7 @@ class TestNormalizeResponse:
         assert cost.cached_discount_usd > 0  # 100 cached @ cheaper rate → discount
 
     def test_with_reasoning_tokens_o1(self) -> None:
-        from tracium.integrations.openai import normalize_response
+        from tracium.integrations.openai import normalize_response  # noqa: PLC0415
 
         resp = _make_response(
             model="o1",
@@ -197,7 +197,7 @@ class TestNormalizeResponse:
         assert cost.reasoning_cost_usd > 0
 
     def test_unknown_model_zero_cost(self) -> None:
-        from tracium.integrations.openai import normalize_response
+        from tracium.integrations.openai import normalize_response  # noqa: PLC0415
 
         resp = _make_response(model="unknown-future-model-v99")
         _, _, cost = normalize_response(resp)
@@ -206,19 +206,19 @@ class TestNormalizeResponse:
         assert cost.input_cost_usd == 0.0
 
     def test_null_usage_gives_zero_tokens(self) -> None:
-        from tracium.integrations.openai import normalize_response
+        from tracium.integrations.openai import normalize_response  # noqa: PLC0415
 
         resp = MagicMock()
         resp.model = "gpt-4o"
         resp.usage = None
-        token_usage, model_info, cost = normalize_response(resp)
+        token_usage, _model_info, cost = normalize_response(resp)
 
         assert token_usage.input_tokens == 0
         assert token_usage.output_tokens == 0
         assert cost.total_cost_usd == 0.0
 
     def test_missing_model_uses_unknown(self) -> None:
-        from tracium.integrations.openai import normalize_response
+        from tracium.integrations.openai import normalize_response  # noqa: PLC0415
 
         resp = MagicMock()
         resp.model = None
@@ -228,7 +228,7 @@ class TestNormalizeResponse:
         assert model_info.name == "unknown"
 
     def test_gpt4o_mini_cost_calculation(self) -> None:
-        from tracium.integrations.openai import normalize_response
+        from tracium.integrations.openai import normalize_response  # noqa: PLC0415
 
         resp = _make_response(
             model="gpt-4o-mini",
@@ -244,7 +244,7 @@ class TestNormalizeResponse:
         assert abs(cost.total_cost_usd - 0.75) < 1e-6
 
     def test_gpt4o_cost_calculation(self) -> None:
-        from tracium.integrations.openai import normalize_response
+        from tracium.integrations.openai import normalize_response  # noqa: PLC0415
 
         resp = _make_response(
             model="gpt-4o",
@@ -261,8 +261,8 @@ class TestNormalizeResponse:
 
     def test_cost_breakdown_is_valid_dataclass(self) -> None:
         """CostBreakdown validates total = input + output + reasoning - discount."""
-        from tracium.integrations.openai import normalize_response
-        from tracium.namespaces.trace import CostBreakdown
+        from tracium.integrations.openai import normalize_response  # noqa: PLC0415
+        from tracium.namespaces.trace import CostBreakdown  # noqa: PLC0415
 
         resp = _make_response(
             model="gpt-4o",
@@ -278,7 +278,7 @@ class TestNormalizeResponse:
         assert abs(cost2.total_cost_usd - cost.total_cost_usd) < 1e-9
 
     def test_o3_mini_cost(self) -> None:
-        from tracium.integrations.openai import normalize_response
+        from tracium.integrations.openai import normalize_response  # noqa: PLC0415
 
         resp = _make_response(
             model="o3-mini",
@@ -300,19 +300,19 @@ class TestNormalizeResponse:
 
 class TestComputeCost:
     def test_zero_tokens_zero_cost(self) -> None:
-        from tracium.integrations.openai import _compute_cost
+        from tracium.integrations.openai import _compute_cost  # noqa: PLC0415
 
         cost = _compute_cost("gpt-4o", 0, 0, None, None)
         assert cost.total_cost_usd == 0.0
 
     def test_unknown_model_zero_cost(self) -> None:
-        from tracium.integrations.openai import _compute_cost
+        from tracium.integrations.openai import _compute_cost  # noqa: PLC0415
 
         cost = _compute_cost("my-internal-llm", 1000, 500, None, None)
         assert cost.total_cost_usd == 0.0
 
     def test_cached_discount_reduces_cost(self) -> None:
-        from tracium.integrations.openai import _compute_cost
+        from tracium.integrations.openai import _compute_cost  # noqa: PLC0415
 
         # Without cache discount
         cost_no_cache = _compute_cost("gpt-4o", 1000, 500, None, None)
@@ -323,7 +323,7 @@ class TestComputeCost:
         assert cost_cached.total_cost_usd < cost_no_cache.total_cost_usd
 
     def test_reasoning_tokens_separate_rate(self) -> None:
-        from tracium.integrations.openai import _compute_cost
+        from tracium.integrations.openai import _compute_cost  # noqa: PLC0415
 
         cost = _compute_cost("o1", 100, 200, None, 150)
         assert cost.reasoning_cost_usd > 0
@@ -332,15 +332,15 @@ class TestComputeCost:
 
     def test_non_negative_total(self) -> None:
         """Even with large cached discount, total is clamped to >= 0."""
-        from tracium.integrations.openai import _compute_cost
+        from tracium.integrations.openai import _compute_cost  # noqa: PLC0415
 
         # This edge case shouldn't arise with real data, but guard it anyway
         cost = _compute_cost("gpt-4o", 10, 5, 10, None)
         assert cost.total_cost_usd >= 0.0
 
     def test_pricing_date_attached(self) -> None:
-        from tracium.integrations.openai import _compute_cost
-        from tracium.integrations._pricing import PRICING_DATE
+        from tracium.integrations._pricing import PRICING_DATE  # noqa: PLC0415
+        from tracium.integrations.openai import _compute_cost  # noqa: PLC0415
 
         cost = _compute_cost("gpt-4o", 1000, 500, None, None)
         assert cost.pricing_date == PRICING_DATE
@@ -356,10 +356,10 @@ def _build_mock_openai() -> types.ModuleType:
     openai_mod = types.ModuleType("openai")
 
     # Use real functions so functools.wraps can copy __name__ / __doc__ safely
-    def _sync_create(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
+    def _sync_create(*args: Any, **kwargs: Any) -> Any:
         return _make_response()
 
-    async def _async_create(*args: Any, **kwargs: Any) -> Any:  # noqa: ANN401
+    async def _async_create(*args: Any, **kwargs: Any) -> Any:
         return _make_response()
 
     # Completions class (sync)
@@ -404,25 +404,25 @@ class TestPatchLifecycle:
                 del sys.modules[key]
 
     def test_is_patched_false_when_not_installed(self) -> None:
-        from tracium.integrations.openai import is_patched
+        from tracium.integrations.openai import is_patched  # noqa: PLC0415
 
         # No openai in sys.modules → returns False (not raises)
         assert is_patched() is False
 
     def test_patch_raises_without_openai(self) -> None:
-        from tracium.integrations.openai import patch
+        from tracium.integrations.openai import patch  # noqa: PLC0415
 
         with pytest.raises(ImportError, match="openai"):
             patch()
 
     def test_unpatch_noop_without_openai(self) -> None:
-        from tracium.integrations.openai import unpatch
+        from tracium.integrations.openai import unpatch  # noqa: PLC0415
 
         with pytest.raises(ImportError, match="openai"):
             unpatch()
 
     def test_patch_sets_flag(self) -> None:
-        from tracium.integrations.openai import patch, is_patched, unpatch
+        from tracium.integrations.openai import is_patched, patch  # noqa: PLC0415
 
         _build_mock_openai()
         try:
@@ -432,7 +432,7 @@ class TestPatchLifecycle:
             _uninstall_mock_openai()
 
     def test_patch_idempotent(self) -> None:
-        from tracium.integrations.openai import patch, is_patched
+        from tracium.integrations.openai import is_patched, patch  # noqa: PLC0415
 
         _build_mock_openai()
         try:
@@ -443,7 +443,7 @@ class TestPatchLifecycle:
             _uninstall_mock_openai()
 
     def test_unpatch_removes_flag(self) -> None:
-        from tracium.integrations.openai import patch, unpatch, is_patched
+        from tracium.integrations.openai import is_patched, patch, unpatch  # noqa: PLC0415
 
         _build_mock_openai()
         try:
@@ -456,7 +456,7 @@ class TestPatchLifecycle:
 
     def test_unpatch_noop_when_not_patched(self) -> None:
         """unpatch() when already unpatched should not raise."""
-        from tracium.integrations.openai import unpatch
+        from tracium.integrations.openai import unpatch  # noqa: PLC0415
 
         _build_mock_openai()
         try:
@@ -472,14 +472,14 @@ class TestPatchLifecycle:
 
 class TestAutoPopulateSpan:
     def test_populates_active_span(self) -> None:
-        from tracium._span import SpanContextManager
-        from tracium.integrations.openai import _auto_populate_span
+        from tracium._span import SpanContextManager  # noqa: PLC0415
+        from tracium.integrations.openai import _auto_populate_span  # noqa: PLC0415
 
         with SpanContextManager("test-span") as span:
             assert span.token_usage is None
             assert span.cost is None
 
-            resp = _make_response(model="gpt-4o-mini", prompt_tokens=100, completion_tokens=30, total_tokens=130)
+            resp = _make_response(model="gpt-4o-mini", prompt_tokens=100, completion_tokens=30, total_tokens=130)  # noqa: E501
             _auto_populate_span(resp)
 
             assert span.token_usage is not None
@@ -489,9 +489,9 @@ class TestAutoPopulateSpan:
             assert span.cost.total_cost_usd > 0
 
     def test_does_not_overwrite_manual_token_usage(self) -> None:
-        from tracium._span import SpanContextManager
-        from tracium.namespaces.trace import TokenUsage
-        from tracium.integrations.openai import _auto_populate_span
+        from tracium._span import SpanContextManager  # noqa: PLC0415
+        from tracium.integrations.openai import _auto_populate_span  # noqa: PLC0415
+        from tracium.namespaces.trace import TokenUsage  # noqa: PLC0415
 
         manual_usage = TokenUsage(input_tokens=999, output_tokens=1, total_tokens=1000)
 
@@ -503,8 +503,8 @@ class TestAutoPopulateSpan:
             assert span.token_usage.input_tokens == 999
 
     def test_no_active_span_is_noop(self) -> None:
-        from tracium._span import _span_stack
-        from tracium.integrations.openai import _auto_populate_span
+        from tracium._span import _span_stack  # noqa: PLC0415
+        from tracium.integrations.openai import _auto_populate_span  # noqa: PLC0415
 
         # Ensure stack is empty
         stack = _span_stack()
@@ -514,8 +514,8 @@ class TestAutoPopulateSpan:
         _auto_populate_span(_make_response())
 
     def test_sets_model_name_if_not_set(self) -> None:
-        from tracium._span import SpanContextManager
-        from tracium.integrations.openai import _auto_populate_span
+        from tracium._span import SpanContextManager  # noqa: PLC0415
+        from tracium.integrations.openai import _auto_populate_span  # noqa: PLC0415
 
         with SpanContextManager("test-span") as span:
             assert span.model is None
@@ -523,16 +523,16 @@ class TestAutoPopulateSpan:
             assert span.model == "gpt-4o"
 
     def test_does_not_overwrite_existing_model(self) -> None:
-        from tracium._span import SpanContextManager
-        from tracium.integrations.openai import _auto_populate_span
+        from tracium._span import SpanContextManager  # noqa: PLC0415
+        from tracium.integrations.openai import _auto_populate_span  # noqa: PLC0415
 
         with SpanContextManager("test-span", model="my-custom-model") as span:
             _auto_populate_span(_make_response(model="gpt-4o"))
             assert span.model == "my-custom-model"
 
     def test_malformed_response_does_not_raise(self) -> None:
-        from tracium._span import SpanContextManager
-        from tracium.integrations.openai import _auto_populate_span
+        from tracium._span import SpanContextManager  # noqa: PLC0415
+        from tracium.integrations.openai import _auto_populate_span  # noqa: PLC0415
 
         with SpanContextManager("test-span") as span:  # noqa: F841
             _auto_populate_span("not-a-response-object")  # should swallow error
@@ -546,8 +546,7 @@ class TestAutoPopulateSpan:
 class TestEndToEnd:
     def test_span_payload_contains_token_data(self) -> None:
         """After _auto_populate_span, to_span_payload includes token_usage."""
-        from tracium._span import Span, _span_id, _trace_id, _now_ns
-        from tracium.integrations.openai import _auto_populate_span
+        from tracium._span import Span, _now_ns, _span_id, _trace_id  # noqa: PLC0415
 
         span = Span(
             name="e2e-test",
@@ -556,8 +555,8 @@ class TestEndToEnd:
             start_ns=_now_ns(),
         )
         # Simulate the wrapper setting data
-        resp = _make_response(model="gpt-4o-mini", prompt_tokens=200, completion_tokens=80, total_tokens=280)
-        from tracium.integrations.openai import normalize_response
+        resp = _make_response(model="gpt-4o-mini", prompt_tokens=200, completion_tokens=80, total_tokens=280)  # noqa: E501
+        from tracium.integrations.openai import normalize_response  # noqa: PLC0415
         token_usage, model_info, cost = normalize_response(resp)
         span.token_usage = token_usage
         span.cost = cost
@@ -574,7 +573,7 @@ class TestEndToEnd:
 
     def test_normalize_then_validate_cost_breakdown(self) -> None:
         """CostBreakdown from normalize_response passes its own __post_init__."""
-        from tracium.integrations.openai import normalize_response
+        from tracium.integrations.openai import normalize_response  # noqa: PLC0415
 
         # This exercises the __post_init__ validator in CostBreakdown
         for model in ["gpt-4o", "gpt-4o-mini", "o1", "o3-mini", "gpt-3.5-turbo"]:
@@ -589,7 +588,7 @@ class TestEndToEnd:
             assert cost.total_cost_usd >= 0
 
     def test_with_cached_tokens_cost_is_less(self) -> None:
-        from tracium.integrations.openai import normalize_response
+        from tracium.integrations.openai import normalize_response  # noqa: PLC0415
 
         base = _make_response("gpt-4o", 1000, 500, 1500)
         cached = _make_response("gpt-4o", 1000, 500, 1500, cached_tokens=500)
@@ -609,7 +608,7 @@ class TestEndToEnd:
 class TestPricingFallback:
     def test_get_pricing_strips_version_suffix(self) -> None:
         """get_pricing should match 'gpt-4o-mini' for 'gpt-4o-mini-2099-01-01'."""
-        from tracium.integrations._pricing import get_pricing, OPENAI_PRICING
+        from tracium.integrations._pricing import OPENAI_PRICING, get_pricing  # noqa: PLC0415
 
         # Add a fake model with a version suffix to the table temporarily
         OPENAI_PRICING["test-base-model"] = {"input": 1.0, "output": 2.0}
@@ -623,7 +622,7 @@ class TestPricingFallback:
 
     def test_get_pricing_version_strip_no_match(self) -> None:
         """Stripping prefixes that still don't match returns None."""
-        from tracium.integrations._pricing import get_pricing
+        from tracium.integrations._pricing import get_pricing  # noqa: PLC0415
 
         assert get_pricing("completely-unknown-xyz-2099-01-01") is None
 
@@ -643,14 +642,14 @@ class TestPatchedMethodInvocation:
 
     def test_patched_sync_create_populates_span(self) -> None:
         """Calling the patched Completions.create executes the wrapper body."""
-        from tracium.integrations.openai import patch
-        from tracium._span import SpanContextManager
+        from tracium._span import SpanContextManager  # noqa: PLC0415
+        from tracium.integrations.openai import patch  # noqa: PLC0415
 
         _build_mock_openai()
         patch()
 
         completions_mod = sys.modules["openai.resources.chat.completions"]
-        Completions = completions_mod.Completions
+        Completions = completions_mod.Completions  # noqa: N806
 
         with SpanContextManager("test") as span:
             # Call the patched create — simulates an actual API call
@@ -659,14 +658,14 @@ class TestPatchedMethodInvocation:
 
     def test_patched_async_create_populates_span(self) -> None:
         """Calling the patched AsyncCompletions.create executes the async wrapper."""
-        from tracium.integrations.openai import patch
-        from tracium._span import SpanContextManager
+        from tracium._span import SpanContextManager  # noqa: PLC0415
+        from tracium.integrations.openai import patch  # noqa: PLC0415
 
         _build_mock_openai()
         patch()
 
         completions_mod = sys.modules["openai.resources.chat.completions"]
-        AsyncCompletions = completions_mod.AsyncCompletions
+        AsyncCompletions = completions_mod.AsyncCompletions  # noqa: N806
 
         async def _run() -> None:
             with SpanContextManager("async-test") as span:
@@ -681,7 +680,7 @@ class TestNormalizeResponseBranches:
 
     def test_prompt_tokens_details_none(self) -> None:
         """ptd is None → cached_tokens stays None."""
-        from tracium.integrations.openai import normalize_response
+        from tracium.integrations.openai import normalize_response  # noqa: PLC0415
 
         resp = MagicMock()
         resp.model = "gpt-4o"
@@ -698,7 +697,7 @@ class TestNormalizeResponseBranches:
 
     def test_completion_tokens_details_none(self) -> None:
         """ctd is None → reasoning_tokens stays None."""
-        from tracium.integrations.openai import normalize_response
+        from tracium.integrations.openai import normalize_response  # noqa: PLC0415
 
         resp = MagicMock()
         resp.model = "gpt-4o"
@@ -715,7 +714,7 @@ class TestNormalizeResponseBranches:
 
     def test_cached_tokens_subfield_is_none(self) -> None:
         """ptd is not None but cached_tokens field is None."""
-        from tracium.integrations.openai import normalize_response
+        from tracium.integrations.openai import normalize_response  # noqa: PLC0415
 
         resp = MagicMock()
         resp.model = "gpt-4o"
@@ -735,7 +734,7 @@ class TestNormalizeResponseBranches:
 
     def test_reasoning_tokens_subfield_is_none(self) -> None:
         """ctd is not None but reasoning_tokens field is None."""
-        from tracium.integrations.openai import normalize_response
+        from tracium.integrations.openai import normalize_response  # noqa: PLC0415
 
         resp = MagicMock()
         resp.model = "gpt-4o"

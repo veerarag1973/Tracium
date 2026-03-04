@@ -14,18 +14,19 @@ from __future__ import annotations
 
 import pytest
 
-# ── trace ─────────────────────────────────────────────────────────────────────
-from tracium.namespaces.trace import (
-    AgentRunPayload,
-    AgentStepPayload,
-    CostBreakdown,
-    GenAIOperationName,
-    GenAISystem,
-    ModelInfo,
-    SpanKind,
-    SpanPayload,
-    TokenUsage,
-    ToolCall,
+# ── audit ─────────────────────────────────────────────────────────────────────
+from tracium.namespaces.audit import (
+    AuditChainTamperedPayload,
+    AuditChainVerifiedPayload,
+    AuditKeyRotatedPayload,
+)
+
+# ── cache ─────────────────────────────────────────────────────────────────────
+from tracium.namespaces.cache import (
+    CacheEvictedPayload,
+    CacheHitPayload,
+    CacheMissPayload,
+    CacheWrittenPayload,
 )
 
 # ── cost ──────────────────────────────────────────────────────────────────────
@@ -63,21 +64,6 @@ from tracium.namespaces.prompt import (
     PromptVersionChangedPayload,
 )
 
-# ── template ──────────────────────────────────────────────────────────────────
-from tracium.namespaces.template import (
-    TemplateRegisteredPayload,
-    TemplateValidationFailedPayload,
-    TemplateVariableBoundPayload,
-)
-
-# ── cache ─────────────────────────────────────────────────────────────────────
-from tracium.namespaces.cache import (
-    CacheEvictedPayload,
-    CacheHitPayload,
-    CacheMissPayload,
-    CacheWrittenPayload,
-)
-
 # ── redact ────────────────────────────────────────────────────────────────────
 from tracium.namespaces.redact import (
     RedactAppliedPayload,
@@ -85,11 +71,25 @@ from tracium.namespaces.redact import (
     RedactPiiDetectedPayload,
 )
 
-# ── audit ─────────────────────────────────────────────────────────────────────
-from tracium.namespaces.audit import (
-    AuditChainTamperedPayload,
-    AuditChainVerifiedPayload,
-    AuditKeyRotatedPayload,
+# ── template ──────────────────────────────────────────────────────────────────
+from tracium.namespaces.template import (
+    TemplateRegisteredPayload,
+    TemplateValidationFailedPayload,
+    TemplateVariableBoundPayload,
+)
+
+# ── trace ─────────────────────────────────────────────────────────────────────
+from tracium.namespaces.trace import (
+    AgentRunPayload,
+    AgentStepPayload,
+    CostBreakdown,
+    GenAIOperationName,
+    GenAISystem,
+    ModelInfo,
+    SpanKind,
+    SpanPayload,
+    TokenUsage,
+    ToolCall,
 )
 
 # ===========================================================================
@@ -115,17 +115,17 @@ def _cost_breakdown() -> CostBreakdown:
 
 
 def _span_payload(**kw) -> SpanPayload:
-    defaults = dict(
-        span_id=SPAN_ID,
-        trace_id=TRACE_ID,
-        span_name="test_span",
-        operation=GenAIOperationName.CHAT,
-        span_kind=SpanKind.CLIENT,
-        status="ok",
-        start_time_unix_nano=TS_START,
-        end_time_unix_nano=TS_END,
-        duration_ms=1000.0,
-    )
+    defaults = {
+        "span_id": SPAN_ID,
+        "trace_id": TRACE_ID,
+        "span_name": "test_span",
+        "operation": GenAIOperationName.CHAT,
+        "span_kind": SpanKind.CLIENT,
+        "status": "ok",
+        "start_time_unix_nano": TS_START,
+        "end_time_unix_nano": TS_END,
+        "duration_ms": 1000.0,
+    }
     defaults.update(kw)
     return SpanPayload(**defaults)
 
@@ -194,7 +194,7 @@ class TestToolCall:
         assert tc.duration_ms is None
 
     def test_round_trip(self) -> None:
-        tc = ToolCall(tool_call_id="tc_001", function_name="search", status="success", duration_ms=42.5)
+        tc = ToolCall(tool_call_id="tc_001", function_name="search", status="success", duration_ms=42.5)  # noqa: E501
         assert ToolCall.from_dict(tc.to_dict()) == tc
 
     def test_invalid_status(self) -> None:
@@ -265,20 +265,20 @@ class TestSpanPayload:
 
 class TestAgentStepPayload:
     def _make(self, **kw) -> AgentStepPayload:
-        defaults = dict(
-            agent_run_id="run_001",
-            step_index=0,
-            span_id=SPAN_ID,
-            trace_id=TRACE_ID,
-            operation=GenAIOperationName.CHAT,
-            tool_calls=[],
-            reasoning_steps=[],
-            decision_points=[],
-            status="ok",
-            start_time_unix_nano=TS_START,
-            end_time_unix_nano=TS_END,
-            duration_ms=500.0,
-        )
+        defaults = {
+            "agent_run_id": "run_001",
+            "step_index": 0,
+            "span_id": SPAN_ID,
+            "trace_id": TRACE_ID,
+            "operation": GenAIOperationName.CHAT,
+            "tool_calls": [],
+            "reasoning_steps": [],
+            "decision_points": [],
+            "status": "ok",
+            "start_time_unix_nano": TS_START,
+            "end_time_unix_nano": TS_END,
+            "duration_ms": 500.0,
+        }
         defaults.update(kw)
         return AgentStepPayload(**defaults)
 
@@ -313,21 +313,21 @@ class TestAgentStepPayload:
 
 class TestAgentRunPayload:
     def _make(self, **kw) -> AgentRunPayload:
-        defaults = dict(
-            agent_run_id="run_001",
-            agent_name="customer_support_agent",
-            trace_id=TRACE_ID,
-            root_span_id=SPAN_ID,
-            total_steps=3,
-            total_model_calls=5,
-            total_tool_calls=2,
-            total_token_usage=_token_usage(),
-            total_cost=_cost_breakdown(),
-            status="ok",
-            start_time_unix_nano=TS_START,
-            end_time_unix_nano=TS_END,
-            duration_ms=2000.0,
-        )
+        defaults = {
+            "agent_run_id": "run_001",
+            "agent_name": "customer_support_agent",
+            "trace_id": TRACE_ID,
+            "root_span_id": SPAN_ID,
+            "total_steps": 3,
+            "total_model_calls": 5,
+            "total_tool_calls": 2,
+            "total_token_usage": _token_usage(),
+            "total_cost": _cost_breakdown(),
+            "status": "ok",
+            "start_time_unix_nano": TS_START,
+            "end_time_unix_nano": TS_END,
+            "duration_ms": 2000.0,
+        }
         defaults.update(kw)
         return AgentRunPayload(**defaults)
 
@@ -382,7 +382,7 @@ class TestCostPayloads:
 
     def test_cost_token_recorded_rejects_bad_cost(self) -> None:
         with pytest.raises(TypeError):
-            CostTokenRecordedPayload(cost="not-a-breakdown", token_usage=_token_usage(), model=_model_info())  # type: ignore[arg-type]
+            CostTokenRecordedPayload(cost="not-a-breakdown", token_usage=_token_usage(), model=_model_info())  # type: ignore[arg-type]  # noqa: E501
 
     def test_cost_session_recorded_required(self) -> None:
         p = CostSessionRecordedPayload(
@@ -421,7 +421,7 @@ class TestCostPayloads:
 
     def test_cost_attributed_invalid_type(self) -> None:
         with pytest.raises(ValueError):
-            CostAttributedPayload(cost=_cost_breakdown(), attribution_target="x", attribution_type="unknown")
+            CostAttributedPayload(cost=_cost_breakdown(), attribution_target="x", attribution_type="unknown")  # noqa: E501
 
 
 # ===========================================================================
@@ -537,11 +537,11 @@ class TestEvalPayloads:
         assert restored.severity == "high"
 
     def test_scenario_started_required(self) -> None:
-        p = EvalScenarioStartedPayload(scenario_id="sc_01", scenario_name="rag_accuracy", evaluator="harness")
+        p = EvalScenarioStartedPayload(scenario_id="sc_01", scenario_name="rag_accuracy", evaluator="harness")  # noqa: E501
         assert p.dataset_id is None
 
     def test_scenario_started_round_trip(self) -> None:
-        p = EvalScenarioStartedPayload(scenario_id="sc_01", scenario_name="rag", evaluator="harness")
+        p = EvalScenarioStartedPayload(scenario_id="sc_01", scenario_name="rag", evaluator="harness")  # noqa: E501
         restored = EvalScenarioStartedPayload.from_dict(p.to_dict())
         assert restored.scenario_name == "rag"
 
@@ -625,7 +625,7 @@ class TestFencePayloads:
 
 class TestGuardPayload:
     def test_required_fields(self) -> None:
-        p = GuardPayload(classifier="pii_classifier", direction="input", action="blocked", score=0.95)
+        p = GuardPayload(classifier="pii_classifier", direction="input", action="blocked", score=0.95)  # noqa: E501
         assert p.categories == []
         assert p.latency_ms is None
 
@@ -652,7 +652,7 @@ class TestGuardPayload:
 
     def test_negative_latency_rejected(self) -> None:
         with pytest.raises(ValueError):
-            GuardPayload(classifier="cls", direction="input", action="passed", score=0.1, latency_ms=-1.0)
+            GuardPayload(classifier="cls", direction="input", action="passed", score=0.1, latency_ms=-1.0)  # noqa: E501
 
 
 # ===========================================================================
@@ -742,7 +742,7 @@ class TestTemplatePayloads:
             TemplateRegisteredPayload(template_id="t", version="v1", template_hash="bad")
 
     def test_variable_bound_required(self) -> None:
-        p = TemplateVariableBoundPayload(template_id="tmpl_01", version="v1", variable_name="user_name")
+        p = TemplateVariableBoundPayload(template_id="tmpl_01", version="v1", variable_name="user_name")  # noqa: E501
         assert p.value_hash is None
 
     def test_variable_bound_round_trip(self) -> None:
@@ -791,12 +791,12 @@ class TestCachePayloads:
         assert p.best_similarity_score is None
 
     def test_miss_round_trip(self) -> None:
-        p = CacheMissPayload(key_hash="b" * 64, namespace="llm_responses", best_similarity_score=0.5)
+        p = CacheMissPayload(key_hash="b" * 64, namespace="llm_responses", best_similarity_score=0.5)  # noqa: E501
         restored = CacheMissPayload.from_dict(p.to_dict())
         assert restored.best_similarity_score == pytest.approx(0.5)
 
     def test_evicted_required(self) -> None:
-        p = CacheEvictedPayload(key_hash="c" * 64, namespace="llm_responses", eviction_reason="ttl_expired")
+        p = CacheEvictedPayload(key_hash="c" * 64, namespace="llm_responses", eviction_reason="ttl_expired")  # noqa: E501
         assert p.entry_age_seconds is None
 
     def test_evicted_invalid_reason(self) -> None:
@@ -804,7 +804,7 @@ class TestCachePayloads:
             CacheEvictedPayload(key_hash="c" * 64, namespace="ns", eviction_reason="unknown_reason")
 
     def test_evicted_round_trip(self) -> None:
-        p = CacheEvictedPayload(key_hash="c" * 64, namespace="ns", eviction_reason="capacity_exceeded")
+        p = CacheEvictedPayload(key_hash="c" * 64, namespace="ns", eviction_reason="capacity_exceeded")  # noqa: E501
         restored = CacheEvictedPayload.from_dict(p.to_dict())
         assert restored.eviction_reason == "capacity_exceeded"
 

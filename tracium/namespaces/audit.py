@@ -9,12 +9,12 @@ AuditChainTamperedPayload   llm.audit.chain.tampered
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 __all__ = [
-    "AuditKeyRotatedPayload",
-    "AuditChainVerifiedPayload",
     "AuditChainTamperedPayload",
+    "AuditChainVerifiedPayload",
+    "AuditKeyRotatedPayload",
 ]
 
 _VALID_ROTATION_REASONS = frozenset({
@@ -36,9 +36,9 @@ class AuditKeyRotatedPayload:
     previous_key_id: str
     rotated_at: str   # ISO 8601 timestamp with exactly 6 decimal places
     rotated_by: str
-    rotation_reason: Optional[str] = None
+    rotation_reason: str | None = None
     key_algorithm: str = "HMAC-SHA256"
-    effective_from_event_id: Optional[str] = None  # ULID
+    effective_from_event_id: str | None = None  # ULID
 
     def __post_init__(self) -> None:
         if not self.key_id:
@@ -51,11 +51,12 @@ class AuditKeyRotatedPayload:
             raise ValueError("AuditKeyRotatedPayload.rotated_by must be non-empty")
         if self.rotation_reason is not None and self.rotation_reason not in _VALID_ROTATION_REASONS:
             raise ValueError(
-                f"AuditKeyRotatedPayload.rotation_reason must be one of {sorted(_VALID_ROTATION_REASONS)}"
+                f"AuditKeyRotatedPayload.rotation_reason must be one of {sorted(_VALID_ROTATION_REASONS)}"  # noqa: E501
             )
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "key_id": self.key_id,
             "previous_key_id": self.previous_key_id,
             "rotated_at": self.rotated_at,
@@ -69,7 +70,8 @@ class AuditKeyRotatedPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "AuditKeyRotatedPayload":
+    def from_dict(cls, data: dict[str, Any]) -> AuditKeyRotatedPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             key_id=data["key_id"],
             previous_key_id=data["previous_key_id"],
@@ -103,7 +105,8 @@ class AuditChainVerifiedPayload:
         if not self.verified_by:
             raise ValueError("AuditChainVerifiedPayload.verified_by must be non-empty")
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
         return {
             "verified_from_event_id": self.verified_from_event_id,
             "verified_to_event_id": self.verified_to_event_id,
@@ -113,7 +116,8 @@ class AuditChainVerifiedPayload:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "AuditChainVerifiedPayload":
+    def from_dict(cls, data: dict[str, Any]) -> AuditChainVerifiedPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             verified_from_event_id=data["verified_from_event_id"],
             verified_to_event_id=data["verified_to_event_id"],
@@ -131,9 +135,9 @@ class AuditChainTamperedPayload:
     tampered_count: int
     detected_at: str
     detected_by: str
-    gap_count: Optional[int] = None
-    gap_prev_ids: List[str] = field(default_factory=list)
-    severity: Optional[str] = None  # "low"|"medium"|"high"|"critical"
+    gap_count: int | None = None
+    gap_prev_ids: list[str] = field(default_factory=list)
+    severity: str | None = None  # "low"|"medium"|"high"|"critical"
 
     def __post_init__(self) -> None:
         if not self.first_tampered_event_id:
@@ -145,10 +149,11 @@ class AuditChainTamperedPayload:
         if not self.detected_by:
             raise ValueError("AuditChainTamperedPayload.detected_by must be non-empty")
         if self.severity is not None and self.severity not in _VALID_SEVERITIES:
-            raise ValueError(f"AuditChainTamperedPayload.severity must be one of {sorted(_VALID_SEVERITIES)}")
+            raise ValueError(f"AuditChainTamperedPayload.severity must be one of {sorted(_VALID_SEVERITIES)}")  # noqa: E501
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "first_tampered_event_id": self.first_tampered_event_id,
             "tampered_count": self.tampered_count,
             "detected_at": self.detected_at,
@@ -163,7 +168,8 @@ class AuditChainTamperedPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "AuditChainTamperedPayload":
+    def from_dict(cls, data: dict[str, Any]) -> AuditChainTamperedPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             first_tampered_event_id=data["first_tampered_event_id"],
             tampered_count=int(data["tampered_count"]),

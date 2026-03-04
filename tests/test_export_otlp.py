@@ -18,8 +18,7 @@ import asyncio
 import time
 import urllib.error
 import urllib.request
-from io import BytesIO
-from typing import Any, Dict, List
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -47,7 +46,7 @@ from tracium.export.otlp import (
 # ---------------------------------------------------------------------------
 
 
-def _make_event(
+def _make_event(  # noqa: PLR0913
     *,
     trace_id: str | None = None,
     span_id: str | None = None,
@@ -249,7 +248,7 @@ class TestFlattenPayload:
 
 
 class TestEventToAttributes:
-    def _attr_value(self, attrs: List[Dict], key: str) -> Any:
+    def _attr_value(self, attrs: list[dict], key: str) -> Any:
         for item in attrs:
             if item["key"] == key:
                 v = item["value"]
@@ -414,7 +413,7 @@ class TestOTLPExporterInit:
 
     def test_default_resource_attrs_set(self) -> None:
         exp = OTLPExporter("http://localhost")
-        assert exp._resource_attrs.service_name == "llm-toolkit-schema"
+        assert exp._resource_attrs.service_name == "agentobs"
 
 
 # ---------------------------------------------------------------------------
@@ -546,13 +545,13 @@ class TestWrapHelpers:
         exp = _make_exporter()
         result = exp._wrap_spans([])
         scope = result["resourceSpans"][0]["scopeSpans"][0]["scope"]
-        assert scope["name"] == "llm-toolkit-schema"
+        assert scope["name"] == "agentobs"
 
     def test_wrap_logs_includes_scope_name(self) -> None:
         exp = _make_exporter()
         result = exp._wrap_logs([])
         scope = result["resourceLogs"][0]["scopeLogs"][0]["scope"]
-        assert scope["name"] == "llm-toolkit-schema"
+        assert scope["name"] == "agentobs"
 
     def test_wrap_spans_resource_uses_configured_attrs(self) -> None:
         ra = ResourceAttributes(service_name="my-svc")
@@ -778,7 +777,7 @@ class TestGenAiAttributes:
 
     def test_model_version_maps_to_gen_ai_request_model_version(self) -> None:
         event = self._event(
-            {"model": {"name": "gpt-4o", "provider": "openai", "version": "2024-05-13"}, "status": "ok"}
+            {"model": {"name": "gpt-4o", "provider": "openai", "version": "2024-05-13"}, "status": "ok"}  # noqa: E501
         )
         attrs = {kv["key"]: kv["value"] for kv in _gen_ai_attributes(event)}
         assert attrs["gen_ai.request.model_version"]["stringValue"] == "2024-05-13"

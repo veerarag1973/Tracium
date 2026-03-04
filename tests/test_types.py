@@ -9,15 +9,14 @@ import pytest
 
 from tracium.exceptions import EventTypeError
 from tracium.types import (
+    _RESERVED_NAMESPACES,
     EVENT_TYPE_PATTERN,
     EventType,
-    _RESERVED_NAMESPACES,
     get_by_value,
     is_registered,
     namespace_of,
     validate_custom,
 )
-
 
 # ---------------------------------------------------------------------------
 # EventType enum membership
@@ -31,7 +30,7 @@ class TestEventTypeValues:
             assert isinstance(et.value, str), f"{et.name} value is not a string"
 
     def test_all_values_match_pattern(self) -> None:
-        import re
+        import re  # noqa: PLC0415
         pattern = re.compile(EVENT_TYPE_PATTERN)
         for et in EventType:
             assert pattern.match(et.value), (
@@ -48,12 +47,12 @@ class TestEventTypeValues:
 
     def test_string_comparison(self) -> None:
         assert EventType.TRACE_SPAN_COMPLETED == "llm.trace.span.completed"
-        assert "llm.trace.span.completed" == EventType.TRACE_SPAN_COMPLETED
+        assert EventType.TRACE_SPAN_COMPLETED == "llm.trace.span.completed"
 
     def test_total_count(self) -> None:
         """Ensure all 11 namespaces are represented."""
         namespaces = {et.namespace for et in EventType}
-        assert len(namespaces) == 11  # noqa: PLR2004
+        assert len(namespaces) == 11
 
 
 # ---------------------------------------------------------------------------
@@ -173,7 +172,7 @@ class TestEventTypeDunderMethods:
     def test_hashable_in_set(self) -> None:
         """EventType instances must be usable as set members."""
         s = {EventType.TRACE_SPAN_COMPLETED, EventType.CACHE_HIT}
-        assert len(s) == 2  # noqa: PLR2004
+        assert len(s) == 2
         assert EventType.TRACE_SPAN_COMPLETED in s
 
     def test_hashable_as_dict_key(self) -> None:
@@ -263,7 +262,7 @@ class TestNamespaceOf:
         assert "llm.guard" in _RESERVED_NAMESPACES
         assert "llm.audit" in _RESERVED_NAMESPACES
         assert "llm.inspect" not in _RESERVED_NAMESPACES  # removed in v2.0
-        assert len(_RESERVED_NAMESPACES) == 11  # noqa: PLR2004
+        assert len(_RESERVED_NAMESPACES) == 11
 
 
 # ---------------------------------------------------------------------------

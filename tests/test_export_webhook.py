@@ -19,7 +19,6 @@ import asyncio
 import hashlib
 import hmac
 import urllib.error
-from typing import List
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -27,11 +26,10 @@ import pytest
 from tracium.event import Event
 from tracium.exceptions import ExportError
 from tracium.export.webhook import (
-    WebhookExporter,
     _SIGNATURE_HEADER,
+    WebhookExporter,
     _sign_body,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -77,7 +75,7 @@ class TestSignBody:
 
     def test_signature_is_correct(self) -> None:
         body = b"test-body"
-        secret = "my-secret"
+        secret = "my-secret"  # noqa: S105
         expected_mac = hmac.new(
             secret.encode("utf-8"), msg=body, digestmod=hashlib.sha256
         ).hexdigest()
@@ -148,11 +146,11 @@ class TestWebhookRepr:
         assert "hooks.example.com" in repr(exp)
 
     def test_repr_does_not_contain_secret(self) -> None:
-        exp = WebhookExporter("http://example.com", secret="ultra-secret-value")
+        exp = WebhookExporter("http://example.com", secret="ultra-secret-value")  # noqa: S106
         assert "ultra-secret-value" not in repr(exp)
 
     def test_repr_shows_signed_true_when_secret_set(self) -> None:
-        exp = WebhookExporter("http://example.com", secret="s3cr3t")
+        exp = WebhookExporter("http://example.com", secret="s3cr3t")  # noqa: S106
         assert "True" in repr(exp)
 
     def test_repr_shows_signed_false_without_secret(self) -> None:
@@ -202,7 +200,7 @@ class TestExportSingleEvent:
         assert body == event.to_json().encode("utf-8")
 
     def test_export_with_secret_adds_signature_header(self) -> None:
-        exp = WebhookExporter("http://example.com/hook", secret="my-secret")
+        exp = WebhookExporter("http://example.com/hook", secret="my-secret")  # noqa: S106
         event = _make_event()
         captured: list = []
 
@@ -214,7 +212,7 @@ class TestExportSingleEvent:
             asyncio.run(exp.export(event))
 
         req = captured[0]
-        # urllib.Request stores headers with capitalize(): "X-llm-toolkit-schema-Signature" → "X-llm-toolkit-schema-signature"
+        # urllib.Request stores headers with capitalize(): "X-llm-toolkit-schema-Signature" → "X-llm-toolkit-schema-signature"  # noqa: E501
         sig_key = _SIGNATURE_HEADER.capitalize()
         sig_header = req.headers.get(sig_key)
         assert sig_header is not None
@@ -237,7 +235,7 @@ class TestExportSingleEvent:
         assert req.headers.get(sig_key) is None
 
     def test_export_signature_is_verifiable(self) -> None:
-        secret = "verify-me-secret"
+        secret = "verify-me-secret"  # noqa: S105
         exp = WebhookExporter("http://example.com/hook", secret=secret)
         event = _make_event()
         captured: list = []
@@ -306,7 +304,7 @@ class TestExportBatch:
             count = asyncio.run(exp.export_batch(events))
 
         assert count == 3
-        import json
+        import json  # noqa: PLC0415
         body = json.loads(captured[0].data)
         assert isinstance(body, list)
         assert len(body) == 3
@@ -322,7 +320,7 @@ class TestExportBatch:
         assert len(calls) == 0
 
     def test_batch_signature_over_array_body(self) -> None:
-        secret = "batch-secret"
+        secret = "batch-secret"  # noqa: S105
         exp = WebhookExporter("http://example.com/hook", secret=secret)
         events = [_make_event(), _make_event()]
         captured: list = []
@@ -362,7 +360,7 @@ class TestRetryLogic:
                 raise OSError("temporary failure")
             return _mock_urlopen_success()
 
-        with patch("urllib.request.urlopen", side_effect=_fake):
+        with patch("urllib.request.urlopen", side_effect=_fake):  # noqa: SIM117
             with patch("tracium.export.webhook.asyncio.sleep", new_callable=AsyncMock):
                 asyncio.run(exp.export(event))
 
@@ -383,7 +381,7 @@ class TestRetryLogic:
                 raise _make_http_error(503, "Service Unavailable")
             return _mock_urlopen_success()
 
-        with patch("urllib.request.urlopen", side_effect=_fake):
+        with patch("urllib.request.urlopen", side_effect=_fake):  # noqa: SIM117
             with patch("tracium.export.webhook.asyncio.sleep", new_callable=AsyncMock):
                 asyncio.run(exp.export(event))
 
@@ -402,7 +400,7 @@ class TestRetryLogic:
             call_count += 1
             raise _make_http_error(400, "Bad Request")
 
-        with patch("urllib.request.urlopen", side_effect=_fake):
+        with patch("urllib.request.urlopen", side_effect=_fake):  # noqa: SIM117
             with pytest.raises(ExportError) as exc_info:
                 asyncio.run(exp.export(event))
 
@@ -420,7 +418,7 @@ class TestRetryLogic:
         def _fake(req, timeout=None):
             raise OSError("persistent failure")
 
-        with patch("urllib.request.urlopen", side_effect=_fake):
+        with patch("urllib.request.urlopen", side_effect=_fake):  # noqa: SIM117
             with patch("tracium.export.webhook.asyncio.sleep", new_callable=AsyncMock):
                 with pytest.raises(ExportError) as exc_info:
                     asyncio.run(exp.export(event))
@@ -435,7 +433,7 @@ class TestRetryLogic:
         )
         event = _make_event()
 
-        with patch("urllib.request.urlopen", side_effect=OSError("fail")):
+        with patch("urllib.request.urlopen", side_effect=OSError("fail")):  # noqa: SIM117
             with pytest.raises(ExportError) as exc_info:
                 asyncio.run(exp.export(event))
 
@@ -454,8 +452,7 @@ class TestRetryLogic:
             call_count += 1
             raise OSError("fail")
 
-        with patch("urllib.request.urlopen", side_effect=_fake):
-            with pytest.raises(ExportError):
-                asyncio.run(exp.export(event))
+        with patch("urllib.request.urlopen", side_effect=_fake), pytest.raises(ExportError):
+            asyncio.run(exp.export(event))
 
         assert call_count == 1

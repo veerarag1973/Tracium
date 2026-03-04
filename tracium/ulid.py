@@ -42,7 +42,7 @@ from typing import Final
 
 from tracium.exceptions import ULIDError
 
-__all__ = ["generate", "validate", "ULID_REGEX"]
+__all__ = ["ULID_REGEX", "generate", "validate"]
 
 # ---------------------------------------------------------------------------
 # Crockford Base32 alphabet (excludes I, L, O, U to avoid confusion)
@@ -81,7 +81,7 @@ class _ULIDGenerator:
     would overflow (2**80) clock advancement is waited for.
     """
 
-    __slots__ = ("_lock", "_last_ms", "_last_rand")
+    __slots__ = ("_last_ms", "_last_rand", "_lock")
 
     _rand_max: Final[int] = (1 << 80) - 1  # type: ignore[misc]
 

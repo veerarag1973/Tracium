@@ -1,4 +1,4 @@
-"""PII redaction framework for llm-toolkit-schema.
+"""PII redaction framework for tracium.
 
 Provides a layered, policy-driven approach to PII identification and redaction
 in event payloads.  Redaction is **opt-in per field** — fields must be
@@ -57,7 +57,7 @@ import datetime
 from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Final, FrozenSet, Optional
+from typing import TYPE_CHECKING, Any, Final
 
 from tracium.exceptions import LLMSchemaError
 
@@ -65,13 +65,13 @@ if TYPE_CHECKING:
     from tracium.event import Event
 
 __all__ = [
-    "Sensitivity",
+    "PII_TYPES",
+    "PIINotRedactedError",
     "Redactable",
     "RedactionPolicy",
     "RedactionResult",
-    "PIINotRedactedError",
+    "Sensitivity",
     "contains_pii",
-    "PII_TYPES",
 ]
 
 # ---------------------------------------------------------------------------
@@ -199,13 +199,13 @@ class Redactable:
         repr(field)  # "<Redactable sensitivity='pii' pii_types={'email'}>"
     """
 
-    __slots__ = ("_value", "_sensitivity", "_pii_types")
+    __slots__ = ("_pii_types", "_sensitivity", "_value")
 
     def __init__(
         self,
-        value: Any,
+        value: Any,  # noqa: ANN401
         sensitivity: Sensitivity,
-        pii_types: FrozenSet[str] = frozenset(),
+        pii_types: frozenset[str] = frozenset(),
     ) -> None:
         object.__setattr__(self, "_value", value)
         object.__setattr__(self, "_sensitivity", sensitivity)
@@ -221,11 +221,11 @@ class Redactable:
         return self._sensitivity  # type: ignore[return-value]
 
     @property
-    def pii_types(self) -> FrozenSet[str]:
+    def pii_types(self) -> frozenset[str]:
         """Set of PII type labels (e.g. ``{'email', 'pii_identifier'}``)."""
         return self._pii_types  # type: ignore[return-value]
 
-    def reveal(self) -> Any:
+    def reveal(self) -> Any:  # noqa: ANN401
         """Return the raw unredacted value.
 
         Use with extreme care.  Access to raw values should be restricted to
@@ -274,7 +274,7 @@ class RedactionResult:
         redacted_by:      The policy identifier string.
     """
 
-    event: "Event"
+    event: Event
     redaction_count: int
     redacted_at: str
     redacted_by: str
@@ -357,7 +357,7 @@ class RedactionPolicy:
         """Return True if the Redactable field meets the policy threshold."""
         return r.sensitivity >= self.min_sensitivity
 
-    def _redact_value(self, value: Any, counter: list[int]) -> Any:
+    def _redact_value(self, value: Any, counter: list[int]) -> Any:  # noqa: ANN401
         """Recursively replace Redactable instances in *value*.
 
         Args:
@@ -383,7 +383,7 @@ class RedactionPolicy:
             return tuple(self._redact_value(v, counter) for v in value)
         return value
 
-    def apply(self, event: "Event") -> RedactionResult:
+    def apply(self, event: Event) -> RedactionResult:
         """Apply this policy to *event*, returning a new redacted event.
 
         All :class:`Redactable` fields in the payload whose sensitivity is ≥
@@ -450,7 +450,7 @@ class RedactionPolicy:
 # ---------------------------------------------------------------------------
 
 
-def contains_pii(event: "Event") -> bool:
+def contains_pii(event: Event) -> bool:
     """Return ``True`` if any unredacted :class:`Redactable` values remain.
 
     Use this after :meth:`RedactionPolicy.apply` to verify that all qualifying
@@ -474,7 +474,7 @@ def contains_pii(event: "Event") -> bool:
     return _has_redactable(event.payload)
 
 
-def assert_redacted(event: "Event", context: str = "") -> None:
+def assert_redacted(event: Event, context: str = "") -> None:
     """Assert that *event* contains no unredacted :class:`Redactable` values.
 
     This is the strict variant of :func:`contains_pii`.  It raises
@@ -501,7 +501,7 @@ def assert_redacted(event: "Event", context: str = "") -> None:
 # ---------------------------------------------------------------------------
 
 
-def _has_redactable(value: Any) -> bool:
+def _has_redactable(value: Any) -> bool:  # noqa: ANN401
     """Return True if *value* contains any Redactable instance (recursive)."""
     if isinstance(value, Redactable):
         return True
@@ -512,7 +512,7 @@ def _has_redactable(value: Any) -> bool:
     return False
 
 
-def _count_redactable(value: Any, _depth: int = 0) -> int:
+def _count_redactable(value: Any, _depth: int = 0) -> int:  # noqa: ANN401
     """Count the total number of Redactable instances in *value* (recursive)."""
     if isinstance(value, Redactable):
         return 1

@@ -9,8 +9,7 @@ ensure correctness.
 from __future__ import annotations
 
 import json
-from pathlib import Path
-from typing import List
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
@@ -19,6 +18,9 @@ from tracium._cli import main
 from tracium.event import Event
 from tracium.signing import sign
 from tracium.types import EventType
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -40,12 +42,12 @@ def _make_event(
     )
 
 
-def _write_jsonl(path: Path, events: List[Event]) -> None:
+def _write_jsonl(path: Path, events: list[Event]) -> None:
     lines = [json.dumps(e.to_dict()) for e in events]
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def _write_raw_jsonl(path: Path, lines: List[str]) -> None:
+def _write_raw_jsonl(path: Path, lines: list[str]) -> None:
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -111,13 +113,13 @@ class TestValidateCommand:
 
     def test_schema_validation_failure_exits_1(self, tmp_path, capsys):
         """Patch validate_event to raise SchemaValidationError for one event."""
-        from tracium.exceptions import SchemaValidationError
+        from tracium.exceptions import SchemaValidationError  # noqa: PLC0415
 
         f = tmp_path / "events.jsonl"
         ev = _make_event()
         _write_jsonl(f, [ev])
 
-        with patch("tracium.validate.validate_event", side_effect=SchemaValidationError(field="source", received="bad", reason="bad value")):
+        with patch("tracium.validate.validate_event", side_effect=SchemaValidationError(field="source", received="bad", reason="bad value")):  # noqa: E501
             exc = _run(["validate", str(f)])
 
         assert exc.value.code == 1
@@ -137,10 +139,10 @@ class TestValidateCommand:
 
 
 class TestAuditChainCommand:
-    _SECRET = "test-signing-key-abc123"
+    _SECRET = "test-signing-key-abc123"  # noqa: S105
 
-    def _signed_chain(self, n: int = 2) -> List[Event]:
-        events: List[Event] = []
+    def _signed_chain(self, n: int = 2) -> list[Event]:
+        events: list[Event] = []
         prev: Event | None = None
         for i in range(n):
             raw = _make_event(payload={"step": i})
@@ -184,7 +186,7 @@ class TestAuditChainCommand:
         events = self._signed_chain(3)
         # Tamper: overwrite the signature of the second event
         raw_dicts = [e.to_dict() for e in events]
-        raw_dicts[1]["signature"] = "hmac-sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        raw_dicts[1]["signature"] = "hmac-sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"  # noqa: E501
         f.write_text("\n".join(json.dumps(d) for d in raw_dicts) + "\n", encoding="utf-8")
         exc = _run(["audit-chain", str(f)])
         assert exc.value.code == 1
@@ -289,8 +291,8 @@ class TestStatsCommand:
     def test_token_and_cost_aggregation(self, tmp_path, capsys):
         f = tmp_path / "rich.jsonl"
         events = [
-            _make_event(payload={"prompt_tokens": 100, "completion_tokens": 50, "total_tokens": 150, "cost_usd": 0.003}),
-            _make_event(payload={"prompt_tokens": 200, "completion_tokens": 75, "total_tokens": 275, "cost_usd": 0.005}),
+            _make_event(payload={"prompt_tokens": 100, "completion_tokens": 50, "total_tokens": 150, "cost_usd": 0.003}),  # noqa: E501
+            _make_event(payload={"prompt_tokens": 200, "completion_tokens": 75, "total_tokens": 275, "cost_usd": 0.005}),  # noqa: E501
         ]
         _write_jsonl(f, events)
         _run(["stats", str(f)])

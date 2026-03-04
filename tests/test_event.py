@@ -8,11 +8,11 @@ from __future__ import annotations
 import datetime
 import json
 import time
-from typing import Any, Dict
-from unittest.mock import patch
+from typing import Any
 
 import pytest
 
+from tests.conftest import FIXED_SPAN_ID, FIXED_TIMESTAMP, FIXED_TRACE_ID
 from tracium.event import (
     SCHEMA_VERSION,
     Event,
@@ -39,9 +39,6 @@ from tracium.exceptions import (
 from tracium.types import EventType
 from tracium.ulid import generate as gen_ulid
 
-from tests.conftest import FIXED_SPAN_ID, FIXED_TIMESTAMP, FIXED_TRACE_ID
-
-
 # ===========================================================================
 # Tags
 # ===========================================================================
@@ -59,7 +56,7 @@ class TestTags:
         assert len(t) == 0
 
     def test_len(self) -> None:
-        assert len(Tags(a="1", b="2")) == 2  # noqa: PLR2004
+        assert len(Tags(a="1", b="2")) == 2
 
     def test_contains(self) -> None:
         t = Tags(x="y")
@@ -81,7 +78,7 @@ class TestTags:
         assert d == {"x": "1", "y": "2"}
         # Verify it's a copy
         d["extra"] = "3"
-        assert len(Tags(x="1", y="2")) == 2  # noqa: PLR2004
+        assert len(Tags(x="1", y="2")) == 2
 
     def test_equality_with_tags(self) -> None:
         assert Tags(a="1") == Tags(a="1")
@@ -142,8 +139,8 @@ class TestEventConstruction:
             payload={"hit": True},
             timestamp=FIXED_TIMESTAMP,
         )
-        assert len(event.event_id) == 26  # noqa: PLR2004
-        from tracium.ulid import validate
+        assert len(event.event_id) == 26
+        from tracium.ulid import validate  # noqa: PLC0415
         assert validate(event.event_id)
 
     def test_auto_timestamp(self) -> None:
@@ -204,13 +201,13 @@ class TestEventConstruction:
 
 @pytest.mark.unit
 class TestEventEqualityAndHash:
-    def test_same_event_id_equal(self, minimal_event_kwargs: Dict[str, Any]) -> None:
+    def test_same_event_id_equal(self, minimal_event_kwargs: dict[str, Any]) -> None:
         e1 = Event(**minimal_event_kwargs)
         e2 = Event(**minimal_event_kwargs)
         assert e1 == e2
 
     def test_different_event_id_not_equal(
-        self, minimal_event_kwargs: Dict[str, Any]
+        self, minimal_event_kwargs: dict[str, Any]
     ) -> None:
         e1 = Event(**minimal_event_kwargs)
         kwargs2 = dict(minimal_event_kwargs, event_id=gen_ulid())
@@ -228,7 +225,7 @@ class TestEventEqualityAndHash:
         s: set[Event] = {minimal_event}
         assert minimal_event in s
 
-    def test_hash_by_id(self, minimal_event_kwargs: Dict[str, Any]) -> None:
+    def test_hash_by_id(self, minimal_event_kwargs: dict[str, Any]) -> None:
         e1 = Event(**minimal_event_kwargs)
         e2 = Event(**minimal_event_kwargs)
         assert hash(e1) == hash(e2)
@@ -251,7 +248,7 @@ class TestEventEqualityAndHash:
         assert minimal_event.signature is None
 
     def test_prev_id_property(
-        self, minimal_event_kwargs: Dict[str, Any], valid_ulid: str
+        self, minimal_event_kwargs: dict[str, Any], valid_ulid: str
     ) -> None:
         """prev_id property returns the value passed at construction."""
         e = Event(**dict(minimal_event_kwargs, prev_id=valid_ulid))
@@ -259,7 +256,7 @@ class TestEventEqualityAndHash:
 
 
 # ===========================================================================
-# Event.validate()
+# Event.validate()  # noqa: ERA001
 # ===========================================================================
 
 
@@ -274,7 +271,7 @@ class TestEventValidation:
     # -- schema_version -------------------------------------------------------
 
     def test_invalid_schema_version_not_string(
-        self, minimal_event_kwargs: Dict[str, Any]
+        self, minimal_event_kwargs: dict[str, Any]
     ) -> None:
         e = Event(**dict(minimal_event_kwargs, schema_version=123))  # type: ignore[arg-type]
         with pytest.raises(SchemaValidationError) as exc_info:
@@ -282,7 +279,7 @@ class TestEventValidation:
         assert exc_info.value.field == "schema_version"
 
     def test_invalid_schema_version_format(
-        self, minimal_event_kwargs: Dict[str, Any]
+        self, minimal_event_kwargs: dict[str, Any]
     ) -> None:
         e = Event(**dict(minimal_event_kwargs, schema_version="not-semver"))
         with pytest.raises(SchemaValidationError) as exc_info:
@@ -292,7 +289,7 @@ class TestEventValidation:
     # -- event_id -------------------------------------------------------------
 
     def test_invalid_event_id_not_string(
-        self, minimal_event_kwargs: Dict[str, Any]
+        self, minimal_event_kwargs: dict[str, Any]
     ) -> None:
         e = Event(**dict(minimal_event_kwargs, event_id=12345))  # type: ignore[arg-type]
         with pytest.raises(SchemaValidationError) as exc_info:
@@ -300,7 +297,7 @@ class TestEventValidation:
         assert exc_info.value.field == "event_id"
 
     def test_invalid_event_id_not_ulid(
-        self, minimal_event_kwargs: Dict[str, Any]
+        self, minimal_event_kwargs: dict[str, Any]
     ) -> None:
         e = Event(**dict(minimal_event_kwargs, event_id="not-a-ulid"))
         with pytest.raises(SchemaValidationError) as exc_info:
@@ -310,7 +307,7 @@ class TestEventValidation:
     # -- event_type -----------------------------------------------------------
 
     def test_invalid_event_type_not_string(
-        self, minimal_event_kwargs: Dict[str, Any]
+        self, minimal_event_kwargs: dict[str, Any]
     ) -> None:
         # EventType is str, but we bypass construction by using object.__setattr__
         e = Event(**minimal_event_kwargs)
@@ -320,7 +317,7 @@ class TestEventValidation:
         assert exc_info.value.field == "event_type"
 
     def test_invalid_event_type_format(
-        self, minimal_event_kwargs: Dict[str, Any]
+        self, minimal_event_kwargs: dict[str, Any]
     ) -> None:
         e = Event(**dict(minimal_event_kwargs, event_type="bad-type"))
         with pytest.raises(SchemaValidationError) as exc_info:
@@ -330,7 +327,7 @@ class TestEventValidation:
     # -- timestamp ------------------------------------------------------------
 
     def test_invalid_timestamp_not_string(
-        self, minimal_event_kwargs: Dict[str, Any]
+        self, minimal_event_kwargs: dict[str, Any]
     ) -> None:
         e = Event(**minimal_event_kwargs)
         object.__setattr__(e, "_timestamp", 9999)
@@ -339,7 +336,7 @@ class TestEventValidation:
         assert exc_info.value.field == "timestamp"
 
     def test_invalid_timestamp_format(
-        self, minimal_event_kwargs: Dict[str, Any]
+        self, minimal_event_kwargs: dict[str, Any]
     ) -> None:
         e = Event(**dict(minimal_event_kwargs, timestamp="2026-03-01"))
         with pytest.raises(SchemaValidationError) as exc_info:
@@ -347,7 +344,7 @@ class TestEventValidation:
         assert exc_info.value.field == "timestamp"
 
     def test_invalid_timestamp_bad_date(
-        self, minimal_event_kwargs: Dict[str, Any]
+        self, minimal_event_kwargs: dict[str, Any]
     ) -> None:
         e = Event(**dict(minimal_event_kwargs, timestamp="2026-13-32T25:99:00.000000Z"))
         with pytest.raises(SchemaValidationError) as exc_info:
@@ -357,7 +354,7 @@ class TestEventValidation:
     # -- source ---------------------------------------------------------------
 
     def test_invalid_source_not_string(
-        self, minimal_event_kwargs: Dict[str, Any]
+        self, minimal_event_kwargs: dict[str, Any]
     ) -> None:
         e = Event(**minimal_event_kwargs)
         object.__setattr__(e, "_source", 42)
@@ -366,7 +363,7 @@ class TestEventValidation:
         assert exc_info.value.field == "source"
 
     def test_invalid_source_format(
-        self, minimal_event_kwargs: Dict[str, Any]
+        self, minimal_event_kwargs: dict[str, Any]
     ) -> None:
         e = Event(**dict(minimal_event_kwargs, source="notvalid"))
         with pytest.raises(SchemaValidationError) as exc_info:
@@ -376,7 +373,7 @@ class TestEventValidation:
     # -- payload --------------------------------------------------------------
 
     def test_invalid_payload_not_dict(
-        self, minimal_event_kwargs: Dict[str, Any]
+        self, minimal_event_kwargs: dict[str, Any]
     ) -> None:
         e = Event(**dict(minimal_event_kwargs, payload="not a dict"))  # type: ignore[arg-type]
         with pytest.raises(SchemaValidationError) as exc_info:
@@ -384,7 +381,7 @@ class TestEventValidation:
         assert exc_info.value.field == "payload"
 
     def test_invalid_payload_empty_dict(
-        self, minimal_event_kwargs: Dict[str, Any]
+        self, minimal_event_kwargs: dict[str, Any]
     ) -> None:
         e = Event(**dict(minimal_event_kwargs, payload={}))
         with pytest.raises(SchemaValidationError) as exc_info:
@@ -393,20 +390,20 @@ class TestEventValidation:
 
     # -- trace_id / span_id ---------------------------------------------------
 
-    def test_invalid_trace_id(self, minimal_event_kwargs: Dict[str, Any]) -> None:
+    def test_invalid_trace_id(self, minimal_event_kwargs: dict[str, Any]) -> None:
         e = Event(**dict(minimal_event_kwargs, trace_id="tooshort"))
         with pytest.raises(SchemaValidationError) as exc_info:
             e.validate()
         assert exc_info.value.field == "trace_id"
 
-    def test_invalid_span_id(self, minimal_event_kwargs: Dict[str, Any]) -> None:
+    def test_invalid_span_id(self, minimal_event_kwargs: dict[str, Any]) -> None:
         e = Event(**dict(minimal_event_kwargs, span_id="tooshort"))
         with pytest.raises(SchemaValidationError) as exc_info:
             e.validate()
         assert exc_info.value.field == "span_id"
 
     def test_invalid_parent_span_id(
-        self, minimal_event_kwargs: Dict[str, Any]
+        self, minimal_event_kwargs: dict[str, Any]
     ) -> None:
         e = Event(**dict(minimal_event_kwargs, parent_span_id="X" * 16))
         with pytest.raises(SchemaValidationError) as exc_info:
@@ -415,14 +412,14 @@ class TestEventValidation:
 
     # -- context ids ----------------------------------------------------------
 
-    def test_empty_org_id_raises(self, minimal_event_kwargs: Dict[str, Any]) -> None:
+    def test_empty_org_id_raises(self, minimal_event_kwargs: dict[str, Any]) -> None:
         e = Event(**dict(minimal_event_kwargs, org_id=""))
         with pytest.raises(SchemaValidationError) as exc_info:
             e.validate()
         assert exc_info.value.field == "org_id"
 
     def test_non_string_team_id_raises(
-        self, minimal_event_kwargs: Dict[str, Any]
+        self, minimal_event_kwargs: dict[str, Any]
     ) -> None:
         e = Event(**minimal_event_kwargs)
         object.__setattr__(e, "_team_id", 42)
@@ -431,7 +428,7 @@ class TestEventValidation:
         assert exc_info.value.field == "team_id"
 
     def test_empty_actor_id_raises(
-        self, minimal_event_kwargs: Dict[str, Any]
+        self, minimal_event_kwargs: dict[str, Any]
     ) -> None:
         e = Event(**dict(minimal_event_kwargs, actor_id=""))
         with pytest.raises(SchemaValidationError) as exc_info:
@@ -439,7 +436,7 @@ class TestEventValidation:
         assert exc_info.value.field == "actor_id"
 
     def test_empty_session_id_raises(
-        self, minimal_event_kwargs: Dict[str, Any]
+        self, minimal_event_kwargs: dict[str, Any]
     ) -> None:
         e = Event(**dict(minimal_event_kwargs, session_id=""))
         with pytest.raises(SchemaValidationError) as exc_info:
@@ -448,19 +445,19 @@ class TestEventValidation:
 
     # -- prev_id ---------------------------------------------------------------
 
-    def test_invalid_prev_id(self, minimal_event_kwargs: Dict[str, Any]) -> None:
+    def test_invalid_prev_id(self, minimal_event_kwargs: dict[str, Any]) -> None:
         e = Event(**dict(minimal_event_kwargs, prev_id="not-a-ulid"))
         with pytest.raises(SchemaValidationError) as exc_info:
             e.validate()
         assert exc_info.value.field == "prev_id"
 
-    def test_valid_prev_id(self, minimal_event_kwargs: Dict[str, Any]) -> None:
+    def test_valid_prev_id(self, minimal_event_kwargs: dict[str, Any]) -> None:
         e = Event(**dict(minimal_event_kwargs, prev_id=gen_ulid()))
         e.validate()  # must not raise
 
 
 # ===========================================================================
-# Event.to_dict()
+# Event.to_dict()  # noqa: ERA001
 # ===========================================================================
 
 
@@ -498,7 +495,7 @@ class TestEventToDict:
 
 
 # ===========================================================================
-# Event.to_json()
+# Event.to_json()  # noqa: ERA001
 # ===========================================================================
 
 
@@ -531,7 +528,7 @@ class TestEventToJson:
         assert data["trace_id"] == FIXED_TRACE_ID
 
     def test_non_serialisable_payload_raises(
-        self, minimal_event_kwargs: Dict[str, Any]
+        self, minimal_event_kwargs: dict[str, Any]
     ) -> None:
         e = Event(
             **dict(minimal_event_kwargs, payload={"fn": lambda x: x})  # type: ignore[dict-item]
@@ -540,7 +537,7 @@ class TestEventToJson:
             e.to_json()
 
     def test_datetime_in_payload_serialised(
-        self, minimal_event_kwargs: Dict[str, Any]
+        self, minimal_event_kwargs: dict[str, Any]
     ) -> None:
         dt = datetime.datetime(2026, 3, 1, 12, 0, 0, tzinfo=datetime.timezone.utc)
         e = Event(**dict(minimal_event_kwargs, payload={"created_at": dt}))
@@ -548,7 +545,7 @@ class TestEventToJson:
         assert "2026-03-01" in raw
 
     def test_event_type_enum_serialised_as_string(
-        self, minimal_event_kwargs: Dict[str, Any]
+        self, minimal_event_kwargs: dict[str, Any]
     ) -> None:
         e = Event(**minimal_event_kwargs)
         raw = e.to_json()
@@ -557,7 +554,7 @@ class TestEventToJson:
 
 
 # ===========================================================================
-# Event.payload_checksum()
+# Event.payload_checksum()  # noqa: ERA001
 # ===========================================================================
 
 
@@ -571,7 +568,7 @@ class TestPayloadChecksum:
         assert minimal_event.payload_checksum() == minimal_event.payload_checksum()
 
     def test_different_payloads_different_checksum(
-        self, minimal_event_kwargs: Dict[str, Any]
+        self, minimal_event_kwargs: dict[str, Any]
     ) -> None:
         e1 = Event(**dict(minimal_event_kwargs, payload={"a": "1"}))
         e2 = Event(**dict(minimal_event_kwargs, payload={"a": "2"}))
@@ -579,11 +576,11 @@ class TestPayloadChecksum:
 
     def test_checksum_length(self, minimal_event: Event) -> None:
         # "sha256:" + 64 hex chars
-        assert len(minimal_event.payload_checksum()) == 64 + 7  # noqa: PLR2004
+        assert len(minimal_event.payload_checksum()) == 64 + 7
 
 
 # ===========================================================================
-# Event.from_dict() / from_json()
+# Event.from_dict() / from_json()  # noqa: ERA001
 # ===========================================================================
 
 
@@ -620,7 +617,7 @@ class TestEventDeserialization:
             Event.from_dict(["not", "a", "dict"])  # type: ignore[arg-type]
 
     def test_from_dict_payload_not_dict(
-        self, minimal_event_kwargs: Dict[str, Any]
+        self, minimal_event_kwargs: dict[str, Any]
     ) -> None:
         e = Event(**minimal_event_kwargs)
         d = e.to_dict()
@@ -628,7 +625,7 @@ class TestEventDeserialization:
         with pytest.raises(DeserializationError, match="must be an object"):
             Event.from_dict(d)
 
-    def test_from_dict_missing_payload(self, event_dict: Dict[str, Any]) -> None:
+    def test_from_dict_missing_payload(self, event_dict: dict[str, Any]) -> None:
         del event_dict["payload"]
         with pytest.raises(DeserializationError, match="'payload' is missing"):
             Event.from_dict(event_dict)
@@ -642,13 +639,13 @@ class TestEventDeserialization:
             Event.from_dict({}, source_hint="test_file.jsonl")
         assert "test_file.jsonl" in str(exc_info.value)
 
-    def test_from_dict_non_string_field(self, event_dict: Dict[str, Any]) -> None:
+    def test_from_dict_non_string_field(self, event_dict: dict[str, Any]) -> None:
         event_dict["source"] = 42
         with pytest.raises(DeserializationError, match="must be a string"):
             Event.from_dict(event_dict)
 
     def test_from_dict_tags_not_a_dict(
-        self, event_dict: Dict[str, Any]
+        self, event_dict: dict[str, Any]
     ) -> None:
         """tags that is not dict-like raises DeserializationError."""
         event_dict["tags"] = "not-a-dict"
@@ -757,8 +754,8 @@ class TestSerializationHelpers:
 
     def test_parse_timestamp_with_microseconds(self) -> None:
         dt = _parse_timestamp("2026-03-01T12:00:00.123456Z")
-        assert dt.year == 2026  # noqa: PLR2004
-        assert dt.month == 3  # noqa: PLR2004
+        assert dt.year == 2026
+        assert dt.month == 3
 
     def test_parse_timestamp_without_microseconds(self) -> None:
         dt = _parse_timestamp("2026-03-01T12:00:00Z")
@@ -767,8 +764,8 @@ class TestSerializationHelpers:
     def test_parse_timestamp_non_z_suffix(self) -> None:
         """Timestamps with +00:00 suffix (no trailing Z) also round-trip."""
         dt = _parse_timestamp("2026-03-01T12:00:00.123456+00:00")
-        assert dt.year == 2026  # noqa: PLR2004
-        assert dt.month == 3  # noqa: PLR2004
+        assert dt.year == 2026
+        assert dt.month == 3
 
 
 # ===========================================================================
@@ -791,14 +788,14 @@ class TestEventPerformance:
         assert elapsed < 1.0, f"Creating 1000 events took {elapsed:.2f}s (expected < 1s)"
 
     def test_serialise_1000_events_under_50ms(
-        self, minimal_event_kwargs: Dict[str, Any]
+        self, minimal_event_kwargs: dict[str, Any]
     ) -> None:
         events = [Event(**minimal_event_kwargs) for _ in range(1000)]
         start = time.perf_counter()
         for e in events:
             e.to_json()
         elapsed_ms = (time.perf_counter() - start) * 1000
-        assert elapsed_ms < 50, f"Serialising 1000 events took {elapsed_ms:.1f}ms (expected < 50ms)"  # noqa: PLR2004
+        assert elapsed_ms < 50, f"Serialising 1000 events took {elapsed_ms:.1f}ms (expected < 50ms)"
 
 
 # ===========================================================================
@@ -809,7 +806,7 @@ class TestEventPerformance:
 @pytest.mark.security
 class TestEventSecurity:
     def test_pii_not_in_schema_validation_error(
-        self, minimal_event_kwargs: Dict[str, Any]
+        self, minimal_event_kwargs: dict[str, Any]
     ) -> None:
         """PII in payload must never surface in a validation error message."""
         pii_payload = {"user_email": "john.doe@acme.com", "request": "help me"}
@@ -821,7 +818,7 @@ class TestEventSecurity:
         assert "help me" not in error_msg
 
     def test_non_serialisable_error_safe(
-        self, minimal_event_kwargs: Dict[str, Any]
+        self, minimal_event_kwargs: dict[str, Any]
     ) -> None:
         """SerializationError must carry event_id but not full payload content."""
         e = Event(**dict(minimal_event_kwargs, payload={"fn": lambda x: x}))  # type: ignore[dict-item]

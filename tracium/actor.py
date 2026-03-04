@@ -50,7 +50,7 @@ with them.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 __all__ = ["ActorContext"]
 
@@ -85,10 +85,10 @@ class ActorContext:
     """
 
     user_id: str
-    org_id: Optional[str] = None
-    team_id: Optional[str] = None
-    email: Optional[str] = None
-    ip_address: Optional[str] = None
+    org_id: str | None = None
+    team_id: str | None = None
+    email: str | None = None
+    ip_address: str | None = None
     service_account: bool = False
 
     # -----------------------------------------------------------------
@@ -109,13 +109,13 @@ class ActorContext:
     # Serialisation
     # -----------------------------------------------------------------
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return a plain dict suitable for embedding in ``Event.payload``.
 
         Only non-``None`` optional fields are included so that the
         serialised form stays compact.
         """
-        result: Dict[str, Any] = {"user_id": self.user_id}
+        result: dict[str, Any] = {"user_id": self.user_id}
         if self.org_id is not None:
             result["org_id"] = self.org_id
         if self.team_id is not None:
@@ -129,7 +129,7 @@ class ActorContext:
         return result
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ActorContext":
+    def from_dict(cls, data: dict[str, Any]) -> ActorContext:
         """Reconstruct an :class:`ActorContext` from a plain dict."""
         return cls(
             user_id=str(data["user_id"]),

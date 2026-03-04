@@ -10,10 +10,9 @@ import json
 import pytest
 
 import tracium
+from tests.conftest import FIXED_TIMESTAMP
 from tracium import Event, EventType, Tags, generate_ulid, validate_ulid
 from tracium.exceptions import LLMSchemaError
-
-from tests.conftest import FIXED_TIMESTAMP
 
 
 @pytest.mark.integration

@@ -45,7 +45,7 @@ Install with::
 from __future__ import annotations
 
 import functools
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from tracium.namespaces.trace import (
     CostBreakdown,
@@ -55,11 +55,11 @@ from tracium.namespaces.trace import (
 )
 
 __all__ = [
-    "patch",
-    "unpatch",
+    "get_duration_ms",
     "is_patched",
     "normalize_response",
-    "get_duration_ms",
+    "patch",
+    "unpatch",
 ]
 
 # ---------------------------------------------------------------------------
@@ -69,7 +69,7 @@ __all__ = [
 PRICING_DATE: str = "2026-03-04"
 
 #: Groq model pricing — USD per million tokens.
-GROQ_PRICING: Dict[str, Dict[str, float]] = {
+GROQ_PRICING: dict[str, dict[str, float]] = {
     # ------------------------------------------------------------------
     # LLaMA 3.3
     # ------------------------------------------------------------------
@@ -183,7 +183,9 @@ def patch() -> None:
 
     # --- sync ----------------------------------------------------------------
     try:
-        from groq.resources.chat.completions import Completions  # type: ignore[import-untyped]
+        from groq.resources.chat.completions import (  # noqa: PLC0415
+            Completions,  # type: ignore[import-untyped]
+        )
 
         _orig_sync = Completions.create  # type: ignore[attr-defined]
 
@@ -200,7 +202,9 @@ def patch() -> None:
 
     # --- async ---------------------------------------------------------------
     try:
-        from groq.resources.chat.completions import AsyncCompletions  # type: ignore[import-untyped]
+        from groq.resources.chat.completions import (  # noqa: PLC0415
+            AsyncCompletions,  # type: ignore[import-untyped]
+        )
 
         _orig_async = AsyncCompletions.create  # type: ignore[attr-defined]
 
@@ -232,7 +236,9 @@ def unpatch() -> None:
         return  # nothing to do
 
     try:
-        from groq.resources.chat.completions import Completions  # type: ignore[import-untyped]
+        from groq.resources.chat.completions import (  # noqa: PLC0415
+            Completions,  # type: ignore[import-untyped]
+        )
 
         Completions.create = Completions._tracium_orig_create  # type: ignore[attr-defined,method-assign]
         del Completions._tracium_orig_create  # type: ignore[attr-defined]
@@ -240,14 +246,16 @@ def unpatch() -> None:
         pass
 
     try:
-        from groq.resources.chat.completions import AsyncCompletions  # type: ignore[import-untyped]
+        from groq.resources.chat.completions import (  # noqa: PLC0415
+            AsyncCompletions,  # type: ignore[import-untyped]
+        )
 
         AsyncCompletions.create = AsyncCompletions._tracium_orig_create  # type: ignore[attr-defined,method-assign]
         del AsyncCompletions._tracium_orig_create  # type: ignore[attr-defined]
     except (ImportError, AttributeError):  # pragma: no cover
         pass
 
-    try:
+    try:  # noqa: SIM105
         del groq_mod._tracium_patched  # type: ignore[attr-defined]
     except AttributeError:  # pragma: no cover
         pass
@@ -267,7 +275,7 @@ def is_patched() -> bool:
 
 def normalize_response(
     response: Any,  # noqa: ANN401
-) -> Tuple[TokenUsage, ModelInfo, CostBreakdown]:
+) -> tuple[TokenUsage, ModelInfo, CostBreakdown]:
     """Extract structured observability data from a Groq chat completion.
 
     The Groq SDK mirrors the OpenAI response structure, so token fields
@@ -321,7 +329,7 @@ def normalize_response(
     return token_usage, model_info, cost
 
 
-def get_duration_ms(response: Any) -> Optional[float]:  # noqa: ANN401
+def get_duration_ms(response: Any) -> float | None:  # noqa: ANN401
     """Return the API-measured processing time in milliseconds from a Groq response.
 
     Groq exposes sub-millisecond inference latency via ``usage.total_time``
@@ -345,7 +353,7 @@ def get_duration_ms(response: Any) -> Optional[float]:  # noqa: ANN401
         return None
 
 
-def list_models() -> List[str]:
+def list_models() -> list[str]:
     """Return a sorted list of all Groq model names in the pricing table."""
     return sorted(GROQ_PRICING.keys())
 
@@ -359,15 +367,16 @@ def _require_groq() -> Any:  # noqa: ANN401
     """Import and return the ``groq`` module, raising ``ImportError`` if absent."""
     try:
         import groq  # type: ignore[import-untyped]  # noqa: PLC0415
-        return groq
     except ImportError as exc:
         raise ImportError(
             "The 'groq' package is required for tracium Groq integration.\n"
             "Install it with: pip install 'agentobs[groq]'"
         ) from exc
+    else:
+        return groq
 
 
-def _get_pricing(model: str) -> Optional[Dict[str, float]]:
+def _get_pricing(model: str) -> dict[str, float] | None:
     """Return the pricing entry for *model*, or ``None`` if unknown."""
     if model in GROQ_PRICING:
         return GROQ_PRICING[model]
@@ -431,5 +440,5 @@ def _auto_populate_span(response: Any) -> None:  # noqa: ANN401
         if span.model is None:
             span.model = model_info.name
 
-    except Exception:  # noqa: BLE001
+    except Exception:  # noqa: S110
         pass

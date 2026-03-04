@@ -1,4 +1,4 @@
-"""tracium.namespaces.trace — Span and agent payload types (RFC-0001 §8).
+﻿"""tracium.namespaces.trace — Span and agent payload types (RFC-0001 §8).
 
 This module provides Python dataclasses for the ``llm.trace.*`` namespace.
 All types map directly to the JSON Schema defined in
@@ -52,25 +52,25 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 __all__ = [
+    "AgentRunPayload",
+    "AgentStepPayload",
+    "CostBreakdown",
+    "DecisionPoint",
+    "GenAIOperationName",
     # Enumerations
     "GenAISystem",
-    "GenAIOperationName",
-    "SpanKind",
-    # Value objects
-    "TokenUsage",
     "ModelInfo",
-    "CostBreakdown",
     "PricingTier",
-    "ToolCall",
     "ReasoningStep",
-    "DecisionPoint",
+    "SpanKind",
     # Payloads
     "SpanPayload",
-    "AgentStepPayload",
-    "AgentRunPayload",
+    # Value objects
+    "TokenUsage",
+    "ToolCall",
 ]
 
 # ---------------------------------------------------------------------------
@@ -136,7 +136,7 @@ class SpanKind(str, Enum):
 
 
 # ---------------------------------------------------------------------------
-# Value objects (RFC §9, §8.1–§8.3)
+# Value objects (RFC §9, §8.1-§8.3)
 # ---------------------------------------------------------------------------
 
 @dataclass(frozen=True)
@@ -150,10 +150,10 @@ class TokenUsage:
     input_tokens: int
     output_tokens: int
     total_tokens: int
-    cached_tokens: Optional[int] = None
-    cache_creation_tokens: Optional[int] = None
-    reasoning_tokens: Optional[int] = None
-    image_tokens: Optional[int] = None
+    cached_tokens: int | None = None
+    cache_creation_tokens: int | None = None
+    reasoning_tokens: int | None = None
+    image_tokens: int | None = None
 
     def __post_init__(self) -> None:
         for name in ("input_tokens", "output_tokens", "total_tokens"):
@@ -165,8 +165,9 @@ class TokenUsage:
             if v is not None and (not isinstance(v, int) or v < 0):
                 raise ValueError(f"TokenUsage.{opt} must be a non-negative int or None")
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "input_tokens": self.input_tokens,
             "output_tokens": self.output_tokens,
             "total_tokens": self.total_tokens,
@@ -178,13 +179,14 @@ class TokenUsage:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "TokenUsage":
+    def from_dict(cls, data: dict[str, Any]) -> TokenUsage:
+        """Deserialise from a plain ``dict``."""
         return cls(
             input_tokens=int(data["input_tokens"]),
             output_tokens=int(data["output_tokens"]),
             total_tokens=int(data["total_tokens"]),
             cached_tokens=int(data["cached_tokens"]) if "cached_tokens" in data else None,
-            cache_creation_tokens=int(data["cache_creation_tokens"]) if "cache_creation_tokens" in data else None,
+            cache_creation_tokens=int(data["cache_creation_tokens"]) if "cache_creation_tokens" in data else None,  # noqa: E501
             reasoning_tokens=int(data["reasoning_tokens"]) if "reasoning_tokens" in data else None,
             image_tokens=int(data["image_tokens"]) if "image_tokens" in data else None,
         )
@@ -198,11 +200,11 @@ class ModelInfo:
     :attr:`GenAISystem.CUSTOM` (``"_custom"``).
     """
 
-    system: Union[GenAISystem, str]
+    system: GenAISystem | str
     name: str
-    response_model: Optional[str] = None
-    version: Optional[str] = None
-    custom_system_name: Optional[str] = None
+    response_model: str | None = None
+    version: str | None = None
+    custom_system_name: str | None = None
 
     def __post_init__(self) -> None:
         sys_val = self.system.value if isinstance(self.system, GenAISystem) else self.system
@@ -213,9 +215,10 @@ class ModelInfo:
         if not isinstance(self.name, str) or not self.name:
             raise ValueError("ModelInfo.name must be a non-empty string")
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
         sys_val = self.system.value if isinstance(self.system, GenAISystem) else self.system
-        d: Dict[str, Any] = {"system": sys_val, "name": self.name}
+        d: dict[str, Any] = {"system": sys_val, "name": self.name}
         if self.response_model is not None:
             d["response_model"] = self.response_model
         if self.version is not None:
@@ -225,10 +228,11 @@ class ModelInfo:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ModelInfo":
+    def from_dict(cls, data: dict[str, Any]) -> ModelInfo:
+        """Deserialise from a plain ``dict``."""
         sys_raw = data["system"]
         try:
-            system: Union[GenAISystem, str] = GenAISystem(sys_raw)
+            system: GenAISystem | str = GenAISystem(sys_raw)
         except ValueError:
             system = sys_raw
         return cls(
@@ -258,7 +262,7 @@ class CostBreakdown:
     cached_discount_usd: float = 0.0
     reasoning_cost_usd: float = 0.0
     currency: str = "USD"
-    pricing_date: Optional[str] = None
+    pricing_date: str | None = None
 
     _TOLERANCE: float = 1e-6
 
@@ -269,9 +273,9 @@ class CostBreakdown:
             if not isinstance(v, (int, float)) or v < 0:
                 raise ValueError(f"CostBreakdown.{name} must be a non-negative number")
         if not _CURRENCY_RE.match(self.currency):
-            raise ValueError(f"CostBreakdown.currency must be a 3-letter ISO 4217 code")
+            raise ValueError("CostBreakdown.currency must be a 3-letter ISO 4217 code")
         if self.pricing_date is not None and not _ISO_DATE_RE.match(self.pricing_date):
-            raise ValueError(f"CostBreakdown.pricing_date must be YYYY-MM-DD")
+            raise ValueError("CostBreakdown.pricing_date must be YYYY-MM-DD")
         expected = (
             self.input_cost_usd
             + self.output_cost_usd
@@ -281,11 +285,12 @@ class CostBreakdown:
         if abs(self.total_cost_usd - expected) > self._TOLERANCE:
             raise ValueError(
                 f"CostBreakdown.total_cost_usd {self.total_cost_usd} != "
-                f"input + output + reasoning - cached_discount = {expected:.8f} (±{self._TOLERANCE})"
+                f"input + output + reasoning - cached_discount = {expected:.8f} (±{self._TOLERANCE})"  # noqa: E501
             )
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "input_cost_usd": self.input_cost_usd,
             "output_cost_usd": self.output_cost_usd,
             "total_cost_usd": self.total_cost_usd,
@@ -301,7 +306,8 @@ class CostBreakdown:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "CostBreakdown":
+    def from_dict(cls, data: dict[str, Any]) -> CostBreakdown:
+        """Deserialise from a plain ``dict``."""
         return cls(
             input_cost_usd=float(data["input_cost_usd"]),
             output_cost_usd=float(data["output_cost_usd"]),
@@ -313,7 +319,7 @@ class CostBreakdown:
         )
 
     @classmethod
-    def zero(cls) -> "CostBreakdown":
+    def zero(cls) -> CostBreakdown:
         """Return a zero-filled CostBreakdown (§9.3 zero-fill allowance)."""
         return cls(input_cost_usd=0.0, output_cost_usd=0.0, total_cost_usd=0.0)
 
@@ -326,27 +332,28 @@ class PricingTier:
     cost calculations remain reproducible indefinitely.
     """
 
-    system: Union[GenAISystem, str]
+    system: GenAISystem | str
     model: str
     input_per_million_usd: float
     output_per_million_usd: float
     effective_date: str
-    cached_input_per_million_usd: Optional[float] = None
-    reasoning_per_million_usd: Optional[float] = None
+    cached_input_per_million_usd: float | None = None
+    reasoning_per_million_usd: float | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.model, str) or not self.model:
             raise ValueError("PricingTier.model must be a non-empty string")
         if not _ISO_DATE_RE.match(self.effective_date):
-            raise ValueError(f"PricingTier.effective_date must be YYYY-MM-DD")
+            raise ValueError("PricingTier.effective_date must be YYYY-MM-DD")
         for name in ("input_per_million_usd", "output_per_million_usd"):
             v = getattr(self, name)
             if not isinstance(v, (int, float)) or v < 0:
                 raise ValueError(f"PricingTier.{name} must be a non-negative number")
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
         sys_val = self.system.value if isinstance(self.system, GenAISystem) else self.system
-        d: Dict[str, Any] = {
+        d: dict[str, Any] = {
             "system": sys_val,
             "model": self.model,
             "input_per_million_usd": self.input_per_million_usd,
@@ -360,10 +367,11 @@ class PricingTier:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "PricingTier":
+    def from_dict(cls, data: dict[str, Any]) -> PricingTier:
+        """Deserialise from a plain ``dict``."""
         sys_raw = data["system"]
         try:
-            system: Union[GenAISystem, str] = GenAISystem(sys_raw)
+            system: GenAISystem | str = GenAISystem(sys_raw)
         except ValueError:
             system = sys_raw
         return cls(
@@ -390,9 +398,9 @@ class ToolCall:
     tool_call_id: str
     function_name: str
     status: str  # "success" | "error" | "timeout" | "cancelled"
-    arguments_hash: Optional[str] = None  # 64 lowercase hex chars, no prefix
-    error_type: Optional[str] = None
-    duration_ms: Optional[float] = None
+    arguments_hash: str | None = None  # 64 lowercase hex chars, no prefix
+    error_type: str | None = None
+    duration_ms: float | None = None
 
     _VALID_STATUSES = frozenset({"success", "error", "timeout", "cancelled"})
 
@@ -408,8 +416,9 @@ class ToolCall:
         if self.duration_ms is not None and self.duration_ms < 0:
             raise ValueError("ToolCall.duration_ms must be non-negative")
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "tool_call_id": self.tool_call_id,
             "function_name": self.function_name,
             "status": self.status,
@@ -423,7 +432,8 @@ class ToolCall:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ToolCall":
+    def from_dict(cls, data: dict[str, Any]) -> ToolCall:
+        """Deserialise from a plain ``dict``."""
         return cls(
             tool_call_id=data["tool_call_id"],
             function_name=data["function_name"],
@@ -445,8 +455,8 @@ class ReasoningStep:
 
     step_index: int
     reasoning_tokens: int
-    duration_ms: Optional[float] = None
-    content_hash: Optional[str] = None  # 64 lowercase hex chars, no prefix
+    duration_ms: float | None = None
+    content_hash: str | None = None  # 64 lowercase hex chars, no prefix
 
     def __post_init__(self) -> None:
         if not isinstance(self.step_index, int) or self.step_index < 0:
@@ -460,8 +470,9 @@ class ReasoningStep:
                 "ReasoningStep.content_hash must be 64 lowercase hex chars (SHA-256, no prefix)"
             )
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "step_index": self.step_index,
             "reasoning_tokens": self.reasoning_tokens,
         }
@@ -472,7 +483,8 @@ class ReasoningStep:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ReasoningStep":
+    def from_dict(cls, data: dict[str, Any]) -> ReasoningStep:
+        """Deserialise from a plain ``dict``."""
         return cls(
             step_index=int(data["step_index"]),
             reasoning_tokens=int(data["reasoning_tokens"]),
@@ -490,9 +502,9 @@ class DecisionPoint:
 
     decision_id: str
     decision_type: str  # "tool_selection"|"route_choice"|"loop_termination"|"escalation"
-    options_considered: List[str]
+    options_considered: list[str]
     chosen_option: str
-    rationale: Optional[str] = None
+    rationale: str | None = None
 
     _VALID_TYPES = frozenset({"tool_selection", "route_choice", "loop_termination", "escalation"})
 
@@ -500,14 +512,15 @@ class DecisionPoint:
         if not isinstance(self.decision_id, str) or not self.decision_id:
             raise ValueError("DecisionPoint.decision_id must be a non-empty string")
         if self.decision_type not in self._VALID_TYPES:
-            raise ValueError(f"DecisionPoint.decision_type must be one of {sorted(self._VALID_TYPES)}")
+            raise ValueError(f"DecisionPoint.decision_type must be one of {sorted(self._VALID_TYPES)}")  # noqa: E501
         if not self.options_considered:
             raise ValueError("DecisionPoint.options_considered must be a non-empty list")
         if not isinstance(self.chosen_option, str) or not self.chosen_option:
             raise ValueError("DecisionPoint.chosen_option must be a non-empty string")
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "decision_id": self.decision_id,
             "decision_type": self.decision_type,
             "options_considered": list(self.options_considered),
@@ -518,7 +531,8 @@ class DecisionPoint:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "DecisionPoint":
+    def from_dict(cls, data: dict[str, Any]) -> DecisionPoint:
+        """Deserialise from a plain ``dict``."""
         return cls(
             decision_id=data["decision_id"],
             decision_type=data["decision_type"],
@@ -544,31 +558,31 @@ class SpanPayload:
     span_id: str           # 16 lowercase hex chars
     trace_id: str          # 32 lowercase hex chars
     span_name: str
-    operation: Union[GenAIOperationName, str]
-    span_kind: Union[SpanKind, str]
+    operation: GenAIOperationName | str
+    span_kind: SpanKind | str
     status: str            # "ok" | "error" | "timeout"
     start_time_unix_nano: int
     end_time_unix_nano: int
     duration_ms: float
-    parent_span_id: Optional[str] = None
-    agent_run_id: Optional[str] = None
-    model: Optional[ModelInfo] = None
-    token_usage: Optional[TokenUsage] = None
-    cost: Optional[CostBreakdown] = None
-    tool_calls: List[ToolCall] = field(default_factory=list)
-    reasoning_steps: List[ReasoningStep] = field(default_factory=list)
-    finish_reason: Optional[str] = None
-    error: Optional[str] = None
-    error_type: Optional[str] = None
-    attributes: Optional[Dict[str, Any]] = None
+    parent_span_id: str | None = None
+    agent_run_id: str | None = None
+    model: ModelInfo | None = None
+    token_usage: TokenUsage | None = None
+    cost: CostBreakdown | None = None
+    tool_calls: list[ToolCall] = field(default_factory=list)
+    reasoning_steps: list[ReasoningStep] = field(default_factory=list)
+    finish_reason: str | None = None
+    error: str | None = None
+    error_type: str | None = None
+    attributes: dict[str, Any] | None = None
 
     _VALID_STATUSES = frozenset({"ok", "error", "timeout"})
 
     def __post_init__(self) -> None:
         if not _SPAN_ID_RE.match(self.span_id):
-            raise ValueError(f"SpanPayload.span_id must be 16 lowercase hex chars, got {self.span_id!r}")
+            raise ValueError(f"SpanPayload.span_id must be 16 lowercase hex chars, got {self.span_id!r}")  # noqa: E501
         if not _TRACE_ID_RE.match(self.trace_id):
-            raise ValueError(f"SpanPayload.trace_id must be 32 lowercase hex chars, got {self.trace_id!r}")
+            raise ValueError(f"SpanPayload.trace_id must be 32 lowercase hex chars, got {self.trace_id!r}")  # noqa: E501
         if not isinstance(self.span_name, str) or not self.span_name:
             raise ValueError("SpanPayload.span_name must be a non-empty string")
         if self.parent_span_id is not None and not _SPAN_ID_RE.match(self.parent_span_id):
@@ -583,11 +597,12 @@ class SpanPayload:
         if self.duration_ms < 0:
             raise ValueError("SpanPayload.duration_ms must be non-negative")
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
         op = self.operation.value if isinstance(self.operation, Enum) else self.operation
         sk = self.span_kind.value if isinstance(self.span_kind, Enum) else self.span_kind
         st = self.status.value if isinstance(self.status, Enum) else self.status
-        d: Dict[str, Any] = {
+        d: dict[str, Any] = {
             "span_id": self.span_id,
             "trace_id": self.trace_id,
             "span_name": self.span_name,
@@ -621,15 +636,16 @@ class SpanPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "SpanPayload":
+    def from_dict(cls, data: dict[str, Any]) -> SpanPayload:
+        """Deserialise from a plain ``dict``."""
         op_raw = data["operation"]
         try:
-            operation: Union[GenAIOperationName, str] = GenAIOperationName(op_raw)
+            operation: GenAIOperationName | str = GenAIOperationName(op_raw)
         except ValueError:
             operation = op_raw
         sk_raw = data["span_kind"]
         try:
-            span_kind: Union[SpanKind, str] = SpanKind(sk_raw)
+            span_kind: SpanKind | str = SpanKind(sk_raw)
         except ValueError:
             span_kind = sk_raw
         return cls(
@@ -645,7 +661,7 @@ class SpanPayload:
             parent_span_id=data.get("parent_span_id"),
             agent_run_id=data.get("agent_run_id"),
             model=ModelInfo.from_dict(data["model"]) if "model" in data else None,
-            token_usage=TokenUsage.from_dict(data["token_usage"]) if "token_usage" in data else None,
+            token_usage=TokenUsage.from_dict(data["token_usage"]) if "token_usage" in data else None,  # noqa: E501
             cost=CostBreakdown.from_dict(data["cost"]) if "cost" in data else None,
             tool_calls=[ToolCall.from_dict(tc) for tc in data.get("tool_calls", [])],
             reasoning_steps=[ReasoningStep.from_dict(rs) for rs in data.get("reasoning_steps", [])],
@@ -668,20 +684,20 @@ class AgentStepPayload:
     step_index: int
     span_id: str           # 16 lowercase hex chars
     trace_id: str          # 32 lowercase hex chars
-    operation: Union[GenAIOperationName, str]
-    tool_calls: List[ToolCall]
-    reasoning_steps: List[ReasoningStep]
-    decision_points: List[DecisionPoint]
+    operation: GenAIOperationName | str
+    tool_calls: list[ToolCall]
+    reasoning_steps: list[ReasoningStep]
+    decision_points: list[DecisionPoint]
     status: str            # "ok" | "error" | "timeout"
     start_time_unix_nano: int
     end_time_unix_nano: int
     duration_ms: float
-    parent_span_id: Optional[str] = None
-    model: Optional[ModelInfo] = None
-    token_usage: Optional[TokenUsage] = None
-    cost: Optional[CostBreakdown] = None
-    error: Optional[str] = None
-    error_type: Optional[str] = None
+    parent_span_id: str | None = None
+    model: ModelInfo | None = None
+    token_usage: TokenUsage | None = None
+    cost: CostBreakdown | None = None
+    error: str | None = None
+    error_type: str | None = None
 
     _VALID_STATUSES = frozenset({"ok", "error", "timeout"})
 
@@ -698,16 +714,17 @@ class AgentStepPayload:
             raise ValueError("AgentStepPayload.parent_span_id must be 16 lowercase hex chars")
         status_val = self.status.value if isinstance(self.status, Enum) else self.status
         if status_val not in self._VALID_STATUSES:
-            raise ValueError(f"AgentStepPayload.status must be one of {sorted(self._VALID_STATUSES)}")
+            raise ValueError(f"AgentStepPayload.status must be one of {sorted(self._VALID_STATUSES)}")  # noqa: E501
         if self.start_time_unix_nano < 0:
             raise ValueError("AgentStepPayload.start_time_unix_nano must be non-negative")
         if self.end_time_unix_nano < self.start_time_unix_nano:
             raise ValueError("AgentStepPayload.end_time_unix_nano must be >= start_time_unix_nano")
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
         op = self.operation.value if isinstance(self.operation, Enum) else self.operation
         st = self.status.value if isinstance(self.status, Enum) else self.status
-        d: Dict[str, Any] = {
+        d: dict[str, Any] = {
             "agent_run_id": self.agent_run_id,
             "step_index": self.step_index,
             "span_id": self.span_id,
@@ -736,10 +753,11 @@ class AgentStepPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "AgentStepPayload":
+    def from_dict(cls, data: dict[str, Any]) -> AgentStepPayload:
+        """Deserialise from a plain ``dict``."""
         op_raw = data["operation"]
         try:
-            operation: Union[GenAIOperationName, str] = GenAIOperationName(op_raw)
+            operation: GenAIOperationName | str = GenAIOperationName(op_raw)
         except ValueError:
             operation = op_raw
         return cls(
@@ -757,7 +775,7 @@ class AgentStepPayload:
             duration_ms=float(data["duration_ms"]),
             parent_span_id=data.get("parent_span_id"),
             model=ModelInfo.from_dict(data["model"]) if "model" in data else None,
-            token_usage=TokenUsage.from_dict(data["token_usage"]) if "token_usage" in data else None,
+            token_usage=TokenUsage.from_dict(data["token_usage"]) if "token_usage" in data else None,  # noqa: E501
             cost=CostBreakdown.from_dict(data["cost"]) if "cost" in data else None,
             error=data.get("error"),
             error_type=data.get("error_type"),
@@ -786,7 +804,7 @@ class AgentRunPayload:
     start_time_unix_nano: int
     end_time_unix_nano: int
     duration_ms: float
-    termination_reason: Optional[str] = None
+    termination_reason: str | None = None
 
     _VALID_STATUSES = frozenset({"ok", "error", "timeout", "max_steps_exceeded"})
 
@@ -805,15 +823,16 @@ class AgentRunPayload:
                 raise ValueError(f"AgentRunPayload.{name} must be a non-negative int")
         status_val = self.status.value if isinstance(self.status, Enum) else self.status
         if status_val not in self._VALID_STATUSES:
-            raise ValueError(f"AgentRunPayload.status must be one of {sorted(self._VALID_STATUSES)}")
+            raise ValueError(f"AgentRunPayload.status must be one of {sorted(self._VALID_STATUSES)}")  # noqa: E501
         if self.start_time_unix_nano < 0:
             raise ValueError("AgentRunPayload.start_time_unix_nano must be non-negative")
         if self.end_time_unix_nano < self.start_time_unix_nano:
             raise ValueError("AgentRunPayload.end_time_unix_nano must be >= start_time_unix_nano")
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
         st = self.status.value if isinstance(self.status, Enum) else self.status
-        d: Dict[str, Any] = {
+        d: dict[str, Any] = {
             "agent_run_id": self.agent_run_id,
             "agent_name": self.agent_name,
             "trace_id": self.trace_id,
@@ -833,7 +852,8 @@ class AgentRunPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "AgentRunPayload":
+    def from_dict(cls, data: dict[str, Any]) -> AgentRunPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             agent_run_id=data["agent_run_id"],
             agent_name=data["agent_name"],

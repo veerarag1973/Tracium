@@ -18,12 +18,13 @@ Usage::
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Sequence, Union
-from uuid import UUID
+from typing import TYPE_CHECKING, Any
 
 from tracium.event import Event
 from tracium.ulid import generate as gen_ulid
+
+if TYPE_CHECKING:
+    from uuid import UUID
 
 __all__ = [
     "LLMSchemaCallbackHandler",
@@ -35,8 +36,7 @@ __all__ = [
 
 
 def _require_langchain() -> Any:  # noqa: ANN401
-    """Return the LangChain callbacks module (``langchain_core.callbacks`` or
-    ``langchain.callbacks``).
+    """Return the LangChain callbacks module from whichever package is installed.
 
     Tries ``langchain_core.callbacks`` first (preferred, modern API), then
     falls back to the legacy ``langchain.callbacks`` module.
@@ -47,17 +47,19 @@ def _require_langchain() -> Any:  # noqa: ANN401
     # Try modern langchain_core first.  Import the parent module first so that
     # a None sentinel in sys.modules propagates as ImportError correctly.
     try:
+        import sys  # noqa: PLC0415
+
         import langchain_core  # noqa: PLC0415
-        import langchain_core.callbacks  # noqa: PLC0415
-        import sys
+        import langchain_core.callbacks  # noqa: PLC0415, F401
         return sys.modules["langchain_core.callbacks"]
     except ImportError:
         pass
     # Fall back to legacy langchain package.
     try:
+        import sys  # noqa: PLC0415
+
         import langchain  # noqa: PLC0415
-        import langchain.callbacks  # noqa: PLC0415
-        import sys
+        import langchain.callbacks  # noqa: PLC0415, F401
         return sys.modules["langchain.callbacks"]
     except ImportError:
         pass
@@ -95,19 +97,19 @@ class LLMSchemaCallbackHandler:
         self,
         source: str,
         *,
-        org_id: Optional[str] = None,
-        exporter: Optional[Any] = None,
+        org_id: str | None = None,
+        exporter: Any | None = None,  # noqa: ANN401
     ) -> None:
         self._source = source
         self._org_id = org_id
         self._exporter = exporter
-        self.events: List[Event] = []
+        self.events: list[Event] = []
 
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _make_event(self, event_type: str, payload: Dict[str, Any]) -> Event:
+    def _make_event(self, event_type: str, payload: dict[str, Any]) -> Event:
         """Create a Tracium event and optionally schedule async export.
 
         Args:
@@ -129,7 +131,7 @@ class LLMSchemaCallbackHandler:
         if self._exporter is not None:
             try:
                 loop = asyncio.get_running_loop()
-                loop.create_task(self._exporter.export(event))
+                loop.create_task(self._exporter.export(event))  # noqa: RUF006
             except RuntimeError:
                 pass  # no running event loop
 
@@ -141,11 +143,11 @@ class LLMSchemaCallbackHandler:
 
     def on_llm_start(
         self,
-        serialized: Dict[str, Any],
-        prompts: List[str],
+        serialized: dict[str, Any],
+        prompts: list[str],
         *,
-        run_id: Optional[UUID] = None,
-        **kwargs: Any,
+        run_id: UUID | None = None,
+        **kwargs: Any,  # noqa: ANN401
     ) -> None:
         """Called when an LLM invocation begins.
 
@@ -169,10 +171,10 @@ class LLMSchemaCallbackHandler:
 
     def on_llm_end(
         self,
-        response: Any,
+        response: Any,  # noqa: ANN401
         *,
-        run_id: Optional[UUID] = None,
-        **kwargs: Any,
+        run_id: UUID | None = None,
+        **kwargs: Any,  # noqa: ANN401
     ) -> None:
         """Called when an LLM invocation completes.
 
@@ -182,9 +184,9 @@ class LLMSchemaCallbackHandler:
             **kwargs: Additional keyword arguments (ignored).
         """
         llm_output = getattr(response, "llm_output", None)
-        prompt_tokens: Optional[int] = None
-        completion_tokens: Optional[int] = None
-        total_tokens: Optional[int] = None
+        prompt_tokens: int | None = None
+        completion_tokens: int | None = None
+        total_tokens: int | None = None
 
         if isinstance(llm_output, dict):
             token_usage = llm_output.get("token_usage") or {}
@@ -207,8 +209,8 @@ class LLMSchemaCallbackHandler:
         self,
         error: BaseException,
         *,
-        run_id: Optional[UUID] = None,
-        **kwargs: Any,
+        run_id: UUID | None = None,
+        **kwargs: Any,  # noqa: ANN401
     ) -> None:
         """Called when an LLM invocation raises an error.
 
@@ -228,11 +230,11 @@ class LLMSchemaCallbackHandler:
 
     def on_tool_start(
         self,
-        serialized: Dict[str, Any],
+        serialized: dict[str, Any],
         input_str: str,
         *,
-        run_id: Optional[UUID] = None,
-        **kwargs: Any,
+        run_id: UUID | None = None,
+        **kwargs: Any,  # noqa: ANN401
     ) -> None:
         """Called when a tool invocation begins.
 
@@ -256,8 +258,8 @@ class LLMSchemaCallbackHandler:
         self,
         output: str,
         *,
-        run_id: Optional[UUID] = None,
-        **kwargs: Any,
+        run_id: UUID | None = None,
+        **kwargs: Any,  # noqa: ANN401
     ) -> None:
         """Called when a tool invocation completes.
 
@@ -278,8 +280,8 @@ class LLMSchemaCallbackHandler:
         self,
         error: BaseException,
         *,
-        run_id: Optional[UUID] = None,
-        **kwargs: Any,
+        run_id: UUID | None = None,
+        **kwargs: Any,  # noqa: ANN401
     ) -> None:
         """Called when a tool invocation raises an error.
 

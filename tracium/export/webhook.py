@@ -1,4 +1,4 @@
-"""Webhook exporter for llm-toolkit-schema events.
+"""Webhook exporter for tracium events.
 
 Delivers events (or batches) as JSON HTTP POST requests to a configurable
 URL with optional HMAC-SHA256 request signing.
@@ -6,7 +6,7 @@ URL with optional HMAC-SHA256 request signing.
 Security
 --------
 * If ``secret`` is provided every request is signed with
-  ``X-llm-toolkit-schema-Signature: hmac-sha256:<hex>`` so the receiver can verify
+  ``X-AgentOBS-Signature: hmac-sha256:<hex>`` so the receiver can verify
   authenticity.
 * The ``secret`` value is **never** included in repr, logs, or exception
   messages.
@@ -24,31 +24,67 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import hmac
-import json
+import ipaddress
 import urllib.error
 import urllib.parse
 import urllib.request
-from typing import Any, Dict, List, Optional, Sequence
+from typing import TYPE_CHECKING
 
-from tracium.event import Event
 from tracium.exceptions import ExportError
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from tracium.event import Event
 
 __all__ = ["WebhookExporter"]
 
 # Header name for the HMAC-SHA256 request signature.
-_SIGNATURE_HEADER = "X-llm-toolkit-schema-Signature"
+# Note: kept as the legacy value for backwards-compatibility with existing receivers.
+_SIGNATURE_HEADER = "X-AgentOBS-Signature"
 
 # Maximum retry sleep (seconds) — hard ceiling regardless of attempt count.
 _MAX_SLEEP: float = 30.0
 
 
-def _validate_http_url(url: str, param_name: str = "url") -> None:
-    """Raise *ValueError* if *url* is not a valid ``http://`` or ``https://`` URL."""
+def _is_private_ip_literal(host: str) -> bool:
+    """Return ``True`` if *host* is a private/loopback/link-local **literal** IP.
+
+    DNS hostnames are **not** resolved.  Only dotted-decimal IPv4 or bracketed
+    IPv6 literals are evaluated, so ``"localhost"`` passes this check.
+    """
+    try:
+        addr = ipaddress.ip_address(host)
+    except ValueError:
+        return False  # not an IP literal — treat as safe
+    return addr.is_private or addr.is_loopback or addr.is_link_local or addr.is_multicast
+
+
+def _validate_http_url(
+    url: str,
+    param_name: str = "url",
+    *,
+    allow_private_addresses: bool = False,
+) -> None:
+    """Raise *ValueError* if *url* is not a valid ``http://`` or ``https://`` URL.
+
+    When *allow_private_addresses* is ``False`` (default), also rejects URLs
+    whose host is a literal private/loopback/link-local IP address.  DNS
+    hostnames are **not** resolved so ``http://localhost/`` still passes.
+    """
     parsed = urllib.parse.urlparse(url)
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
         raise ValueError(
             f"{param_name} must be a valid http:// or https:// URL; got {url!r}"
         )
+    if not allow_private_addresses:
+        host = parsed.hostname or ""
+        if _is_private_ip_literal(host):
+            raise ValueError(
+                f"{param_name} resolves to a private/loopback/link-local IP address "
+                f"({host!r}).  Set allow_private_addresses=True to permit this in "
+                f"non-production environments."
+            )
 
 
 def _sign_body(body: bytes, secret: str) -> str:
@@ -70,7 +106,7 @@ def _sign_body(body: bytes, secret: str) -> str:
 
 
 class WebhookExporter:
-    """Async exporter that sends llm-toolkit-schema events to an HTTP webhook endpoint.
+    """Async exporter that sends tracium events to an HTTP webhook endpoint.
 
     Each :meth:`export` call delivers a single event as the JSON body.
     :meth:`export_batch` delivers a JSON array.
@@ -78,7 +114,7 @@ class WebhookExporter:
     Args:
         url:         Destination webhook URL.
         secret:      Optional HMAC-SHA256 signing secret.  When provided, the
-                     request includes an ``X-llm-toolkit-schema-Signature`` header.
+                     request includes an ``X-AgentOBS-Signature`` header.
         headers:     Optional extra HTTP request headers.
         timeout:     Per-request timeout in seconds (default 10.0).
         max_retries: Maximum retry attempts on transient failures (default 3).
@@ -98,25 +134,26 @@ class WebhookExporter:
         await exporter.export(event)
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         url: str,
         *,
-        secret: Optional[str] = None,
-        headers: Optional[Dict[str, str]] = None,
+        secret: str | None = None,
+        headers: dict[str, str] | None = None,
         timeout: float = 10.0,
         max_retries: int = 3,
+        allow_private_addresses: bool = False,
     ) -> None:
         if not url:
             raise ValueError("url must be a non-empty string")
-        _validate_http_url(url, "url")
+        _validate_http_url(url, "url", allow_private_addresses=allow_private_addresses)
         if timeout <= 0:
             raise ValueError("timeout must be positive")
         if max_retries < 0:
             raise ValueError("max_retries must be >= 0")
         self._url = url
-        self._secret: Optional[str] = secret
-        self._headers: Dict[str, str] = dict(headers) if headers else {}
+        self._secret: str | None = secret
+        self._headers: dict[str, str] = dict(headers) if headers else {}
         self._timeout = timeout
         self._max_retries = max_retries
 
@@ -173,7 +210,7 @@ class WebhookExporter:
         Raises:
             ExportError: After exhausting all retry attempts.
         """
-        request_headers: Dict[str, str] = {
+        request_headers: dict[str, str] = {
             "Content-Type": "application/json",
             **self._headers,
         }
@@ -182,7 +219,7 @@ class WebhookExporter:
 
         url = self._url
         timeout = self._timeout
-        last_exc: Optional[ExportError] = None
+        last_exc: ExportError | None = None
 
         for attempt in range(self._max_retries + 1):
             if attempt > 0:
@@ -191,14 +228,14 @@ class WebhookExporter:
                 await asyncio.sleep(sleep_secs)
 
             def _do_request() -> None:
-                req = urllib.request.Request(
+                req = urllib.request.Request(  # noqa: S310
                     url=url,
                     data=body,
                     headers=request_headers,
                     method="POST",
                 )
                 try:
-                    with urllib.request.urlopen(req, timeout=timeout) as resp:
+                    with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310
                         resp.read()
                 except urllib.error.HTTPError as exc:
                     raise ExportError(
@@ -216,13 +253,14 @@ class WebhookExporter:
             loop = asyncio.get_running_loop()
             try:
                 await loop.run_in_executor(None, _do_request)
-                return  # success
             except ExportError as exc:
                 last_exc = exc
                 # Only retry on 5xx and network errors; fail fast on 4xx.
                 reason = exc.reason
                 if reason.startswith("HTTP 4"):
                     raise
+            else:
+                return  # success
 
         assert last_exc is not None  # always set when we reach here
         raise last_exc

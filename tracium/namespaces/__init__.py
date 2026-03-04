@@ -111,57 +111,57 @@ from tracium.namespaces.trace import (
 )
 
 __all__: list = [
+    "AgentRunPayload",
+    "AgentStepPayload",
+    "AuditChainTamperedPayload",
+    "AuditChainVerifiedPayload",
     # audit
     "AuditKeyRotatedPayload",
-    "AuditChainVerifiedPayload",
-    "AuditChainTamperedPayload",
+    "CacheEvictedPayload",
     # cache
     "CacheHitPayload",
     "CacheMissPayload",
-    "CacheEvictedPayload",
     "CacheWrittenPayload",
+    "CostAttributedPayload",
+    "CostBreakdown",
+    "CostSessionRecordedPayload",
     # cost
     "CostTokenRecordedPayload",
-    "CostSessionRecordedPayload",
-    "CostAttributedPayload",
+    "DecisionPoint",
     # diff
     "DiffComputedPayload",
     "DiffRegressionFlaggedPayload",
+    "EvalRegressionDetectedPayload",
+    "EvalScenarioCompletedPayload",
+    "EvalScenarioStartedPayload",
     # eval
     "EvalScoreRecordedPayload",
-    "EvalRegressionDetectedPayload",
-    "EvalScenarioStartedPayload",
-    "EvalScenarioCompletedPayload",
+    "FenceMaxRetriesExceededPayload",
+    "FenceRetryTriggeredPayload",
     # fence
     "FenceValidatedPayload",
-    "FenceRetryTriggeredPayload",
-    "FenceMaxRetriesExceededPayload",
+    "GenAIOperationName",
+    # trace — value objects and payloads
+    "GenAISystem",
     # guard
     "GuardPayload",
+    "ModelInfo",
+    "PricingTier",
     # prompt
     "PromptRenderedPayload",
     "PromptTemplateLoadedPayload",
     "PromptVersionChangedPayload",
+    "ReasoningStep",
+    "RedactAppliedPayload",
+    "RedactPhiDetectedPayload",
     # redact
     "RedactPiiDetectedPayload",
-    "RedactPhiDetectedPayload",
-    "RedactAppliedPayload",
+    "SpanKind",
+    "SpanPayload",
     # template
     "TemplateRegisteredPayload",
-    "TemplateVariableBoundPayload",
     "TemplateValidationFailedPayload",
-    # trace — value objects and payloads
-    "GenAISystem",
-    "GenAIOperationName",
-    "SpanKind",
+    "TemplateVariableBoundPayload",
     "TokenUsage",
-    "ModelInfo",
-    "CostBreakdown",
-    "PricingTier",
     "ToolCall",
-    "ReasoningStep",
-    "DecisionPoint",
-    "SpanPayload",
-    "AgentStepPayload",
-    "AgentRunPayload",
 ]

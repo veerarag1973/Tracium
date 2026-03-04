@@ -1,4 +1,4 @@
-﻿"""Tracium — Python SDK for the SpanForge Observability Standard (RFC-0001 v2.0).
+﻿"""Tracium — Python SDK for the AGENTOBS Observability Standard (RFC-0001 v2.0).
 
 Every tool in the LLM Developer Toolkit emits events that conform to the
 :class:`~tracium.event.Event` envelope defined here.  The schema is
@@ -116,24 +116,46 @@ v2.0 â€” RFC-0001 AGENTOBS v2.0 SDK baseline.  Canonical 36-type EventType
 
 from __future__ import annotations
 
-# ---------------------------------------------------------------------------
-# Phase 1: Configuration layer
-# ---------------------------------------------------------------------------
-from tracium.config import TraciumConfig, configure, get_config
+from tracium._span import (
+    AgentRunContext,
+    AgentRunContextManager,
+    AgentStepContext,
+    AgentStepContextManager,
+    Span,
+    SpanContextManager,
+)
 
 # ---------------------------------------------------------------------------
 # Phase 2: Core tracer + span
 # ---------------------------------------------------------------------------
 from tracium._tracer import Tracer, tracer
-from tracium._span import (
-    AgentRunContext,
-    AgentStepContext,
-    Span,
-    SpanContextManager,
-    AgentRunContextManager,
-    AgentStepContextManager,
-)
+from tracium.actor import ActorContext
 
+# ---------------------------------------------------------------------------
+# Phase 1: Configuration layer
+# ---------------------------------------------------------------------------
+from tracium.config import TraciumConfig, configure, get_config
+from tracium.consumer import (
+    ConsumerRecord,
+    ConsumerRegistry,
+    IncompatibleSchemaError,
+    assert_compatible,
+    register_consumer,
+)
+from tracium.consumer import (
+    get_registry as get_consumer_registry,
+)
+from tracium.deprecations import (
+    DeprecationNotice,
+    DeprecationRegistry,
+    get_deprecation_notice,
+    list_deprecated,
+    mark_deprecated,
+    warn_if_deprecated,
+)
+from tracium.deprecations import (
+    get_registry as get_deprecation_registry,
+)
 from tracium.event import SCHEMA_VERSION, Event, Tags
 from tracium.exceptions import (
     DeserializationError,
@@ -147,67 +169,21 @@ from tracium.exceptions import (
     ULIDError,
     VerificationError,
 )
-from tracium.redact import (
-    PIINotRedactedError,
-    PII_TYPES,
-    Redactable,
-    RedactionPolicy,
-    RedactionResult,
-    Sensitivity,
-    assert_redacted,
-    contains_pii,
-)
-from tracium.signing import (
-    AuditStream,
-    ChainVerificationResult,
-    assert_verified,
-    sign,
-    verify,
-    verify_chain,
-)
-from tracium.types import (
-    EventType,
-    get_by_value,
-    is_registered,
-    namespace_of,
-    validate_custom,
-)
-from tracium.ulid import extract_timestamp_ms
-from tracium.ulid import generate as generate_ulid
-from tracium.ulid import validate as validate_ulid
 from tracium.export import (
     JSONLExporter,
     OTLPExporter,
     ResourceAttributes,
     WebhookExporter,
 )
-from tracium.stream import EventStream, Exporter, iter_file, aiter_file
-from tracium.validate import validate_event
-from tracium.consumer import (
-    ConsumerRecord,
-    ConsumerRegistry,
-    IncompatibleSchemaError,
-    assert_compatible,
-    get_registry as get_consumer_registry,
-    register_consumer,
-)
 from tracium.governance import (
     EventGovernancePolicy,
     GovernanceViolationError,
     GovernanceWarning,
-    check_event as governance_check_event,
     get_global_policy,
     set_global_policy,
 )
-from tracium.actor import ActorContext
-from tracium.deprecations import (
-    DeprecationNotice,
-    DeprecationRegistry,
-    get_deprecation_notice,
-    get_registry as get_deprecation_registry,
-    list_deprecated,
-    mark_deprecated,
-    warn_if_deprecated,
+from tracium.governance import (
+    check_event as governance_check_event,
 )
 from tracium.migrate import (
     DeprecationRecord,
@@ -218,7 +194,7 @@ from tracium.migrate import (
 )
 
 # ---------------------------------------------------------------------------
-# Namespace payload dataclasses (RFC §8–§10, §11 audit)
+# Namespace payload dataclasses (RFC §8-§10, §11 audit)
 # ---------------------------------------------------------------------------
 from tracium.namespaces.audit import (
     AuditChainTamperedPayload,
@@ -282,162 +258,192 @@ from tracium.namespaces.trace import (
     TokenUsage,
     ToolCall,
 )
+from tracium.redact import (
+    PII_TYPES,
+    PIINotRedactedError,
+    Redactable,
+    RedactionPolicy,
+    RedactionResult,
+    Sensitivity,
+    assert_redacted,
+    contains_pii,
+)
+from tracium.signing import (
+    AuditStream,
+    ChainVerificationResult,
+    assert_verified,
+    sign,
+    verify,
+    verify_chain,
+)
+from tracium.stream import EventStream, Exporter, aiter_file, iter_file
+from tracium.types import (
+    EventType,
+    get_by_value,
+    is_registered,
+    namespace_of,
+    validate_custom,
+)
+from tracium.ulid import extract_timestamp_ms
+from tracium.ulid import generate as generate_ulid
+from tracium.ulid import validate as validate_ulid
+from tracium.validate import validate_event
 
 __version__: str = "1.0.0"
 
 __all__: list[str] = [
-    # Phase 1 — Configuration
-    "TraciumConfig",
-    "configure",
-    "get_config",
-    # Phase 2 — Tracer + Span
-    "Tracer",
-    "tracer",
-    "Span",
-    "SpanContextManager",
-    "AgentRunContext",
-    "AgentRunContextManager",
-    "AgentStepContext",
-    "AgentStepContextManager",
-    # Core envelope
-    "Event",
-    "Tags",
-    "SCHEMA_VERSION",
-    # Event types
-    "EventType",
-    "is_registered",
-    "namespace_of",
-    "validate_custom",
-    "get_by_value",
-    # ULID
-    "generate_ulid",
-    "validate_ulid",
-    "extract_timestamp_ms",
-    # PII Redaction (RFC Â§12)
-    "Sensitivity",
-    "Redactable",
-    "RedactionPolicy",
-    "RedactionResult",
-    "PIINotRedactedError",
-    "contains_pii",
-    "assert_redacted",
     "PII_TYPES",
-    # HMAC Signing & Audit Chain (RFC Â§11)
-    "sign",
-    "verify",
-    "verify_chain",
-    "assert_verified",
-    "ChainVerificationResult",
-    "AuditStream",
-    # Export backends (RFC Â§14)
-    "OTLPExporter",
-    "ResourceAttributes",
-    "WebhookExporter",
-    "JSONLExporter",
-    # Event routing (RFC Â§14)
-    "EventStream",
-    "Exporter",
-    "iter_file",
-    "aiter_file",
-    # Validation
-    "validate_event",
-    # Exceptions
-    "LLMSchemaError",
-    "SchemaValidationError",
-    "SchemaVersionError",
-    "ULIDError",
-    "SerializationError",
-    "DeserializationError",
-    "EventTypeError",
-    "SigningError",
-    "VerificationError",
-    "ExportError",
-    # Consumer registration (RFC Â§16)
-    "ConsumerRecord",
-    "ConsumerRegistry",
-    "IncompatibleSchemaError",
-    "register_consumer",
-    "get_consumer_registry",
-    "assert_compatible",
-    # Schema governance (RFC Â§13)
-    "EventGovernancePolicy",
-    "GovernanceViolationError",
-    "GovernanceWarning",
-    "get_global_policy",
-    "set_global_policy",
-    "governance_check_event",
+    "SCHEMA_VERSION",
     # Actor identity context
     "ActorContext",
-    # Deprecation registry
-    "DeprecationNotice",
-    "DeprecationRegistry",
-    "mark_deprecated",
-    "get_deprecation_notice",
-    "warn_if_deprecated",
-    "list_deprecated",
-    "get_deprecation_registry",
-    # Migration scaffold (v1→v2)
-    "MigrationResult",
-    "v1_to_v2",
-    "DeprecationRecord",
-    "SunsetPolicy",
-    "v2_migration_roadmap",
-    # Namespace payload dataclasses (RFC §8–§11)
-    # trace — value objects
-    "GenAISystem",
-    "GenAIOperationName",
-    "SpanKind",
-    "TokenUsage",
-    "ModelInfo",
-    "CostBreakdown",
-    "PricingTier",
-    "ToolCall",
-    "ReasoningStep",
-    "DecisionPoint",
-    # trace — payloads
-    "SpanPayload",
-    "AgentStepPayload",
+    "AgentRunContext",
+    "AgentRunContextManager",
     "AgentRunPayload",
-    # cost
-    "CostTokenRecordedPayload",
-    "CostSessionRecordedPayload",
-    "CostAttributedPayload",
+    "AgentStepContext",
+    "AgentStepContextManager",
+    "AgentStepPayload",
+    "AuditChainTamperedPayload",
+    "AuditChainVerifiedPayload",
+    # audit
+    "AuditKeyRotatedPayload",
+    "AuditStream",
+    "CacheEvictedPayload",
     # cache
     "CacheHitPayload",
     "CacheMissPayload",
-    "CacheEvictedPayload",
     "CacheWrittenPayload",
+    "ChainVerificationResult",
+    # Consumer registration (RFC Â§16)
+    "ConsumerRecord",
+    "ConsumerRegistry",
+    "CostAttributedPayload",
+    "CostBreakdown",
+    "CostSessionRecordedPayload",
+    # cost
+    "CostTokenRecordedPayload",
+    "DecisionPoint",
+    # Deprecation registry
+    "DeprecationNotice",
+    "DeprecationRecord",
+    "DeprecationRegistry",
+    "DeserializationError",
+    # diff
+    "DiffComputedPayload",
+    "DiffRegressionFlaggedPayload",
+    "EvalRegressionDetectedPayload",
+    "EvalScenarioCompletedPayload",
+    "EvalScenarioStartedPayload",
     # eval
     "EvalScoreRecordedPayload",
-    "EvalRegressionDetectedPayload",
-    "EvalScenarioStartedPayload",
-    "EvalScenarioCompletedPayload",
-    # guard
-    "GuardPayload",
+    # Core envelope
+    "Event",
+    # Schema governance (RFC Â§13)
+    "EventGovernancePolicy",
+    # Event routing (RFC Â§14)
+    "EventStream",
+    # Event types
+    "EventType",
+    "EventTypeError",
+    "ExportError",
+    "Exporter",
+    "FenceMaxRetriesExceededPayload",
+    "FenceRetryTriggeredPayload",
     # fence
     "FenceValidatedPayload",
-    "FenceRetryTriggeredPayload",
-    "FenceMaxRetriesExceededPayload",
+    "GenAIOperationName",
+    # Namespace payload dataclasses (RFC §8-§11)
+    # trace — value objects
+    "GenAISystem",
+    "GovernanceViolationError",
+    "GovernanceWarning",
+    # guard
+    "GuardPayload",
+    "IncompatibleSchemaError",
+    "JSONLExporter",
+    # Exceptions
+    "LLMSchemaError",
+    # Migration scaffold (v1→v2)
+    "MigrationResult",
+    "ModelInfo",
+    # Export backends (RFC Â§14)
+    "OTLPExporter",
+    "PIINotRedactedError",
+    "PricingTier",
     # prompt
     "PromptRenderedPayload",
     "PromptTemplateLoadedPayload",
     "PromptVersionChangedPayload",
+    "ReasoningStep",
+    "RedactAppliedPayload",
+    "RedactPhiDetectedPayload",
     # redact
     "RedactPiiDetectedPayload",
-    "RedactPhiDetectedPayload",
-    "RedactAppliedPayload",
-    # diff
-    "DiffComputedPayload",
-    "DiffRegressionFlaggedPayload",
+    "Redactable",
+    "RedactionPolicy",
+    "RedactionResult",
+    "ResourceAttributes",
+    "SchemaValidationError",
+    "SchemaVersionError",
+    # PII Redaction (RFC Â§12)
+    "Sensitivity",
+    "SerializationError",
+    "SigningError",
+    "Span",
+    "SpanContextManager",
+    "SpanKind",
+    # trace — payloads
+    "SpanPayload",
+    "SunsetPolicy",
+    "Tags",
     # template
     "TemplateRegisteredPayload",
-    "TemplateVariableBoundPayload",
     "TemplateValidationFailedPayload",
-    # audit
-    "AuditKeyRotatedPayload",
-    "AuditChainVerifiedPayload",
-    "AuditChainTamperedPayload",
+    "TemplateVariableBoundPayload",
+    "TokenUsage",
+    "ToolCall",
+    # Phase 2 — Tracer + Span
+    "Tracer",
+    # Phase 1 — Configuration
+    "TraciumConfig",
+    "ULIDError",
+    "VerificationError",
+    "WebhookExporter",
     # Metadata
     "__version__",
+    "aiter_file",
+    "assert_compatible",
+    "assert_redacted",
+    "assert_verified",
+    "configure",
+    "contains_pii",
+    "extract_timestamp_ms",
+    # ULID
+    "generate_ulid",
+    "get_by_value",
+    "get_config",
+    "get_consumer_registry",
+    "get_deprecation_notice",
+    "get_deprecation_registry",
+    "get_global_policy",
+    "governance_check_event",
+    "is_registered",
+    "iter_file",
+    "list_deprecated",
+    "mark_deprecated",
+    "namespace_of",
+    "register_consumer",
+    "set_global_policy",
+    # HMAC Signing & Audit Chain (RFC Â§11)
+    "sign",
+    "tracer",
+    "v1_to_v2",
+    "v2_migration_roadmap",
+    "validate_custom",
+    # Validation
+    "validate_event",
+    "validate_ulid",
+    "verify",
+    "verify_chain",
+    "warn_if_deprecated",
 ]
 

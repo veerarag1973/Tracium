@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-pytest.importorskip("tracium.export.grafana", reason="tracium.export.grafana not yet implemented (Phase 8)")
+pytest.importorskip("tracium.export.grafana", reason="tracium.export.grafana not yet implemented (Phase 8)")  # noqa: E501
 
 from tracium import Event, EventType, Tags
 from tracium.exceptions import ExportError
@@ -223,7 +223,7 @@ class TestHttpErrors:
     def test_http_error_raises_export_error(
         self, exporter: GrafanaLokiExporter, sample_event: Event
     ) -> None:
-        import urllib.error
+        import urllib.error  # noqa: PLC0415
 
         def _fail(req: Any, timeout: Any = None) -> Any:
             raise urllib.error.HTTPError(None, 500, "Server Error", {}, None)

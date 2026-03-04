@@ -9,34 +9,34 @@ from __future__ import annotations
 
 import pytest
 
-# ── trace ─────────────────────────────────────────────────────────────────────
-from tracium.namespaces.trace import (
-    AgentRunPayload,
-    AgentStepPayload,
-    CostBreakdown,
-    GenAIOperationName,
-    ModelInfo,
-    SpanKind,
-    SpanPayload,
-    TokenUsage,
-    ToolCall,
+# ── audit ─────────────────────────────────────────────────────────────────────
+from tracium.namespaces.audit import (
+    AuditChainTamperedPayload,
+    AuditChainVerifiedPayload,
+    AuditKeyRotatedPayload,
+)
+
+# ── cache ─────────────────────────────────────────────────────────────────────
+from tracium.namespaces.cache import (
+    CacheEvictedPayload,
+    CacheHitPayload,
+    CacheMissPayload,
+    CacheWrittenPayload,
 )
 
 # ── cost ──────────────────────────────────────────────────────────────────────
 from tracium.namespaces.cost import (
-    CostAttributedPayload,
     CostSessionRecordedPayload,
     CostTokenRecordedPayload,
 )
 
 # ── diff ──────────────────────────────────────────────────────────────────────
-from tracium.namespaces.diff import DiffComputedPayload, DiffRegressionFlaggedPayload
+from tracium.namespaces.diff import DiffComputedPayload
 
 # ── eval_ ─────────────────────────────────────────────────────────────────────
 from tracium.namespaces.eval_ import (
     EvalRegressionDetectedPayload,
     EvalScenarioCompletedPayload,
-    EvalScenarioStartedPayload,
     EvalScoreRecordedPayload,
 )
 
@@ -57,21 +57,6 @@ from tracium.namespaces.prompt import (
     PromptVersionChangedPayload,
 )
 
-# ── template ──────────────────────────────────────────────────────────────────
-from tracium.namespaces.template import (
-    TemplateRegisteredPayload,
-    TemplateValidationFailedPayload,
-    TemplateVariableBoundPayload,
-)
-
-# ── cache ─────────────────────────────────────────────────────────────────────
-from tracium.namespaces.cache import (
-    CacheEvictedPayload,
-    CacheHitPayload,
-    CacheMissPayload,
-    CacheWrittenPayload,
-)
-
 # ── redact ────────────────────────────────────────────────────────────────────
 from tracium.namespaces.redact import (
     RedactAppliedPayload,
@@ -79,11 +64,24 @@ from tracium.namespaces.redact import (
     RedactPiiDetectedPayload,
 )
 
-# ── audit ─────────────────────────────────────────────────────────────────────
-from tracium.namespaces.audit import (
-    AuditChainTamperedPayload,
-    AuditChainVerifiedPayload,
-    AuditKeyRotatedPayload,
+# ── template ──────────────────────────────────────────────────────────────────
+from tracium.namespaces.template import (
+    TemplateRegisteredPayload,
+    TemplateValidationFailedPayload,
+    TemplateVariableBoundPayload,
+)
+
+# ── trace ─────────────────────────────────────────────────────────────────────
+from tracium.namespaces.trace import (
+    AgentRunPayload,
+    AgentStepPayload,
+    CostBreakdown,
+    GenAIOperationName,
+    ModelInfo,
+    SpanKind,
+    SpanPayload,
+    TokenUsage,
+    ToolCall,
 )
 
 # ── validate ──────────────────────────────────────────────────────────────────
@@ -112,12 +110,12 @@ def _cb() -> CostBreakdown:
 
 
 def _span(**kw) -> SpanPayload:
-    base = dict(
-        span_id=SPAN_ID, trace_id=TRACE_ID, span_name="s",
-        operation=GenAIOperationName.CHAT, span_kind=SpanKind.CLIENT,
-        status="ok", start_time_unix_nano=TS_S,
-        end_time_unix_nano=TS_E, duration_ms=1.0,
-    )
+    base = {
+        "span_id": SPAN_ID, "trace_id": TRACE_ID, "span_name": "s",
+        "operation": GenAIOperationName.CHAT, "span_kind": SpanKind.CLIENT,
+        "status": "ok", "start_time_unix_nano": TS_S,
+        "end_time_unix_nano": TS_E, "duration_ms": 1.0,
+    }
     base.update(kw)
     return SpanPayload(**base)
 
@@ -163,7 +161,7 @@ class TestModelInfoBranches:
         assert "version" not in d
 
     def test_with_all_optional_fields(self) -> None:
-        mi = ModelInfo(system="openai", name="gpt-4o", version="2024-11", response_model="gpt-4o-mini")
+        mi = ModelInfo(system="openai", name="gpt-4o", version="2024-11", response_model="gpt-4o-mini")  # noqa: E501
         d = mi.to_dict()
         assert d["version"] == "2024-11"
         assert d["response_model"] == "gpt-4o-mini"
@@ -180,7 +178,7 @@ class TestModelInfoBranches:
 
 class TestCostBreakdownBranches:
     def test_minimal_to_dict_omits_optional_fields(self) -> None:
-        d = CostBreakdown(input_cost_usd=0.001, output_cost_usd=0.001, total_cost_usd=0.002).to_dict()
+        d = CostBreakdown(input_cost_usd=0.001, output_cost_usd=0.001, total_cost_usd=0.002).to_dict()  # noqa: E501
         assert "pricing_date" not in d
 
     def test_with_all_optional_fields(self) -> None:
@@ -261,14 +259,14 @@ class TestSpanPayloadBranches:
 
 class TestAgentStepPayloadBranches:
     def _make(self, **kw) -> AgentStepPayload:
-        base = dict(
-            agent_run_id="run_a", step_index=0,
-            span_id=SPAN_ID, trace_id=TRACE_ID,
-            operation=GenAIOperationName.CHAT,
-            tool_calls=[], reasoning_steps=[], decision_points=[],
-            status="ok",
-            start_time_unix_nano=TS_S, end_time_unix_nano=TS_E, duration_ms=1.0,
-        )
+        base = {
+            "agent_run_id": "run_a", "step_index": 0,
+            "span_id": SPAN_ID, "trace_id": TRACE_ID,
+            "operation": GenAIOperationName.CHAT,
+            "tool_calls": [], "reasoning_steps": [], "decision_points": [],
+            "status": "ok",
+            "start_time_unix_nano": TS_S, "end_time_unix_nano": TS_E, "duration_ms": 1.0,
+        }
         base.update(kw)
         return AgentStepPayload(**base)
 
@@ -294,14 +292,14 @@ class TestAgentStepPayloadBranches:
 
 class TestAgentRunPayloadBranches:
     def _make(self, **kw) -> AgentRunPayload:
-        base = dict(
-            agent_run_id="run_a", agent_name="bot",
-            trace_id=TRACE_ID, root_span_id=SPAN_ID,
-            total_steps=1, total_model_calls=1, total_tool_calls=0,
-            total_token_usage=_tu(), total_cost=_cb(),
-            status="ok",
-            start_time_unix_nano=TS_S, end_time_unix_nano=TS_E, duration_ms=1.0,
-        )
+        base = {
+            "agent_run_id": "run_a", "agent_name": "bot",
+            "trace_id": TRACE_ID, "root_span_id": SPAN_ID,
+            "total_steps": 1, "total_model_calls": 1, "total_tool_calls": 0,
+            "total_token_usage": _tu(), "total_cost": _cb(),
+            "status": "ok",
+            "start_time_unix_nano": TS_S, "end_time_unix_nano": TS_E, "duration_ms": 1.0,
+        }
         base.update(kw)
         return AgentRunPayload(**base)
 
@@ -362,7 +360,7 @@ class TestCostSessionRecordedBranches:
             CostSessionRecordedPayload(total_cost=_cb(), total_token_usage=_tu(), call_count=-1)
 
     def test_minimal_to_dict_no_session_id(self) -> None:
-        d = CostSessionRecordedPayload(total_cost=_cb(), total_token_usage=_tu(), call_count=1).to_dict()
+        d = CostSessionRecordedPayload(total_cost=_cb(), total_token_usage=_tu(), call_count=1).to_dict()  # noqa: E501
         assert "session_id" not in d
 
 
@@ -450,7 +448,7 @@ class TestEvalScenarioCompletedBranches:
             EvalScenarioCompletedPayload(scenario_id="s", status="passed", duration_ms=-1.0)
 
     def test_minimal_to_dict_no_error(self) -> None:
-        d = EvalScenarioCompletedPayload(scenario_id="s", status="passed", duration_ms=1.0).to_dict()
+        d = EvalScenarioCompletedPayload(scenario_id="s", status="passed", duration_ms=1.0).to_dict()  # noqa: E501
         assert "error" not in d
 
 
@@ -628,7 +626,7 @@ class TestTemplateRegisteredBranches:
             TemplateRegisteredPayload(template_id="", version="v1", template_hash="a" * 64)
 
     def test_minimal_to_dict_omits_description(self) -> None:
-        d = TemplateRegisteredPayload(template_id="t", version="v1", template_hash="a" * 64).to_dict()
+        d = TemplateRegisteredPayload(template_id="t", version="v1", template_hash="a" * 64).to_dict()  # noqa: E501
         assert "description" not in d
 
 
@@ -711,7 +709,7 @@ class TestCacheEvictedBranches:
             CacheEvictedPayload(key_hash="a" * 64, namespace="ns", eviction_reason="")
 
     def test_minimal_to_dict_omits_optional(self) -> None:
-        d = CacheEvictedPayload(key_hash="a" * 64, namespace="ns", eviction_reason="ttl_expired").to_dict()
+        d = CacheEvictedPayload(key_hash="a" * 64, namespace="ns", eviction_reason="ttl_expired").to_dict()  # noqa: E501
         assert "evicted_at" not in d
 
 
@@ -776,7 +774,7 @@ class TestRedactPhiBranches:
 class TestRedactAppliedBranches:
     def test_negative_redacted_count_rejected(self) -> None:
         with pytest.raises(ValueError):
-            RedactAppliedPayload(policy_min_sensitivity="high", redacted_by="shield", redacted_count=-1)
+            RedactAppliedPayload(policy_min_sensitivity="high", redacted_by="shield", redacted_count=-1)  # noqa: E501
 
     def test_minimal_to_dict_redacted_fields_empty(self) -> None:
         d = RedactAppliedPayload(

@@ -1,7 +1,7 @@
-"""OpenTelemetry SDK bridge for llm-toolkit-schema.
+"""OpenTelemetry SDK bridge for tracium.
 
 When the ``opentelemetry-sdk`` package is installed (``pip install
-"llm-toolkit-schema[otel]"``) this module provides a first-class integration
+"agentobs[otel]"``) this module provides a first-class integration
 that converts :class:`~tracium.event.Event` objects into **real**
 OpenTelemetry spans via the OTel Python SDK — rather than serialising the OTLP
 wire format by hand.
@@ -38,15 +38,19 @@ Usage
 
 Requirements
 ------------
-``pip install "llm-toolkit-schema[otel]"`` — installs ``opentelemetry-sdk>=1.24``.
+``pip install "agentobs[otel]"`` — installs ``opentelemetry-sdk>=1.24``.
 """
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Sequence
+from typing import TYPE_CHECKING, Any
 
-from tracium.event import Event
-from tracium.export.otlp import _gen_ai_attributes  # noqa: PLC2701
+from tracium.export.otlp import _gen_ai_attributes
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from tracium.event import Event
 
 __all__ = ["OTelBridgeExporter"]
 
@@ -55,16 +59,17 @@ __all__ = ["OTelBridgeExporter"]
 # ---------------------------------------------------------------------------
 
 
-def _require_otel() -> Any:
+def _require_otel() -> Any:  # noqa: ANN401
     """Import the OTel SDK or raise a clear ImportError."""
     try:
-        import opentelemetry  # noqa: F401
-        return opentelemetry
+        import opentelemetry  # noqa: PLC0415
     except ImportError as exc:
         raise ImportError(
             "opentelemetry-sdk is required for OTelBridgeExporter. "
-            "Install it: pip install \"llm-toolkit-schema[otel]\""
+            "Install it: pip install \"agentobs[otel]\""
         ) from exc
+    else:
+        return opentelemetry
 
 
 # ---------------------------------------------------------------------------
@@ -93,7 +98,7 @@ class OTelBridgeExporter:
 
     Args:
         tracer_name:    Instrumentation scope name embedded in every span.
-                        Defaults to ``"llm-toolkit-schema"``.
+                        Defaults to ``"agentobs"``.
         tracer_version: Instrumentation scope version.  Defaults to ``"1.0"``.
 
     Example::
@@ -107,7 +112,7 @@ class OTelBridgeExporter:
 
     def __init__(
         self,
-        tracer_name: str = "llm-toolkit-schema",
+        tracer_name: str = "agentobs",
         tracer_version: str = "1.0",
     ) -> None:
         _require_otel()
@@ -118,14 +123,14 @@ class OTelBridgeExporter:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _get_tracer(self) -> Any:
-        from opentelemetry import trace
+    def _get_tracer(self) -> Any:  # noqa: ANN401
+        from opentelemetry import trace  # noqa: PLC0415
         return trace.get_tracer(self._tracer_name, self._tracer_version)
 
     @staticmethod
-    def _build_otel_attributes(event: Event) -> Dict[str, Any]:
+    def _build_otel_attributes(event: Event) -> dict[str, Any]:  # noqa: PLR0912
         """Build a flat attribute dict suitable for the OTel SDK ``span.set_attributes()``."""
-        attrs: Dict[str, Any] = {
+        attrs: dict[str, Any] = {
             "llm.schema_version": event.schema_version,
             "llm.event_id": event.event_id,
             "llm.event_type": event.event_type,
@@ -178,12 +183,16 @@ class OTelBridgeExporter:
         return attrs
 
     @staticmethod
-    def _resolve_span_context(event: Event) -> Optional[Any]:
+    def _resolve_span_context(event: Event) -> Any | None:  # noqa: ANN401
         """Build an OTel ``SpanContext`` from the event's trace/parent fields."""
         if event.trace_id is None:
             return None
         try:
-            from opentelemetry.trace import NonRecordingSpan, SpanContext, TraceFlags
+            from opentelemetry.trace import (  # noqa: PLC0415
+                NonRecordingSpan,
+                SpanContext,
+                TraceFlags,
+            )
         except ImportError:
             return None
 
@@ -219,9 +228,9 @@ class OTelBridgeExporter:
         Args:
             event: The event to emit as an OTel span.
         """
-        from opentelemetry import context as otel_context
-        from opentelemetry import trace
-        from opentelemetry.trace import SpanKind, use_span
+        from opentelemetry import context as otel_context  # noqa: PLC0415
+        from opentelemetry import trace  # noqa: PLC0415
+        from opentelemetry.trace import SpanKind, use_span  # noqa: PLC0415
 
         tracer = self._get_tracer()
         attributes = self._build_otel_attributes(event)
@@ -248,11 +257,11 @@ class OTelBridgeExporter:
 
         with use_span(span, record_exception=False, end_on_exit=False):
             if status_val in ("error", "timeout"):
-                from opentelemetry.trace import StatusCode
+                from opentelemetry.trace import StatusCode  # noqa: PLC0415
                 message = error_msg or ("Operation timed out" if status_val == "timeout" else "")
                 span.set_status(StatusCode.ERROR, message)
             else:
-                from opentelemetry.trace import StatusCode
+                from opentelemetry.trace import StatusCode  # noqa: PLC0415
                 span.set_status(StatusCode.OK)
 
         span.end()

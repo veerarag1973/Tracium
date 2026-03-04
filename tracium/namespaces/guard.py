@@ -10,7 +10,7 @@ GuardPayload    llm.guard.input.blocked, llm.guard.input.passed,
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 __all__ = ["GuardPayload"]
 
@@ -34,15 +34,15 @@ class GuardPayload:
     direction: str    # "input" | "output"
     action: str       # "blocked"|"passed"|"flagged"|"modified"|"escalated"
     score: float
-    score_min: Optional[float] = None
-    score_max: Optional[float] = None
-    threshold: Optional[float] = None
-    categories: List[str] = field(default_factory=list)
-    triggered_categories: List[str] = field(default_factory=list)
-    span_id: Optional[str] = None
-    latency_ms: Optional[float] = None
-    policy_id: Optional[str] = None
-    content_hash: Optional[str] = None  # 64 lowercase hex chars, SHA-256
+    score_min: float | None = None
+    score_max: float | None = None
+    threshold: float | None = None
+    categories: list[str] = field(default_factory=list)
+    triggered_categories: list[str] = field(default_factory=list)
+    span_id: str | None = None
+    latency_ms: float | None = None
+    policy_id: str | None = None
+    content_hash: str | None = None  # 64 lowercase hex chars, SHA-256
 
     def __post_init__(self) -> None:
         if not isinstance(self.classifier, str) or not self.classifier:
@@ -52,12 +52,13 @@ class GuardPayload:
         if self.action not in _VALID_ACTIONS:
             raise ValueError(f"GuardPayload.action must be one of {sorted(_VALID_ACTIONS)}")
         if not isinstance(self.score, (int, float)):
-            raise ValueError("GuardPayload.score must be a number")
+            raise ValueError("GuardPayload.score must be a number")  # noqa: TRY004
         if self.latency_ms is not None and self.latency_ms < 0:
             raise ValueError("GuardPayload.latency_ms must be non-negative")
 
-    def to_dict(self) -> Dict[str, Any]:
-        d: Dict[str, Any] = {
+    def to_dict(self) -> dict[str, Any]:
+        """Serialise the payload to a plain ``dict``."""
+        d: dict[str, Any] = {
             "classifier": self.classifier,
             "direction": self.direction,
             "action": self.action,
@@ -84,7 +85,8 @@ class GuardPayload:
         return d
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "GuardPayload":
+    def from_dict(cls, data: dict[str, Any]) -> GuardPayload:
+        """Deserialise from a plain ``dict``."""
         return cls(
             classifier=data["classifier"],
             direction=data["direction"],

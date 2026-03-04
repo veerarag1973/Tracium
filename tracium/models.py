@@ -1,4 +1,4 @@
-"""Pydantic v2 model layer for llm-toolkit-schema events.
+"""Pydantic v2 model layer for tracium events.
 
 This module provides Pydantic v2 models that mirror the :class:`~tracium.event.Event`
 envelope with strict field-level validation and bidirectional conversion.
@@ -6,7 +6,7 @@ envelope with strict field-level validation and bidirectional conversion.
 The model layer is **optional** — it requires ``pydantic>=2.7`` which is not a
 core dependency.  Install it with::
 
-    pip install "llm-toolkit-schema[pydantic]"
+    pip install "agentobs[pydantic]"
 
 Design goals
 ------------
@@ -37,7 +37,7 @@ Example::
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, Optional
+from typing import Any
 
 try:
     from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -45,7 +45,7 @@ try:
 except ImportError as _import_err:  # pragma: no cover
     raise ImportError(
         "pydantic>=2.7 is required for tracium.models. "
-        "Install it: pip install \"llm-toolkit-schema[pydantic]\""
+        "Install it: pip install \"agentobs[pydantic]\""
     ) from _import_err
 
 from tracium.event import SCHEMA_VERSION, Event, Tags
@@ -92,7 +92,7 @@ class TagsModel(BaseModel):
     model_config = ConfigDict(frozen=True, extra="allow")
 
     @classmethod
-    def from_tags(cls, tags: Tags) -> "TagsModel":
+    def from_tags(cls, tags: Tags) -> TagsModel:
         """Construct from a :class:`~tracium.event.Tags` instance.
 
         Args:
@@ -118,7 +118,7 @@ class TagsModel(BaseModel):
 
 
 class EventModel(BaseModel):
-    """Pydantic v2 model for the llm-toolkit-schema event envelope.
+    """Pydantic v2 model for the tracium event envelope.
 
     Each field carries a Pydantic ``Field`` description and is validated by a
     ``@field_validator``.  The model is frozen (immutable after construction).
@@ -177,50 +177,50 @@ class EventModel(BaseModel):
     source: str = Field(
         description="Source tool and version, e.g. 'llm-trace@0.3.1'.",
     )
-    payload: Dict[str, Any] = Field(
+    payload: dict[str, Any] = Field(
         description="Non-empty dict of event-type-specific data.",
     )
-    trace_id: Optional[str] = Field(
+    trace_id: str | None = Field(
         default=None,
         description="OpenTelemetry trace ID — 32 lowercase hex characters.",
     )
-    span_id: Optional[str] = Field(
+    span_id: str | None = Field(
         default=None,
         description="OpenTelemetry span ID — 16 lowercase hex characters.",
     )
-    parent_span_id: Optional[str] = Field(
+    parent_span_id: str | None = Field(
         default=None,
         description="Parent span ID — 16 lowercase hex characters.",
     )
-    org_id: Optional[str] = Field(
+    org_id: str | None = Field(
         default=None,
         description="Organisation identifier (non-empty string).",
     )
-    team_id: Optional[str] = Field(
+    team_id: str | None = Field(
         default=None,
         description="Team identifier within the organisation (non-empty string).",
     )
-    actor_id: Optional[str] = Field(
+    actor_id: str | None = Field(
         default=None,
         description="User or service actor identifier (non-empty string).",
     )
-    session_id: Optional[str] = Field(
+    session_id: str | None = Field(
         default=None,
         description="Session or conversation identifier (non-empty string).",
     )
-    tags: Optional[TagsModel] = Field(
+    tags: TagsModel | None = Field(
         default=None,
         description="Arbitrary string key-value metadata tags.",
     )
-    checksum: Optional[str] = Field(
+    checksum: str | None = Field(
         default=None,
         description="SHA-256 payload checksum (prefixed 'sha256:').",
     )
-    signature: Optional[str] = Field(
+    signature: str | None = Field(
         default=None,
         description="HMAC-SHA256 audit chain signature (set by tracium.signing).",
     )
-    prev_id: Optional[str] = Field(
+    prev_id: str | None = Field(
         default=None,
         description="ULID of the preceding event in the tamper-evident audit chain.",
     )
@@ -279,14 +279,14 @@ class EventModel(BaseModel):
 
     @field_validator("payload")
     @classmethod
-    def _check_payload(cls, v: Dict[str, Any]) -> Dict[str, Any]:
+    def _check_payload(cls, v: dict[str, Any]) -> dict[str, Any]:
         if not v:
             raise ValueError("payload must be a non-empty dict")
         return v
 
     @field_validator("trace_id")
     @classmethod
-    def _check_trace_id(cls, v: Optional[str]) -> Optional[str]:
+    def _check_trace_id(cls, v: str | None) -> str | None:
         if v is not None and not _TRACE_ID_RE.match(v):
             raise ValueError(
                 "trace_id must be exactly 32 lowercase hex characters"
@@ -295,7 +295,7 @@ class EventModel(BaseModel):
 
     @field_validator("span_id", "parent_span_id")
     @classmethod
-    def _check_span_id(cls, v: Optional[str]) -> Optional[str]:
+    def _check_span_id(cls, v: str | None) -> str | None:
         if v is not None and not _SPAN_ID_RE.match(v):
             raise ValueError(
                 "span_id / parent_span_id must be exactly 16 lowercase hex characters"
@@ -304,14 +304,14 @@ class EventModel(BaseModel):
 
     @field_validator("org_id", "team_id", "actor_id", "session_id")
     @classmethod
-    def _check_string_id(cls, v: Optional[str]) -> Optional[str]:
+    def _check_string_id(cls, v: str | None) -> str | None:
         if v is not None and not v.strip():
             raise ValueError("org_id / team_id / actor_id / session_id must be non-empty")
         return v
 
     @field_validator("prev_id")
     @classmethod
-    def _check_prev_id(cls, v: Optional[str]) -> Optional[str]:
+    def _check_prev_id(cls, v: str | None) -> str | None:
         if v is not None and not _validate_ulid(v):
             raise ValueError(
                 "prev_id must be a valid 26-character ULID (Crockford Base32)"
@@ -323,7 +323,7 @@ class EventModel(BaseModel):
     # ------------------------------------------------------------------
 
     @classmethod
-    def from_event(cls, event: Event) -> "EventModel":
+    def from_event(cls, event: Event) -> EventModel:
         """Construct an :class:`EventModel` from an :class:`~tracium.event.Event`.
 
         Args:
@@ -339,7 +339,7 @@ class EventModel(BaseModel):
 
             model = EventModel.from_event(event)
         """
-        tags_model: Optional[TagsModel] = (
+        tags_model: TagsModel | None = (
             TagsModel.from_tags(event.tags) if event.tags is not None else None
         )
         return cls(
@@ -378,10 +378,10 @@ class EventModel(BaseModel):
             event = model.to_event()
             assert event.event_id == model.event_id
         """
-        tags: Optional[Tags] = (
+        tags: Tags | None = (
             self.tags.to_tags() if self.tags is not None else None
         )
-        kwargs: Dict[str, Any] = {
+        kwargs: dict[str, Any] = {
             k: v
             for k, v in {
                 "schema_version": self.schema_version,

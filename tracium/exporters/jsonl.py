@@ -23,13 +23,13 @@ You can also instantiate directly for testing::
 
 from __future__ import annotations
 
-import io
 import sys
 import threading
 from pathlib import Path
-from typing import IO, Optional, Union
+from typing import IO, TYPE_CHECKING, Union
 
-from tracium.event import Event
+if TYPE_CHECKING:
+    from tracium.event import Event
 
 __all__ = ["SyncJSONLExporter"]
 
@@ -55,7 +55,7 @@ class SyncJSONLExporter:
 
     def __init__(
         self,
-        path: Union[_PathLike, str] = "tracium_events.jsonl",
+        path: _PathLike | str = "tracium_events.jsonl",
         mode: str = "a",
         encoding: str = "utf-8",
     ) -> None:
@@ -64,7 +64,7 @@ class SyncJSONLExporter:
         self._path_str = str(path)
         self._mode = mode
         self._encoding = encoding
-        self._file: Optional[IO[str]] = None
+        self._file: IO[str] | None = None
         self._lock = threading.Lock()
         self._closed = False
 
@@ -82,7 +82,7 @@ class SyncJSONLExporter:
         # Create parent directories if they don't exist.
         p = Path(self._path_str)
         p.parent.mkdir(parents=True, exist_ok=True)
-        self._file = open(p, self._mode, encoding=self._encoding)
+        self._file = p.open(self._mode, encoding=self._encoding)
         # After first open, always append.
         self._mode = "a"
         return self._file
@@ -132,7 +132,7 @@ class SyncJSONLExporter:
     # Context manager
     # ------------------------------------------------------------------
 
-    def __enter__(self) -> "SyncJSONLExporter":
+    def __enter__(self) -> SyncJSONLExporter:
         return self
 
     def __exit__(self, *_: object) -> bool:

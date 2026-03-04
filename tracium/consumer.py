@@ -1,4 +1,4 @@
-"""Consumer registration API for llm-toolkit-schema.
+"""Consumer registration API for tracium.
 
 Provides a lightweight registry that downstream tools, services, and libraries
 can use to declare which event namespaces and schema versions they depend on.
@@ -27,15 +27,18 @@ from __future__ import annotations
 import re
 import threading
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 __all__ = [
     "ConsumerRecord",
     "ConsumerRegistry",
+    "IncompatibleSchemaError",
+    "assert_compatible",
     "get_registry",
     "register_consumer",
-    "assert_compatible",
-    "IncompatibleSchemaError",
 ]
 
 # ---------------------------------------------------------------------------
@@ -54,15 +57,16 @@ _VERSION_RE = re.compile(r"^\d+\.\d+$")
 
 
 class IncompatibleSchemaError(Exception):
-    """Raised when a registered consumer requires a schema version that is
-    not compatible with the currently installed library version.
+    """Raised when a consumer requires a schema version incompatible with the installed one.
+
+    Not compatible with the currently installed library version.
 
     Attributes:
         incompatible:  List of ``(tool_name, required_version)`` pairs that
                        are incompatible with the installed schema version.
     """
 
-    def __init__(self, incompatible: Sequence[Tuple[str, str]]) -> None:
+    def __init__(self, incompatible: Sequence[tuple[str, str]]) -> None:
         self.incompatible = list(incompatible)
         pairs = ", ".join(f"{t!r} ({v})" for t, v in self.incompatible)
         super().__init__(
@@ -92,10 +96,10 @@ class ConsumerRecord:
     """
 
     tool_name: str
-    namespaces: Tuple[str, ...]
+    namespaces: tuple[str, ...]
     schema_version: str
-    contact: Optional[str] = None
-    metadata: Dict[str, str] = field(default_factory=dict)
+    contact: str | None = None
+    metadata: dict[str, str] = field(default_factory=dict)
 
     def __repr__(self) -> str:  # pragma: no cover
         return (
@@ -127,7 +131,7 @@ class ConsumerRegistry:
 
     def __init__(self) -> None:
         self._lock = threading.Lock()
-        self._records: List[ConsumerRecord] = []
+        self._records: list[ConsumerRecord] = []
 
     # ------------------------------------------------------------------
     # Registration
@@ -139,8 +143,8 @@ class ConsumerRegistry:
         *,
         namespaces: Sequence[str],
         schema_version: str,
-        contact: Optional[str] = None,
-        metadata: Optional[Dict[str, str]] = None,
+        contact: str | None = None,
+        metadata: dict[str, str] | None = None,
     ) -> ConsumerRecord:
         """Register a consumer's schema requirements.
 
@@ -182,7 +186,7 @@ class ConsumerRegistry:
     # Querying
     # ------------------------------------------------------------------
 
-    def all(self) -> List[ConsumerRecord]:
+    def all(self) -> list[ConsumerRecord]:
         """Return a snapshot of all registered consumer records.
 
         Returns:
@@ -191,7 +195,7 @@ class ConsumerRegistry:
         with self._lock:
             return list(self._records)
 
-    def by_namespace(self, namespace: str) -> List[ConsumerRecord]:
+    def by_namespace(self, namespace: str) -> list[ConsumerRecord]:
         """Return all consumers that depend on *namespace*.
 
         Args:
@@ -203,7 +207,7 @@ class ConsumerRegistry:
         with self._lock:
             return [r for r in self._records if namespace in r.namespaces]
 
-    def by_tool(self, tool_name: str) -> Optional[ConsumerRecord]:
+    def by_tool(self, tool_name: str) -> ConsumerRecord | None:
         """Return the first record registered under *tool_name*, or ``None``.
 
         Args:
@@ -225,7 +229,7 @@ class ConsumerRegistry:
     def check_compatible(
         self,
         installed_version: str = _CURRENT_SCHEMA_VERSION,
-    ) -> List[Tuple[str, str]]:
+    ) -> list[tuple[str, str]]:
         """Check all consumers against *installed_version*.
 
         A consumer is *compatible* if its ``schema_version`` major matches and
@@ -249,7 +253,7 @@ class ConsumerRegistry:
                 f"installed_version must be MAJOR.MINOR format: {exc}"
             ) from exc
 
-        incompatible: List[Tuple[str, str]] = []
+        incompatible: list[tuple[str, str]] = []
         with self._lock:
             for record in self._records:
                 req_major, req_minor = _parse_version(record.schema_version)
@@ -313,8 +317,8 @@ def register_consumer(
     *,
     namespaces: Sequence[str],
     schema_version: str,
-    contact: Optional[str] = None,
-    metadata: Optional[Dict[str, str]] = None,
+    contact: str | None = None,
+    metadata: dict[str, str] | None = None,
 ) -> ConsumerRecord:
     """Register a consumer in the global registry.
 
@@ -366,7 +370,7 @@ def assert_compatible(
 # ---------------------------------------------------------------------------
 
 
-def _parse_version(version: str) -> Tuple[int, int]:
+def _parse_version(version: str) -> tuple[int, int]:
     """Parse a ``"MAJOR.MINOR"`` version string into ``(int, int)``."""
     parts = version.split(".", 1)
     try:
