@@ -12,6 +12,38 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
+## 1.0.0 (current) — 2026-03-04
+
+**Phase 10 — CLI Tooling**
+
+- **`tracium validate EVENTS_JSONL`** — schema-validates every event in a
+  JSONL file; prints per-line errors.
+- **`tracium audit-chain EVENTS_JSONL`** — verifies HMAC signing-chain
+  integrity; reads `TRACIUM_SIGNING_KEY` from the environment.
+- **`tracium inspect EVENT_ID EVENTS_JSONL`** — pretty-prints a single event
+  looked up by `event_id`.
+- **`tracium stats EVENTS_JSONL`** — prints a summary of event counts, token
+  totals, estimated cost, and timestamp range.
+
+**Phase 11 — Security & Privacy Pipeline**
+
+- **Auto-redaction via `configure()`** — passing `redaction_policy=` to
+  `configure()` wires `RedactionPolicy.apply()` into the `_dispatch()` path;
+  every emitted span/event is redacted before being handed to the exporter.
+- **Auto-signing via `configure()`** — passing `signing_key=` to
+  `configure()` wires HMAC-SHA256 signing into the dispatch path; every event
+  is signed and chained to the previous one automatically.
+- **Pipeline order guaranteed** — redaction always runs before signing, so
+  each signature covers the already-redacted payload.
+- **`_reset_exporter()` closes file handles** — calling `_reset_exporter()`
+  now flushes and closes any open `SyncJSONLExporter` file handle and clears
+  the HMAC chain state, preventing `ResourceWarning` in tests and on shutdown.
+- **`examples/`** — four runnable sample scripts: `openai_chat.py`,
+  `agent_workflow.py`, `langchain_chain.py`, `secure_pipeline.py`.
+- **Version**: `0.2.0` → `1.0.0`; coverage threshold: `99 %` → `90 %`.
+
+---
+
 ## 0.1.0 — 2026-03-04
 
 ### Changed

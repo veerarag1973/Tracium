@@ -1,18 +1,37 @@
-# llm-toolkit-schema PyPI Release Runbook
-# Version: 1.1.2 — 2026-03-03
-# Live at: https://pypi.org/project/llm-toolkit-schema/1.1.2/
+# Tracium SDK — Release Runbook
+# Version: 1.0.0 — 2026-03-04
 #
-# PENDING — ready to publish
+# STATUS: READY TO PUBLISH
 #
+# ─────────────────────────────────────────────────────────────────────────────
+# WHAT'S IN 1.0.0
+# ─────────────────────────────────────────────────────────────────────────────
+#
+#   Phase 0   Package rename llm_toolkit_schema → tracium
+#   Phase 1   Configuration layer (configure(), env vars, singleton)
+#   Phase 2   Core tracer + span (tracer.span() context manager)
+#   Phase 3   Event emission (SpanPayload → Event → EventStream → Exporter)
+#   Phase 4   Agent instrumentation (agent_run(), agent_step())
+#   Phase 5   ConsoleExporter (human-readable dev output)
+#   Phase 6   OpenAI integration (auto token + cost extraction)
+#   Phase 7   Provider integrations (Anthropic, Ollama, Groq, Together AI)
+#   Phase 8   Additional exporters (OTLP, Webhook, Datadog, Grafana Loki)
+#   Phase 9   Framework integrations (LangChain, LlamaIndex)
+#   Phase 10  CLI tooling (tracium validate / audit-chain / inspect / stats)
+#   Phase 11  Security + privacy (HMAC signing chain, PII redaction)
+#   Phase 12  Hardening + docs + 1.0.0 (this release)
+#
+#   Tests      1776+ passing, 96.72% coverage
+#
+# ─────────────────────────────────────────────────────────────────────────────
 # PREREQUISITES
-# ─────────────
-# 1. TestPyPI account: https://test.pypi.org/account/register/
-# 2. PyPI account:     https://pypi.org/account/register/
-# 3. Generate API tokens for both (account → API tokens → "Add API token")
+# ─────────────────────────────────────────────────────────────────────────────
 #
+#   pip install build twine
+#
+# ─────────────────────────────────────────────────────────────────────────────
 # CONFIGURE CREDENTIALS (~/.pypirc)
-# ────────────────────────────────── 
-# Create/append to C:\Users\<you>\.pypirc:
+# ─────────────────────────────────────────────────────────────────────────────
 #
 #   [distutils]
 #   index-servers = pypi testpypi
@@ -25,32 +44,44 @@
 #   username = __token__
 #   password = pypi-XXXXXXXXXX...
 #
-# OR export as environment variables (CI/CD preferred):
-#   $env:TWINE_USERNAME = "__token__"
-#   $env:TWINE_PASSWORD = "pypi-XXXXXXXXXX..."
-
-# ─────────────────────────────────────────────────────────
-# STEP 1: Build and upload to PyPI
-# ─────────────────────────────────────────────────────────
-# https://pypi.org/project/llm-toolkit-schema/1.1.2/
+#   OR export as environment variables (CI/CD preferred):
+#     $env:TWINE_USERNAME = "__token__"
+#     $env:TWINE_PASSWORD = "pypi-XXXXXXXXXX..."
 #
-# Install:
-#   pip install llm-toolkit-schema==1.1.2
-
-# ─────────────────────────────────────────────────────────
-# STEP 2: Create a GitHub release tag
-# ─────────────────────────────────────────────────────────
-git tag v1.1.2
-git push origin v1.1.2
-# Then create a GitHub Release from the tag and attach:
-#   dist\llm_toolkit_schema-1.1.2.tar.gz
-#   dist\llm_toolkit_schema-1.1.2-py3-none-any.whl
-
-# ─────────────────────────────────────────────────────────
-# STEP 3: Connect Read the Docs
-# ─────────────────────────────────────────────────────────
-# 1. Go to https://readthedocs.org → "Import a Project"
-# 2. Connect GitHub → select llm-toolkit/llm-toolkit-schema
-# 3. .readthedocs.yaml is already in the repo root — RTD will pick it up
-# 4. Trigger a build; the docs will be live at:
-#    https://llm-toolkit-schema.readthedocs.io/
+# ─────────────────────────────────────────────────────────────────────────────
+# RELEASE STEPS
+# ─────────────────────────────────────────────────────────────────────────────
+#
+#   1. Confirm all tests pass:
+#        python -m pytest --tb=short -q
+#
+#   2. Confirm version:
+#        python -c "import tracium; print(tracium.__version__)"
+#        # → 1.0.0
+#
+#   3. Build distribution artefacts:
+#        python -m build
+#
+#   4. Upload to TestPyPI and smoke-test:
+#        python -m twine upload --repository testpypi dist/*
+#        pip install --index-url https://test.pypi.org/simple/ tracium==1.0.0
+#        python -c "import tracium; print(tracium.__version__)"
+#
+#   5. Upload to PyPI:
+#        python -m twine upload dist/*
+#
+#   6. Tag the release:
+#        git tag v1.0.0
+#        git push origin v1.0.0
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# CHANGELOG
+# ─────────────────────────────────────────────────────────────────────────────
+#
+#   1.0.0 (2026-03-04)  — Initial stable release
+#     - Full SpanForge Observability Standard v2.0 compliance
+#     - HMAC signing chain (opt-in via signing_key=)
+#     - PII redaction pipeline (opt-in via redaction_policy=)
+#     - CLI: tracium validate / audit-chain / inspect / stats
+#     - Exporters: console, jsonl, otlp, webhook, datadog, grafana_loki
+#     - Integrations: openai, anthropic, ollama, groq, together, langchain, llamaindex

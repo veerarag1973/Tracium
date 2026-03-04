@@ -1,7 +1,7 @@
 # Documentation Index
 
 > **Tracium** — The foundational shared event schema for the LLM Developer Toolkit.  
-> Current release: **0.1.0** — [Changelog](https://github.com/llm-toolkit/tracium/releases)
+> Current release: **1.0.0** — [Changelog](changelog.md)
 
 This index links to every documentation page in this folder.
 
@@ -78,7 +78,7 @@ This index links to every documentation page in this folder.
 
 | Page | Description |
 |------|-------------|
-| [CLI](cli.md) | `tracium` command reference: `check-compat`, `list-deprecated`, `migration-roadmap`, `check-consumers` |
+| [CLI](cli.md) | `tracium` command reference: `check-compat`, `validate`, `audit-chain`, `inspect`, `stats`, `list-deprecated`, `migration-roadmap`, `check-consumers` |
 
 ---
 

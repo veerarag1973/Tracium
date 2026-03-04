@@ -452,7 +452,6 @@ class TestAiterFile:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.skip(reason="tracium.export.datadog not yet implemented (Phase 8)")
 class TestDatadogExporterDdSiteValidation:
     def test_valid_dd_site_accepted(self) -> None:
         from tracium.export.datadog import DatadogExporter

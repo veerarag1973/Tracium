@@ -60,12 +60,28 @@ def _build_source(service_name: str, service_version: str) -> str:
 _exporter_lock = threading.Lock()
 _cached_exporter: Optional[object] = None  # SyncExporter protocol instance
 
+# ---------------------------------------------------------------------------
+# Signing chain state
+# ---------------------------------------------------------------------------
+
+_sign_lock = threading.Lock()
+_prev_signed_event: Optional[Event] = None  # last event in the HMAC chain
+
 
 def _reset_exporter() -> None:
-    """Invalidate the cached exporter so the next emit re-resolves it."""
-    global _cached_exporter
+    """Invalidate the cached exporter and reset the HMAC signing chain."""
+    global _cached_exporter, _prev_signed_event
     with _exporter_lock:
+        if _cached_exporter is not None:
+            # Flush + close any open file handles before discarding the exporter.
+            try:
+                if hasattr(_cached_exporter, "close"):
+                    _cached_exporter.close()  # type: ignore[union-attr]
+            except Exception:  # noqa: BLE001
+                pass
         _cached_exporter = None
+    with _sign_lock:
+        _prev_signed_event = None
 
 
 def _active_exporter() -> object:
@@ -202,8 +218,37 @@ def emit_agent_run(run: object) -> None:
 
 
 def _dispatch(event: Event) -> None:
-    """Export *event* through the active exporter, swallowing all errors."""
+    """Export *event* through the active exporter, swallowing all errors.
+
+    Pipeline (in order):
+    1. **Redaction** — apply :class:`~tracium.redact.RedactionPolicy` when
+       ``config.redaction_policy`` is set.  PII is masked before anything
+       else sees the event.
+    2. **Signing** — sign with HMAC-SHA256 and chain to the previous event
+       when ``config.signing_key`` is set.
+    3. **Export** — hand the event to the active exporter.
+    """
+    global _prev_signed_event
     try:
+        cfg = get_config()
+
+        # 1. Redaction (must occur before signing so signatures cover
+        #    the already-redacted payload).
+        if cfg.redaction_policy is not None:
+            event = cfg.redaction_policy.apply(event).event
+
+        # 2. Signing — maintain the audit chain.
+        if cfg.signing_key:
+            from tracium.signing import sign  # noqa: PLC0415
+            with _sign_lock:
+                event = sign(
+                    event,
+                    org_secret=cfg.signing_key,
+                    prev_event=_prev_signed_event,
+                )
+                _prev_signed_event = event
+
+        # 3. Export.
         exporter = _active_exporter()
         exporter.export(event)  # type: ignore[attr-defined]
     except Exception:  # noqa: BLE001

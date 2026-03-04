@@ -49,6 +49,9 @@ class _CapturingExporter:
 
 def _install_exporter() -> _CapturingExporter:
     """Install a capturing exporter and return it."""
+    # Close any existing cached exporter (e.g. a JSONL exporter with an open
+    # file handle) before replacing it, to avoid ResourceWarning.
+    _reset_exporter()
     cap = _CapturingExporter()
     stream_mod._cached_exporter = cap
     return cap

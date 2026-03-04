@@ -49,7 +49,7 @@ all optional extras.
 
 ```python
 import tracium
-print(tracium.__version__)   # 0.1.0
+print(tracium.__version__)   # 1.0.0
 print(tracium.SCHEMA_VERSION)  # 2.0
 
 from tracium import Event, EventType

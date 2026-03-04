@@ -18,6 +18,8 @@ Core exporters (RFC-0001 §14)
 
 from __future__ import annotations
 
+from tracium.export.datadog import DatadogExporter, DatadogResourceAttributes
+from tracium.export.grafana import GrafanaLokiExporter
 from tracium.export.jsonl import JSONLExporter
 from tracium.export.otlp import OTLPExporter, ResourceAttributes
 from tracium.export.webhook import WebhookExporter
@@ -27,4 +29,7 @@ __all__ = [
     "ResourceAttributes",
     "WebhookExporter",
     "JSONLExporter",
+    "DatadogExporter",
+    "DatadogResourceAttributes",
+    "GrafanaLokiExporter",
 ]

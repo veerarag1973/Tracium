@@ -283,7 +283,7 @@ from tracium.namespaces.trace import (
     ToolCall,
 )
 
-__version__: str = "0.2.0"
+__version__: str = "1.0.0"
 
 __all__: list[str] = [
     # Phase 1 — Configuration

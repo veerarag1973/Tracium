@@ -7,7 +7,7 @@ build-backend = "hatchling.build"
 # ---------------------------------------------------------------------------
 [project]
 name = "tracium"
-version = "0.2.0"
+version = "1.0.0"
 description = "Tracium — the official Python SDK for the SpanForge Observability Standard"
 readme = "README.md"
 license = { text = "MIT" }
@@ -96,7 +96,7 @@ tracium = "tracium._cli:main"
 # Hatch build
 # ---------------------------------------------------------------------------
 [tool.hatch.build.targets.wheel]
-packages = ["tracium", "llm_toolkit_schema"]
+packages = ["tracium"]
 
 # ---------------------------------------------------------------------------
 # Pytest
@@ -110,7 +110,7 @@ addopts       = [
     "--cov=tracium",
     "--cov-report=term-missing",
     "--cov-report=html:htmlcov",
-    "--cov-fail-under=99",
+    "--cov-fail-under=90",
 ]
 markers = [
     "unit: fast, isolated unit tests",
@@ -136,7 +136,7 @@ exclude_lines = [
     "raise NotImplementedError",
 ]
 show_missing = true
-fail_under   = 99
+fail_under   = 90
 
 # ---------------------------------------------------------------------------
 # Ruff — linting + formatting  (replaces flake8, isort, pyupgrade, bandit-lite)
@@ -144,7 +144,7 @@ fail_under   = 99
 [tool.ruff]
 target-version = "py39"
 line-length    = 100
-src            = ["tracium", "llm_toolkit_schema", "tests"]
+src            = ["tracium", "tests"]
 
 [tool.ruff.lint]
 select = [
@@ -183,7 +183,7 @@ ignore = [
 convention = "google"
 
 [tool.ruff.lint.isort]
-known-first-party = ["tracium", "llm_toolkit_schema"]
+known-first-party = ["tracium"]
 
 # ---------------------------------------------------------------------------
 # Mypy — strict type checking

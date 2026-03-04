@@ -14,10 +14,17 @@ tracium command-line utilities
 
 positional arguments:
   <command>
-    check-compat    Check a JSON file of events against the v1.0 compatibility checklist
+    check-compat      Check a JSON file of events against the v1.0 compatibility checklist
+    validate          Validate every event in a JSONL file against the published schema
+    audit-chain       Verify HMAC signing chain integrity of events in a JSONL file
+    inspect           Pretty-print a single event by event_id from a JSONL file
+    stats             Print a summary of events in a JSONL file
+    list-deprecated   Print all deprecated event types from the global deprecation registry
+    migration-roadmap Print the planned v1 → v2 migration roadmap
+    check-consumers   Assert all registered consumers are compatible with the installed schema
 
 options:
-  -h, --help        show this help message and exit
+  -h, --help          show this help message and exit
 ```
 
 ## `check-compat`
@@ -226,3 +233,152 @@ Registered consumers (1 total):
 ERROR: 1 consumer(s) require a schema version not satisfied by 1.1.0.
 ```
 
+---
+
+## `validate`
+
+Validate every event in a JSONL file against the published v2.0 JSON Schema.
+Useful for checking that events emitted by third-party integrations conform to
+the canonical schema before ingestion.
+
+**Usage**
+
+```bash
+tracium validate EVENTS_JSONL
+```
+
+`EVENTS_JSONL`
+: Path to a JSONL file (one serialised `Event` JSON object per line).
+
+**Exit codes**
+
+| Code | Meaning |
+|------|---------|
+| `0` | All events are schema-valid. |
+| `1` | One or more events failed validation (details printed to stdout). |
+| `2` | Usage error, file not found, or malformed JSON. |
+
+**Example — all valid**
+
+```bash
+$ tracium validate events.jsonl
+OK — 128 event(s) are all schema-valid.
+```
+
+**Example — validation errors**
+
+```bash
+$ tracium validate events.jsonl
+FAIL — 2 event(s) failed schema validation:
+
+  Line 14: missing required field 'source'
+  Line 37: 'event_type' value 'foo.bar' is not a registered EventType
+```
+
+---
+
+## `audit-chain`
+
+Verify the HMAC-SHA256 signing chain of a JSONL file produced when
+`signing_key` was set via `configure()`. Detects tampering, deletions, and
+out-of-order events.
+
+The signing secret is read from the `TRACIUM_SIGNING_KEY` environment variable.
+
+**Usage**
+
+```bash
+TRACIUM_SIGNING_KEY=my-secret tracium audit-chain EVENTS_JSONL
+```
+
+**Exit codes**
+
+| Code | Meaning |
+|------|---------|
+| `0` | Chain is intact — all signatures verify and no gaps detected. |
+| `1` | Chain is broken — at least one tampered event or missing link. |
+| `2` | Usage error, file not found, or `TRACIUM_SIGNING_KEY` not set. |
+
+**Example — intact chain**
+
+```bash
+$ TRACIUM_SIGNING_KEY=secret tracium audit-chain events.jsonl
+OK — chain of 50 event(s) is intact. No tampering or gaps detected.
+```
+
+**Example — tampered chain**
+
+```bash
+FAIL — chain verification failed:
+  Event 01JPXXX... signature mismatch (tampered or wrong key)
+  Gap detected: event 01JPYYY... has no prev_id link to prior event
+```
+
+---
+
+## `inspect`
+
+Look up a single event by its `event_id` in a JSONL file and pretty-print it
+as indented JSON. Useful for debugging a specific event without loading the
+whole file.
+
+**Usage**
+
+```bash
+tracium inspect EVENT_ID EVENTS_JSONL
+```
+
+**Exit codes**
+
+| Code | Meaning |
+|------|---------|
+| `0` | Event found and printed. |
+| `1` | Event ID not found in file. |
+| `2` | Usage error or file not found. |
+
+**Example**
+
+```bash
+$ tracium inspect 01JPXXXXXXXXXXXXXXXXXXX events.jsonl
+{
+  "event_id": "01JPXXXXXXXXXXXXXXXXXXX",
+  "schema_version": "2.0",
+  "event_type": "llm.trace.span.completed",
+  "source": "my-app@1.0.0",
+  ...
+}
+```
+
+---
+
+## `stats`
+
+Print a human-readable summary of all events in a JSONL file: total count,
+breakdown by event type, total input/output tokens, estimated cost, and the
+timestamp range of the events.
+
+**Usage**
+
+```bash
+tracium stats EVENTS_JSONL
+```
+
+**Exit codes**
+
+| Code | Meaning |
+|------|---------|
+| `0` | Summary printed successfully. |
+| `2` | Usage error or file not found. |
+
+**Example**
+
+```bash
+$ tracium stats events.jsonl
+Events:  342 total
+Types:
+  llm.trace.span.completed  : 300
+  llm.cost.token_recorded   :  42
+Tokens:  input=48 200  output=12 300  total=60 500
+Cost:    $0.1820 USD
+Range:   2026-03-04T08:00:00Z → 2026-03-04T09:15:33Z
+```

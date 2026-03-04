@@ -26,6 +26,23 @@ Sub-commands
 ``llm-toolkit-schema check-consumers``
     Assert that all globally registered consumers are compatible with the
     installed schema version.  Exits 0 on success, 1 on incompatibilities.
+
+``tracium validate <events.jsonl>``
+    Validate every event in a JSONL file against the published schema.
+    Exits 0 if all events are valid, 1 if any fail validation.
+
+``tracium audit-chain <events.jsonl>``
+    Verify the HMAC signing chain of events in a JSONL file.  Reads the
+    signing key from the ``TRACIUM_SIGNING_KEY`` environment variable.
+    Exits 0 if the chain is intact, 1 if tampering or gaps are found.
+
+``tracium inspect <event_id> <events.jsonl>``
+    Find a single event by ``event_id`` in a JSONL file and pretty-print
+    its JSON envelope to stdout.  Exits 0 on success, 1 if not found.
+
+``tracium stats <events.jsonl>``
+    Print a summary table of events in a JSONL file: event counts by type,
+    total prompt/completion/total tokens, total cost, and timestamp range.
 """
 
 from __future__ import annotations
@@ -161,6 +178,194 @@ def _cmd_check_consumers(_args: argparse.Namespace) -> int:
     return 1
 
 
+def _read_jsonl_events(path: Path):
+    """Read a JSONL file and return a list of (lineno, Event | Exception) pairs."""
+    from tracium.event import Event
+    from tracium.exceptions import DeserializationError, SchemaValidationError
+
+    results = []
+    for lineno, raw_line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        line = raw_line.strip()
+        if not line:
+            continue
+        try:
+            obj = json.loads(line)
+            event = Event.from_dict(obj)
+            results.append((lineno, event))
+        except (json.JSONDecodeError, DeserializationError, SchemaValidationError, KeyError, TypeError) as exc:
+            results.append((lineno, exc))
+    return results
+
+
+def _cmd_validate(args: argparse.Namespace) -> int:
+    """Implement the ``validate`` sub-command."""
+    from tracium.exceptions import SchemaValidationError
+    from tracium.validate import validate_event
+
+    path = Path(args.file)
+    if not path.exists():
+        print(f"error: file not found: {path}", file=sys.stderr)
+        return 2
+
+    rows = _read_jsonl_events(path)
+    if not rows:
+        print("No events found in file.")
+        return 0
+
+    errors: list[tuple[int, str]] = []
+    for lineno, item in rows:
+        if isinstance(item, Exception):
+            errors.append((lineno, f"parse error: {item}"))
+            continue
+        try:
+            validate_event(item)
+        except SchemaValidationError as exc:
+            errors.append((lineno, str(exc)))
+
+    total = len(rows)
+    if not errors:
+        print(f"OK — {total} event(s) passed schema validation.")
+        return 0
+
+    print(f"FAIL — {len(errors)} of {total} event(s) failed validation:\n")
+    for lineno, msg in errors:
+        print(f"  line {lineno}: {msg}")
+    return 1
+
+
+def _cmd_audit_chain(args: argparse.Namespace) -> int:
+    """Implement the ``audit-chain`` sub-command."""
+    import os
+
+    from tracium.signing import SigningError, verify_chain
+
+    path = Path(args.file)
+    if not path.exists():
+        print(f"error: file not found: {path}", file=sys.stderr)
+        return 2
+
+    org_secret = os.environ.get("TRACIUM_SIGNING_KEY", "")
+    if not org_secret:
+        print(
+            "error: TRACIUM_SIGNING_KEY environment variable is not set.",
+            file=sys.stderr,
+        )
+        return 2
+
+    rows = _read_jsonl_events(path)
+    if not rows:
+        print("No events found in file.")
+        return 0
+
+    bad_lines = [(ln, exc) for ln, exc in rows if isinstance(exc, Exception)]
+    if bad_lines:
+        print(f"error: {len(bad_lines)} line(s) could not be parsed:", file=sys.stderr)
+        for ln, exc in bad_lines[:5]:
+            print(f"  line {ln}: {exc}", file=sys.stderr)
+        return 2
+
+    events = [ev for _, ev in rows]
+
+    try:
+        result = verify_chain(events, org_secret=org_secret)
+    except SigningError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+    if result.valid:
+        print(f"OK — chain of {len(events)} event(s) is intact.")
+        return 0
+
+    print(f"FAIL — chain verification failed ({result.tampered_count} tampered event(s)):\n")
+    if result.first_tampered:
+        print(f"  first tampered event_id: {result.first_tampered}")
+    if result.gaps:
+        print(f"  linkage gaps ({len(result.gaps)}):")
+        for gap_id in result.gaps:
+            print(f"    {gap_id}")
+    return 1
+
+
+def _cmd_inspect(args: argparse.Namespace) -> int:
+    """Implement the ``inspect`` sub-command."""
+    path = Path(args.file)
+    if not path.exists():
+        print(f"error: file not found: {path}", file=sys.stderr)
+        return 2
+
+    rows = _read_jsonl_events(path)
+    target_id = args.event_id
+
+    for _lineno, item in rows:
+        if isinstance(item, Exception):
+            continue
+        if item.event_id == target_id:
+            print(json.dumps(item.to_dict(), indent=2))
+            return 0
+
+    print(f"error: event_id {target_id!r} not found in {path}", file=sys.stderr)
+    return 1
+
+
+def _cmd_stats(args: argparse.Namespace) -> int:
+    """Implement the ``stats`` sub-command."""
+    path = Path(args.file)
+    if not path.exists():
+        print(f"error: file not found: {path}", file=sys.stderr)
+        return 2
+
+    rows = _read_jsonl_events(path)
+    if not rows:
+        print("No events found in file.")
+        return 0
+
+    type_counts: dict[str, int] = {}
+    prompt_tokens = 0
+    completion_tokens = 0
+    total_tokens = 0
+    cost_usd = 0.0
+    timestamps: list[str] = []
+    parse_errors = 0
+
+    for _lineno, item in rows:
+        if isinstance(item, Exception):
+            parse_errors += 1
+            continue
+        event_type = str(item.event_type) if item.event_type else "(unknown)"
+        type_counts[event_type] = type_counts.get(event_type, 0) + 1
+        payload = item.payload or {}
+        prompt_tokens += int(payload.get("prompt_tokens") or 0)
+        completion_tokens += int(payload.get("completion_tokens") or 0)
+        total_tokens += int(payload.get("total_tokens") or 0)
+        cost_usd += float(payload.get("cost_usd") or 0.0)
+        if item.timestamp:
+            timestamps.append(item.timestamp)
+
+    total_events = len(rows) - parse_errors
+    print(f"Events: {total_events}" + (f" ({parse_errors} parse error(s) skipped)" if parse_errors else ""))
+    print()
+
+    if type_counts:
+        print(f"{'Event Type':<55} {'Count':>7}")
+        print("-" * 65)
+        for et, cnt in sorted(type_counts.items(), key=lambda x: -x[1]):
+            print(f"  {et:<53} {cnt:>7}")
+        print()
+
+    print(f"Prompt tokens:     {prompt_tokens:>12,}")
+    print(f"Completion tokens: {completion_tokens:>12,}")
+    print(f"Total tokens:      {total_tokens:>12,}")
+    print(f"Cost (USD):        {cost_usd:>12.6f}")
+    print()
+
+    if timestamps:
+        ts_sorted = sorted(timestamps)
+        print(f"Earliest: {ts_sorted[0]}")
+        print(f"Latest:   {ts_sorted[-1]}")
+
+    return 0
+
+
 def main(argv: list[str] | None = None) -> NoReturn:
     """Entry point for the ``llm-toolkit-schema`` CLI tool."""
     parser = argparse.ArgumentParser(
@@ -204,6 +409,55 @@ def main(argv: list[str] | None = None) -> NoReturn:
         help="Assert all registered consumers are compatible with the installed schema",
     )
 
+    # validate sub-command
+    validate_parser = sub.add_parser(
+        "validate",
+        help="Validate every event in a JSONL file against the published schema",
+    )
+    validate_parser.add_argument(
+        "file",
+        metavar="EVENTS_JSONL",
+        help="Path to a JSONL file (one event JSON per line)",
+    )
+
+    # audit-chain sub-command
+    audit_parser = sub.add_parser(
+        "audit-chain",
+        help="Verify HMAC signing chain integrity of events in a JSONL file",
+    )
+    audit_parser.add_argument(
+        "file",
+        metavar="EVENTS_JSONL",
+        help="Path to a JSONL file of signed events (reads TRACIUM_SIGNING_KEY env var)",
+    )
+
+    # inspect sub-command
+    inspect_parser = sub.add_parser(
+        "inspect",
+        help="Pretty-print a single event by event_id from a JSONL file",
+    )
+    inspect_parser.add_argument(
+        "event_id",
+        metavar="EVENT_ID",
+        help="The event_id to look up",
+    )
+    inspect_parser.add_argument(
+        "file",
+        metavar="EVENTS_JSONL",
+        help="Path to a JSONL file to search",
+    )
+
+    # stats sub-command
+    stats_parser = sub.add_parser(
+        "stats",
+        help="Print a summary of events in a JSONL file (counts, tokens, cost, timestamps)",
+    )
+    stats_parser.add_argument(
+        "file",
+        metavar="EVENTS_JSONL",
+        help="Path to a JSONL file",
+    )
+
     args = parser.parse_args(argv)
 
     if args.command == "check-compat":
@@ -214,6 +468,14 @@ def main(argv: list[str] | None = None) -> NoReturn:
         sys.exit(_cmd_migration_roadmap(args))
     elif args.command == "check-consumers":
         sys.exit(_cmd_check_consumers(args))
+    elif args.command == "validate":
+        sys.exit(_cmd_validate(args))
+    elif args.command == "audit-chain":
+        sys.exit(_cmd_audit_chain(args))
+    elif args.command == "inspect":
+        sys.exit(_cmd_inspect(args))
+    elif args.command == "stats":
+        sys.exit(_cmd_stats(args))
     else:
         parser.print_help()
         sys.exit(2)

@@ -4,6 +4,10 @@ Each sub-module is an optional extra that sits on top of the zero-dependency
 core SDK.  Install the relevant extra before importing:
 
     pip install "tracium[openai]"      # OpenAI auto-instrumentation
+    pip install "tracium[anthropic]"   # Anthropic Claude auto-instrumentation
+    pip install "tracium[ollama]"      # Ollama local model auto-instrumentation
+    pip install "tracium[groq]"        # Groq API auto-instrumentation
+    pip install "tracium[together]"    # Together AI auto-instrumentation
     pip install "tracium[langchain]"   # LangChain callback handler
     pip install "tracium[llamaindex]"  # LlamaIndex event handler
 
@@ -20,4 +24,10 @@ from __future__ import annotations
 
 __all__: list[str] = [
     "openai",
+    "anthropic",
+    "ollama",
+    "groq",
+    "together",
+    "langchain",
+    "llamaindex",
 ]

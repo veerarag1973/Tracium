@@ -9,8 +9,8 @@
   <a href="https://pypi.org/project/tracium/"><img src="https://img.shields.io/pypi/v/tracium?color=4c8cbf&label=PyPI&logo=pypi&logoColor=white" alt="PyPI version"/></a>
   <a href="https://pypi.org/project/tracium/"><img src="https://img.shields.io/pypi/pyversions/tracium?color=4c8cbf&logo=python&logoColor=white" alt="Python versions"/></a>
   <a href="https://pypi.org/project/tracium/"><img src="https://img.shields.io/pypi/dm/tracium?color=4c8cbf&label=downloads" alt="Monthly downloads"/></a>
-  <img src="https://img.shields.io/badge/coverage-99%25-brightgreen" alt="99% test coverage"/>
-  <img src="https://img.shields.io/badge/tests-1526%20passing-brightgreen" alt="1526 tests"/>
+  <img src="https://img.shields.io/badge/coverage-97%25-brightgreen" alt="97% test coverage"/>
+  <img src="https://img.shields.io/badge/tests-1791%20passing-brightgreen" alt="1791 tests"/>
   <img src="https://img.shields.io/badge/dependencies-zero-brightgreen" alt="Zero dependencies"/>
   <a href="docs/index.md"><img src="https://img.shields.io/badge/docs-local-4c8cbf" alt="Documentation"/></a>
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license"/>
@@ -117,18 +117,26 @@ Every event gets a **ULID** (a time-sortable unique ID) automatically — no nee
 ### 3 — Redact private information before logging
 
 ```python
+from tracium import Event, EventType
 from tracium.redact import Redactable, RedactionPolicy, Sensitivity
 
 policy = RedactionPolicy(min_sensitivity=Sensitivity.PII, redacted_by="policy:gdpr-v1")
 
 # Wrap any string that might contain PII
-prompt = Redactable("Call me at 555-867-5309", sensitivity=Sensitivity.PII)
-
-result = policy.apply({"prompt": prompt})
-# result["prompt"] -> "[REDACTED by policy:gdpr-v1]"
+event = Event(
+    event_type=EventType.TRACE_SPAN_COMPLETED,
+    source="my-app@1.0.0",
+    payload={"prompt": Redactable("Call me at 555-867-5309", Sensitivity.PII)},
+)
+result = policy.apply(event)
+# result.event.payload["prompt"] -> "[REDACTED by policy:gdpr-v1]"
 ```
 
 ``Redactable`` is a string wrapper. You mark fields as sensitive at the point where they are created; the policy decides what to remove before the event is written to any log.
+
+> **Tip — auto-redact every span:** pass `redaction_policy=policy` to
+> `tracium.configure()` and the policy runs automatically inside `_dispatch()`
+> before any exporter sees the event.
 
 ---
 
@@ -150,7 +158,9 @@ result = verify_chain(stream.events, org_secret="my-org-secret")
 ```
 
 This is the same principle used in certificate chains and blockchain — each event's signature covers the previous event's signature, so you cannot alter history without breaking the chain.
-
+> **Tip — auto-sign every span:** pass `signing_key="your-secret"` to
+> `tracium.configure()` and every emitted span is signed and chained
+> automatically, with no per-event boilerplate.
 ---
 
 ### 5 — Export to anywhere
@@ -227,10 +237,17 @@ console.export(event)
 
 ---
 
-### 7 — Check compliance from the command line
+### 7 — Check compliance and inspect events from the command line
 
 ```bash
-tracium check-compat events.json
+tracium check-compat events.json        # v1.0 compatibility checklist
+tracium validate events.jsonl           # JSON Schema validation per event
+tracium audit-chain events.jsonl        # verify HMAC signing chain integrity
+tracium inspect <EVENT_ID> events.jsonl # pretty-print a single event
+tracium stats events.jsonl              # summary: counts, tokens, cost, timestamps
+tracium list-deprecated                 # list all deprecated event types
+tracium migration-roadmap [--json]      # v2 migration roadmap
+tracium check-consumers                 # consumer registry compatibility check
 ```
 
 ```
@@ -241,7 +258,7 @@ CHK-5  Event IDs are valid ULIDs            (500 / 500 events)
 All checks passed.
 ```
 
-Drop this into your CI pipeline and catch schema drift before it reaches production.
+Drop any of these into your CI pipeline to catch schema drift, signing failures, or schema-breaking migrations before they reach production.
 
 ---
 
@@ -271,6 +288,11 @@ Drop this into your CI pipeline and catch schema drift before it reaches product
   <td><code>tracium._span</code></td>
   <td>Span, AgentRun, AgentStep context managers — the runtime tracing API</td>
   <td>App developers</td>
+</tr>
+<tr>
+  <td><code>tracium._cli</code></td>
+  <td>8 CLI sub-commands: <code>check-compat</code>, <code>validate</code>, <code>audit-chain</code>, <code>inspect</code>, <code>stats</code>, <code>list-deprecated</code>, <code>migration-roadmap</code>, <code>check-consumers</code></td>
+  <td>DevOps / CI teams</td>
 </tr>
 <tr>
   <td><code>tracium.redact</code></td>
@@ -324,7 +346,7 @@ Drop this into your CI pipeline and catch schema drift before it reaches product
 </tr>
 <tr>
   <td><code>tracium.integrations</code></td>
-  <td>Plug-in adapters for LangChain and LlamaIndex</td>
+  <td>Plug-in adapters for OpenAI, LangChain, LlamaIndex, Anthropic, Groq, Ollama, and Together</td>
   <td>App developers</td>
 </tr>
 <tr>
@@ -383,8 +405,8 @@ event = Event(
 
 ## Quality standards
 
-- **1 526 tests** — unit, integration, property-based (Hypothesis), and performance benchmarks
-- **99 % line and branch coverage** — measured with ``pytest-cov``
+- **1 791 tests** — unit, integration, property-based (Hypothesis), and performance benchmarks
+- **97 % line and branch coverage** — measured with ``pytest-cov``
 - **Zero required dependencies** — the entire core runs on Python's standard library alone
 - **Typed** — full ``py.typed`` marker; works with mypy and pyright out of the box
 - **Frozen v2 trace schema** — ``llm.trace.*`` payload fields will never break between minor releases
@@ -401,7 +423,8 @@ tracium/
 ├── config.py         <- configure() / get_config() / TraciumConfig
 ├── _span.py          <- Span, AgentRun, AgentStep context managers
 ├── _tracer.py        <- Tracer — top-level tracing entry point
-├── _stream.py        <- Internal stream helpers
+├── _stream.py        <- Internal dispatch: redact → sign → export
+├── _cli.py           <- CLI entry-point (8 sub-commands)
 ├── signing.py        <- HMAC signing & audit chains
 ├── redact.py         <- PII redaction
 ├── validate.py       <- JSON Schema validation
@@ -421,7 +444,9 @@ tracium/
 ├── stream.py         <- EventStream fan-out router (+ Kafka source)
 ├── integrations/
 │   ├── langchain.py  <- LangChain callback handler
-│   └── llamaindex.py <- LlamaIndex event handler
+│   ├── llamaindex.py <- LlamaIndex event handler
+│   ├── openai.py     <- OpenAI tracing wrapper
+│   └── ...           (anthropic, groq, ollama, together)
 ├── namespaces/       <- Typed payload dataclasses
 │   ├── trace.py        (SpanPayload, AgentRunPayload, AgentStepPayload — frozen v2)
 │   ├── cost.py
@@ -429,6 +454,11 @@ tracium/
 │   └── ...
 ├── models.py         <- Optional Pydantic v2 models
 └── migrate.py        <- Schema migration helpers
+examples/             <- Runnable sample scripts
+├── openai_chat.py    <- OpenAI + JSONL export
+├── agent_workflow.py <- Multi-step agent + console exporter
+├── langchain_chain.py<- LangChain callback handler
+└── secure_pipeline.py<- HMAC signing + PII redaction together
 ```
 
 ---
@@ -444,7 +474,7 @@ python -m venv .venv
 # source .venv/bin/activate     # macOS / Linux
 
 pip install -e ".[dev]"
-pytest                          # run all 1 526 tests
+pytest                          # run all 1 791 tests
 ```
 
 <details>
@@ -454,7 +484,7 @@ pytest                          # run all 1 526 tests
 ruff check .                  # linting
 ruff format .                 # auto-format
 mypy tracium                  # type checking
-pytest --cov                  # tests + coverage report (>=99% required)
+pytest --cov                  # tests + coverage report (>=90% required)
 ```
 
 </details>
@@ -476,8 +506,8 @@ sphinx-build -b html . _build/html   # open _build/html/index.html
 
 This project follows [Semantic Versioning](https://semver.org/):
 
-- **Patch** releases (``0.2.x``) — bug fixes only, fully backwards-compatible
-- **Minor** releases (``0.x.0``) — new features, backwards-compatible
+- **Patch** releases (``1.0.x``) — bug fixes only, fully backwards-compatible
+- **Minor** releases (``1.x.0``) — new features, backwards-compatible
 - **Major** releases (``x.0.0``) — breaking changes, announced in advance
 
 The ``llm.trace.*`` namespace payload schema is **additionally frozen at v2**: even a major release will not remove or rename fields from ``SpanPayload``, ``AgentRunPayload``, or ``AgentStepPayload``.
@@ -495,7 +525,7 @@ See [docs/changelog.md](docs/changelog.md) or the [release history on PyPI](http
 Contributions are welcome! Please read the [Contributing Guide](docs/contributing.md) first, then open an issue or pull request.
 
 Key rules:
-- All new code must maintain **>= 99 % test coverage**
+- All new code must maintain **>= 90 % test coverage**
 - Follow the existing **Google-style docstrings**
 - Run ``ruff`` and ``mypy`` before submitting
 

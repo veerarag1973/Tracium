@@ -48,7 +48,6 @@ def _inject_fake_llamaindex() -> None:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.skip(reason="tracium.integrations.langchain not yet implemented (Phase 9)")
 class TestLLMSchemaCallbackHandler:
     @pytest.fixture(autouse=True)
     def setup(self) -> None:
@@ -186,7 +185,6 @@ class TestLLMSchemaCallbackHandler:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.skip(reason="tracium.integrations.llamaindex not yet implemented (Phase 9)")
 class TestLLMSchemaEventHandler:
     @pytest.fixture(autouse=True)
     def setup(self) -> None:
@@ -287,7 +285,6 @@ class TestLLMSchemaEventHandler:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.skip(reason="tracium.integrations.langchain not yet implemented (Phase 9)")
 class TestLangChainAdditionalCoverage:
     """Covers lines 45, 128, and 181->184 in langchain.py."""
 
@@ -387,7 +384,6 @@ class TestLangChainAdditionalCoverage:
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.skip(reason="tracium.integrations.llamaindex not yet implemented (Phase 9)")
 class TestLlamaIndexAdditionalCoverage:
     """Covers lines 43, 116-119, 128, 212-213, 235->exit in llamaindex.py."""
 
