@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://llm-toolkit-schema.dev/schemas/v1.0/schema.json",
+  "title": "llm-toolkit-schema Event Envelope",
+  "description": "Canonical JSON Schema for the llm-toolkit-schema v1.0 Event envelope.  Every event emitted by a tool in the LLM Developer Toolkit must validate against this schema.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "event_id",
+    "event_type",
+    "timestamp",
+    "source",
+    "payload"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "description": "Schema version.  Currently must be '1.0'.",
+      "pattern": "^\\d+\\.\\d+(?:\\.\\d+)?(?:[.-][a-zA-Z0-9.]+)?$",
+      "examples": ["1.0"]
+    },
+    "event_id": {
+      "type": "string",
+      "description": "Universally unique ULID identifier for this event (26 uppercase base-32 characters).",
+      "pattern": "^[0-9A-Z]{26}$",
+      "examples": ["01HZ8G3EPRP1YF2QV70NMBE6J4"]
+    },
+    "event_type": {
+      "type": "string",
+      "description": "Dot-separated namespaced event type, e.g. 'llm.trace.span.completed'.",
+      "pattern": "^[a-z][a-z0-9]*(?:\\.[a-z][a-z0-9_]*)+$",
+      "examples": [
+        "llm.trace.span.completed",
+        "llm.prompt.saved",
+        "llm.cost.recorded"
+      ]
+    },
+    "timestamp": {
+      "type": "string",
+      "description": "UTC ISO-8601 timestamp when the event was emitted.",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$",
+      "examples": ["2024-05-13T12:00:00.000000Z"]
+    },
+    "source": {
+      "type": "string",
+      "description": "Emitting tool in 'name@semver' format, e.g. 'llm-trace@0.3.1'.",
+      "pattern": "^[a-z][a-z0-9\\-]*@\\d+\\.\\d+\\.\\d+$",
+      "examples": ["llm-trace@0.3.1", "promptlock@1.0.0"]
+    },
+    "payload": {
+      "type": "object",
+      "description": "Tool-specific event data.  Must contain at least one property.",
+      "minProperties": 1
+    },
+    "trace_id": {
+      "type": "string",
+      "description": "OpenTelemetry trace ID — exactly 32 lowercase hexadecimal characters.",
+      "pattern": "^[0-9a-f]{32}$",
+      "examples": ["4bf92f3577b34da6a3ce929d0e0e4736"]
+    },
+    "span_id": {
+      "type": "string",
+      "description": "OpenTelemetry span ID — exactly 16 lowercase hexadecimal characters.",
+      "pattern": "^[0-9a-f]{16}$",
+      "examples": ["00f067aa0ba902b7"]
+    },
+    "parent_span_id": {
+      "type": "string",
+      "description": "Parent span ID — exactly 16 lowercase hexadecimal characters.",
+      "pattern": "^[0-9a-f]{16}$"
+    },
+    "org_id": {
+      "type": "string",
+      "description": "Organisation identifier for multi-tenant deployments.",
+      "minLength": 1
+    },
+    "team_id": {
+      "type": "string",
+      "description": "Team identifier.",
+      "minLength": 1
+    },
+    "actor_id": {
+      "type": "string",
+      "description": "User or service-account identifier that triggered the event.",
+      "minLength": 1
+    },
+    "session_id": {
+      "type": "string",
+      "description": "Session identifier grouping a series of related events.",
+      "minLength": 1
+    },
+    "tags": {
+      "type": "object",
+      "description": "Arbitrary string key→value metadata attached to the event.",
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "checksum": {
+      "type": "string",
+      "description": "SHA-256 hex digest of the canonical payload (set by sign()).",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "signature": {
+      "type": "string",
+      "description": "HMAC-SHA256 hex signature covering the event chain (set by sign()).",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "prev_id": {
+      "type": "string",
+      "description": "ULID of the previous event in an audit chain (set by sign()).",
+      "pattern": "^[0-9A-Z]{26}$"
+    }
+  }
+}
