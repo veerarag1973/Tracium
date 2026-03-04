@@ -11,7 +11,8 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.9%2B-4c8cbf?logo=python&logoColor=white" alt="Python 3.9+"/>
-  <a href="RFC-0001-AGENTOBS.md"><img src="https://img.shields.io/badge/standard-AGENTOBS_RFC--0001-4c8cbf" alt="AGENTOBS RFC-0001"/></a>
+  <a href="https://pypi.org/project/agentobs/"><img src="https://img.shields.io/pypi/v/agentobs?color=4c8cbf&logo=pypi&logoColor=white" alt="PyPI"/></a>
+  <a href="https://www.getspanforge.com/standard"><img src="https://img.shields.io/badge/standard-AGENTOBS_RFC--0001-4c8cbf" alt="AGENTOBS RFC-0001"/></a>
   <img src="https://img.shields.io/badge/coverage-96%25-brightgreen" alt="96% test coverage"/>
   <img src="https://img.shields.io/badge/tests-1837%20passing-brightgreen" alt="1837 tests"/>
   <img src="https://img.shields.io/badge/dependencies-zero-brightgreen" alt="Zero dependencies"/>
@@ -23,7 +24,7 @@
 
 ## What is this?
 
-**AgentOBS** (``tracium``) is the **reference implementation of [RFC-0001 AGENTOBS](RFC-0001-AGENTOBS.md)** — the open event-schema standard for observability of agentic AI systems.
+**AgentOBS** (``tracium``) is the **reference implementation of [RFC-0001 AGENTOBS](https://www.getspanforge.com/standard)** — the open event-schema standard for observability of agentic AI systems.
 
 AGENTOBS defines a structured, typed event envelope that every LLM-adjacent instrumentation tool can emit and every observability backend can consume. It covers the full lifecycle: event envelopes, agent span hierarchies, token and cost models, HMAC audit chains, PII redaction, OTLP-compatible export, and schema governance.
 

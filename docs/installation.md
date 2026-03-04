@@ -1,5 +1,7 @@
 # Installation
 
+[![PyPI](https://img.shields.io/pypi/v/agentobs?color=4c8cbf&logo=pypi&logoColor=white)](https://pypi.org/project/agentobs/)
+
 ## Requirements
 
 - Python **3.9** or later

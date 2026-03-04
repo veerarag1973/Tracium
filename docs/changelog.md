@@ -12,7 +12,24 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
-## 1.0.0 (current) — 2026-03-04
+## 1.0.2 (current) — 2026-03-04
+
+**Packaging fix**
+
+- Added PyPI badge (links to `https://pypi.org/project/agentobs/`) to README, docs index, and installation page.
+- Fixed remaining relative AGENTOBS Standard link in `docs/index.md`.
+
+---
+
+## 1.0.1 — 2026-03-04
+
+**Packaging fix**
+
+- Fixed broken AGENTOBS Standard link on PyPI project page — now points to `https://www.getspanforge.com/standard`.
+
+---
+
+## 1.0.0 — 2026-03-04
 
 **Phase 10 — CLI Tooling**
 
