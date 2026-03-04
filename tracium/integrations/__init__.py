@@ -1,14 +1,23 @@
-"""RFC-0001 AGENTOBS SDK — third-party framework integrations.
+"""tracium.integrations — Third-party provider and framework integrations.
 
-Framework-specific adapters (LangChain, LlamaIndex, etc.) are optional extras
-that sit on top of the core SDK.  They are NOT part of the zero-dependency core.
+Each sub-module is an optional extra that sits on top of the zero-dependency
+core SDK.  Install the relevant extra before importing:
 
-Install an adapter with its extra:
+    pip install "tracium[openai]"      # OpenAI auto-instrumentation
+    pip install "tracium[langchain]"   # LangChain callback handler
+    pip install "tracium[llamaindex]"  # LlamaIndex event handler
 
-    pip install "llm-toolkit-schema[langchain]"
-    pip install "llm-toolkit-schema[llamaindex]"
+Available integrations
+----------------------
+* :mod:`tracium.integrations.openai`    — OpenAI chat completions (Phase 6)
+* :mod:`tracium.integrations.anthropic` — Anthropic Claude (Phase 7)
+* :mod:`tracium.integrations.ollama`    — Ollama local models (Phase 7)
+* :mod:`tracium.integrations.groq`      — Groq API (Phase 7)
+* :mod:`tracium.integrations.together`  — Together AI (Phase 7)
 """
 
 from __future__ import annotations
 
-__all__: list[str] = []
+__all__: list[str] = [
+    "openai",
+]
