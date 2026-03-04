@@ -1,4 +1,4 @@
-"""Tests for llm_toolkit_schema.models — Pydantic v2 model layer.
+﻿"""Tests for tracium.models — Pydantic v2 model layer.
 
 100% branch coverage target.
 """
@@ -7,9 +7,9 @@ from __future__ import annotations
 
 import pytest
 
-from llm_toolkit_schema import Event, EventType, Tags
-from llm_toolkit_schema.event import SCHEMA_VERSION
-from llm_toolkit_schema.ulid import generate as gen_ulid
+from tracium import Event, EventType, Tags
+from tracium.event import SCHEMA_VERSION
+from tracium.ulid import generate as gen_ulid
 
 from tests.conftest import (
     FIXED_SPAN_ID,
@@ -23,7 +23,7 @@ pytest.importorskip("pydantic")
 
 from pydantic import ValidationError  # noqa: E402 (after importorskip guard)
 
-from llm_toolkit_schema.models import EventModel, TagsModel  # noqa: E402
+from tracium.models import EventModel, TagsModel  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Helpers

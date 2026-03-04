@@ -1,4 +1,4 @@
-"""Tests for llm_toolkit_schema/export/otlp.py — OTLPExporter.
+﻿"""Tests for tracium/export/otlp.py — OTLPExporter.
 
 Coverage targets
 ----------------
@@ -24,9 +24,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from llm_toolkit_schema.event import Event, Tags
-from llm_toolkit_schema.exceptions import ExportError
-from llm_toolkit_schema.export.otlp import (
+from tracium.event import Event, Tags
+from tracium.exceptions import ExportError
+from tracium.export.otlp import (
     OTLPExporter,
     ResourceAttributes,
     _compute_end_nano,

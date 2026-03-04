@@ -1,4 +1,4 @@
-"""Tests for llm_toolkit_schema.signing — HMAC-SHA256 signing and audit chain.
+﻿"""Tests for tracium.signing — HMAC-SHA256 signing and audit chain.
 
 100% branch/statement coverage target.
 """
@@ -10,9 +10,9 @@ from typing import List
 
 import pytest
 
-from llm_toolkit_schema import Event, EventType, Tags
-from llm_toolkit_schema.exceptions import SigningError, VerificationError
-from llm_toolkit_schema.signing import (
+from tracium import Event, EventType, Tags
+from tracium.exceptions import SigningError, VerificationError
+from tracium.signing import (
     AuditStream,
     ChainVerificationResult,
     _canonical_payload_bytes,
@@ -234,7 +234,7 @@ class TestVerify:
     def test_missing_signature_returns_false(self) -> None:
         # Build event with checksum but no signature
         event = _event()
-        from llm_toolkit_schema.signing import _compute_checksum as _cc
+        from tracium.signing import _compute_checksum as _cc
         payload_copy = dict(event.payload)
         cs = _cc(payload_copy)
         # Manually create event with checksum but no signature
@@ -327,8 +327,8 @@ class TestAssertVerified:
             assert_verified(event, _SECRET)
         assert exc_info.value.event_id == event.event_id
 
-    def test_verification_error_is_llm_toolkit_schema_error(self) -> None:
-        from llm_toolkit_schema.exceptions import LLMSchemaError
+    def test_verification_error_is_tracium_error(self) -> None:
+        from tracium.exceptions import LLMSchemaError
         err = VerificationError(event_id="01ARYZ3NDEKTSV4RRFFQ69G5FA")
         assert isinstance(err, LLMSchemaError)
 
@@ -703,17 +703,21 @@ class TestAuditEventTypes:
         assert EventType.AUDIT_KEY_ROTATED == "llm.audit.key.rotated"
 
     def test_audit_chain_started_event_type_exists(self) -> None:
-        assert EventType.AUDIT_CHAIN_STARTED == "llm.audit.chain.started"
+        # AUDIT_CHAIN_STARTED removed in v2.0; only AUDIT_KEY_ROTATED remains
+        assert not hasattr(EventType, "AUDIT_CHAIN_STARTED")
+        assert EventType.AUDIT_KEY_ROTATED == "llm.audit.key.rotated"
 
     def test_audit_namespace(self) -> None:
         assert EventType.AUDIT_KEY_ROTATED.namespace == "llm.audit"
 
-    def test_audit_tool_is_llm_toolkit_schema(self) -> None:
-        assert EventType.AUDIT_KEY_ROTATED.tool == "llm-toolkit-schema"
+    def test_audit_tool_is_tracium(self) -> None:
+        # et.tool removed in v2.0; use et.description instead
+        assert isinstance(EventType.AUDIT_KEY_ROTATED.description, str)
+        assert len(EventType.AUDIT_KEY_ROTATED.description) > 0
 
     def test_audit_reserved_namespace(self) -> None:
-        from llm_toolkit_schema.types import validate_custom
-        from llm_toolkit_schema.exceptions import EventTypeError
+        from tracium.types import validate_custom
+        from tracium.exceptions import EventTypeError
         with pytest.raises(EventTypeError):
             validate_custom("llm.audit.custom.event")
 
@@ -725,8 +729,8 @@ class TestAuditEventTypes:
 
 @pytest.mark.unit
 class TestSigningError:
-    def test_is_llm_toolkit_schema_error(self) -> None:
-        from llm_toolkit_schema.exceptions import LLMSchemaError
+    def test_is_tracium_error(self) -> None:
+        from tracium.exceptions import LLMSchemaError
         err = SigningError("bad key")
         assert isinstance(err, LLMSchemaError)
 

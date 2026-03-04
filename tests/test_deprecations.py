@@ -1,4 +1,4 @@
-"""Tests for llm_toolkit_schema.deprecations (DeprecationRegistry)."""
+﻿"""Tests for tracium.deprecations (DeprecationRegistry)."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import warnings
 
 import pytest
 
-from llm_toolkit_schema.deprecations import (
+from tracium.deprecations import (
     DeprecationNotice,
     DeprecationRegistry,
     get_deprecation_notice,

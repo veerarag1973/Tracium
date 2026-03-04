@@ -1,4 +1,4 @@
-"""Shared pytest fixtures and helpers for the llm-toolkit-schema test suite."""
+﻿"""Shared pytest fixtures and helpers for the llm-toolkit-schema test suite."""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ from typing import Any, Dict
 
 import pytest
 
-from llm_toolkit_schema import Event, EventType, Tags
-from llm_toolkit_schema.ulid import generate as gen_ulid
+from tracium import Event, EventType, Tags
+from tracium.ulid import generate as gen_ulid
 
 
 # ---------------------------------------------------------------------------

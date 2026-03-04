@@ -1,4 +1,4 @@
-"""Tests for llm_toolkit_schema.event — Event, Tags, and helpers.
+﻿"""Tests for tracium.event — Event, Tags, and helpers.
 
 100% branch and line coverage target.
 """
@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 import pytest
 
-from llm_toolkit_schema.event import (
+from tracium.event import (
     SCHEMA_VERSION,
     Event,
     Tags,
@@ -31,13 +31,13 @@ from llm_toolkit_schema.event import (
     _validate_timestamp,
     _validate_ulid_field,
 )
-from llm_toolkit_schema.exceptions import (
+from tracium.exceptions import (
     DeserializationError,
     SchemaValidationError,
     SerializationError,
 )
-from llm_toolkit_schema.types import EventType
-from llm_toolkit_schema.ulid import generate as gen_ulid
+from tracium.types import EventType
+from tracium.ulid import generate as gen_ulid
 
 from tests.conftest import FIXED_SPAN_ID, FIXED_TIMESTAMP, FIXED_TRACE_ID
 
@@ -133,7 +133,7 @@ class TestEventConstruction:
     def test_minimal_event(self, minimal_event: Event) -> None:
         assert minimal_event.event_type == "llm.trace.span.completed"
         assert minimal_event.source == "llm-trace@0.3.1"
-        assert minimal_event.schema_version == "1.0"
+        assert minimal_event.schema_version == "2.0"
 
     def test_auto_event_id(self) -> None:
         event = Event(
@@ -143,7 +143,7 @@ class TestEventConstruction:
             timestamp=FIXED_TIMESTAMP,
         )
         assert len(event.event_id) == 26  # noqa: PLR2004
-        from llm_toolkit_schema.ulid import validate
+        from tracium.ulid import validate
         assert validate(event.event_id)
 
     def test_auto_timestamp(self) -> None:
@@ -665,8 +665,7 @@ class TestEventDeserialization:
 class TestValidationHelpers:
     def test_validate_schema_version_valid(self) -> None:
         _validate_schema_version("1.0")
-        _validate_schema_version("1.0.0")
-        _validate_schema_version("2.0.0-beta.1")
+        _validate_schema_version("2.0")
 
     def test_validate_schema_version_not_string(self) -> None:
         with pytest.raises(SchemaValidationError):

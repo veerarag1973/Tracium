@@ -1,4 +1,4 @@
-"""Tests for llm_toolkit_schema.governance (EventGovernancePolicy)."""
+﻿"""Tests for tracium.governance (EventGovernancePolicy)."""
 
 from __future__ import annotations
 
@@ -6,8 +6,8 @@ import warnings
 
 import pytest
 
-from llm_toolkit_schema import Event, EventType, Tags
-from llm_toolkit_schema.governance import (
+from tracium import Event, EventType, Tags
+from tracium.governance import (
     EventGovernancePolicy,
     GovernanceViolationError,
     GovernanceWarning,
@@ -15,7 +15,7 @@ from llm_toolkit_schema.governance import (
     get_global_policy,
     set_global_policy,
 )
-from llm_toolkit_schema.ulid import generate as gen_ulid
+from tracium.ulid import generate as gen_ulid
 
 FIXED_TIMESTAMP = "2026-03-01T12:00:00.000000Z"
 

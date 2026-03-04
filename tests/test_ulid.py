@@ -1,4 +1,4 @@
-"""Tests for llm_toolkit_schema.ulid — 100% coverage target.
+﻿"""Tests for tracium.ulid — 100% coverage target.
 
 Test categories
 ---------------
@@ -17,8 +17,8 @@ from unittest.mock import patch
 
 import pytest
 
-from llm_toolkit_schema.exceptions import ULIDError
-from llm_toolkit_schema.ulid import (
+from tracium.exceptions import ULIDError
+from tracium.ulid import (
     ULID_LENGTH,
     ULID_REGEX,
     _ALPHABET,
@@ -219,7 +219,7 @@ class TestMonotonicity:
         fixed_ms = _now_ms()
         gen = _ULIDGenerator()
 
-        with patch("llm_toolkit_schema.ulid._now_ms", return_value=fixed_ms):
+        with patch("tracium.ulid._now_ms", return_value=fixed_ms):
             ulids = [gen.generate() for _ in range(100)]
 
         for i in range(len(ulids) - 1):
@@ -234,14 +234,14 @@ class TestMonotonicity:
         forward_ms = _now_ms() + 10_000  # 10 seconds in the future
 
         first: List[str] = []
-        with patch("llm_toolkit_schema.ulid._now_ms", return_value=forward_ms):
+        with patch("tracium.ulid._now_ms", return_value=forward_ms):
             for _ in range(5):
                 first.append(gen.generate())
 
         # Now simulate clock going backwards
         backward_ms = forward_ms - 5_000  # 5 seconds back
         second: List[str] = []
-        with patch("llm_toolkit_schema.ulid._now_ms", return_value=backward_ms):
+        with patch("tracium.ulid._now_ms", return_value=backward_ms):
             for _ in range(5):
                 second.append(gen.generate())
 
@@ -265,7 +265,7 @@ class TestMonotonicity:
         # the clock will actually advance on second call, which is fine).
         # Instead, set last_rand to rand_max directly and check:
         object.__setattr__(gen, "_last_rand", rand_max)
-        with patch("llm_toolkit_schema.ulid._now_ms", return_value=fixed_ms - 1):
+        with patch("tracium.ulid._now_ms", return_value=fixed_ms - 1):
             with pytest.raises(ULIDError, match="Random segment overflow"):
                 gen.generate()
 
@@ -295,7 +295,7 @@ class TestMonotonicity:
             except StopIteration:
                 return fixed_ms + 1
 
-        with patch("llm_toolkit_schema.ulid._now_ms", side_effect=advancing_clock):
+        with patch("tracium.ulid._now_ms", side_effect=advancing_clock):
             ulid = gen.generate()
         assert validate(ulid), "ULID generated after spin must be valid"
 

@@ -1,4 +1,4 @@
-"""Tests for llm_toolkit_schema.export.datadog (DatadogExporter)."""
+﻿"""Tests for tracium.export.datadog (DatadogExporter)."""
 
 from __future__ import annotations
 
@@ -9,14 +9,16 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from llm_toolkit_schema import Event, EventType, Tags
-from llm_toolkit_schema.exceptions import ExportError
-from llm_toolkit_schema.export.datadog import (
+pytest.importorskip("tracium.export.datadog", reason="tracium.export.datadog not yet implemented (Phase 8)")
+
+from tracium import Event, EventType, Tags
+from tracium.exceptions import ExportError
+from tracium.export.datadog import (
     DatadogExporter,
     DatadogResourceAttributes,
     _METRIC_FIELDS,
 )
-from llm_toolkit_schema.ulid import generate as gen_ulid
+from tracium.ulid import generate as gen_ulid
 
 FIXED_TIMESTAMP = "2026-03-01T12:00:00.000000Z"
 
@@ -194,7 +196,7 @@ class TestExportAsync:
             mock_resp.read.return_value = b""
             return mock_resp
 
-        with patch("llm_toolkit_schema.export.datadog.urllib.request.urlopen", _mock_urlopen):
+        with patch("tracium.export.datadog.urllib.request.urlopen", _mock_urlopen):
             async def _run() -> None:
                 await exporter.export(sample_event)
 
@@ -210,7 +212,7 @@ class TestExportAsync:
             mock_resp.read.return_value = b""
             return mock_resp
 
-        with patch("llm_toolkit_schema.export.datadog.urllib.request.urlopen", _mock_urlopen):
+        with patch("tracium.export.datadog.urllib.request.urlopen", _mock_urlopen):
             async def _run() -> None:
                 await exporter.export_batch([sample_event, sample_event])
 
@@ -224,7 +226,7 @@ class TestExportAsync:
         def _fail_urlopen(req: Any, timeout: Any = None) -> Any:
             raise urllib.error.HTTPError(None, 500, "Internal Server Error", {}, None)
 
-        with patch("llm_toolkit_schema.export.datadog.urllib.request.urlopen", _fail_urlopen):
+        with patch("tracium.export.datadog.urllib.request.urlopen", _fail_urlopen):
             async def _run() -> None:
                 await exporter.export(sample_event)
 
@@ -237,7 +239,7 @@ class TestExportAsync:
         def _fail_urlopen(req: Any, timeout: Any = None) -> Any:
             raise OSError("connection refused")
 
-        with patch("llm_toolkit_schema.export.datadog.urllib.request.urlopen", _fail_urlopen):
+        with patch("tracium.export.datadog.urllib.request.urlopen", _fail_urlopen):
             async def _run() -> None:
                 await exporter.export(sample_event)
 
@@ -282,7 +284,7 @@ class TestTraceSpanExport:
             mock_resp.read.return_value = b""
             return mock_resp
 
-        with patch("llm_toolkit_schema.export.datadog.urllib.request.urlopen", _mock_urlopen):
+        with patch("tracium.export.datadog.urllib.request.urlopen", _mock_urlopen):
             async def _run() -> None:
                 await exporter.export(event)
 
@@ -307,7 +309,7 @@ class TestTraceSpanExport:
             mock_resp.read.return_value = b""
             return mock_resp
 
-        with patch("llm_toolkit_schema.export.datadog.urllib.request.urlopen", _mock_urlopen):
+        with patch("tracium.export.datadog.urllib.request.urlopen", _mock_urlopen):
             async def _run() -> None:
                 await exporter.export(event)
 
@@ -358,7 +360,7 @@ class TestTraceSpanExport:
         def _fail(req: Any, timeout: Any = None) -> Any:
             raise urllib.error.HTTPError(None, 502, "Bad Gateway", {}, None)
 
-        with patch("llm_toolkit_schema.export.datadog.urllib.request.urlopen", _fail):
+        with patch("tracium.export.datadog.urllib.request.urlopen", _fail):
             async def _run() -> None:
                 await exporter.export(event)
 
@@ -382,7 +384,7 @@ class TestTraceSpanExport:
         def _fail(req: Any, timeout: Any = None) -> Any:
             raise OSError("connection refused to agent")
 
-        with patch("llm_toolkit_schema.export.datadog.urllib.request.urlopen", _fail):
+        with patch("tracium.export.datadog.urllib.request.urlopen", _fail):
             async def _run() -> None:
                 await exporter.export(event)
 

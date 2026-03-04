@@ -1,4 +1,4 @@
-"""Integration tests — cross-module end-to-end scenarios.
+﻿"""Integration tests — cross-module end-to-end scenarios.
 
 These tests exercise the full stack: ULID → EventType → Event → JSON → re-parse.
 """
@@ -9,9 +9,9 @@ import json
 
 import pytest
 
-import llm_toolkit_schema
-from llm_toolkit_schema import Event, EventType, Tags, generate_ulid, validate_ulid
-from llm_toolkit_schema.exceptions import LLMSchemaError
+import tracium
+from tracium import Event, EventType, Tags, generate_ulid, validate_ulid
+from tracium.exceptions import LLMSchemaError
 
 from tests.conftest import FIXED_TIMESTAMP
 
@@ -65,13 +65,13 @@ class TestFullRoundTrip:
         """Same payload → same checksum regardless of event_id/timestamp."""
         payload = {"key": "value", "number": 42}
         e1 = Event(
-            event_type=EventType.COST_RECORDED,
+            event_type=EventType.COST_TOKEN_RECORDED,
             source="llm-cost@0.2.0",
             payload=payload,
             timestamp=FIXED_TIMESTAMP,
         )
         e2 = Event(
-            event_type=EventType.COST_RECORDED,
+            event_type=EventType.COST_TOKEN_RECORDED,
             source="llm-cost@0.2.0",
             payload=payload,
             timestamp=FIXED_TIMESTAMP,
@@ -92,7 +92,7 @@ class TestFullRoundTrip:
         for et in EventType:
             event = Event(
                 event_type=et,
-                source=f"{et.tool}@0.1.0",
+                source="test-service@0.1.0",
                 payload={"test": True},
                 timestamp=FIXED_TIMESTAMP,
             )
@@ -102,16 +102,16 @@ class TestFullRoundTrip:
 @pytest.mark.integration
 class TestPublicApiExports:
     def test_version_present(self) -> None:
-        assert hasattr(llm_toolkit_schema, "__version__")
-        assert llm_toolkit_schema.__version__.startswith("1.")
+        assert hasattr(tracium, "__version__")
+        assert tracium.__version__.startswith("0.")
 
     def test_schema_version_constant(self) -> None:
-        assert llm_toolkit_schema.SCHEMA_VERSION == "1.0"
+        assert tracium.SCHEMA_VERSION == "2.0"
 
     def test_all_exceptions_exported(self) -> None:
-        assert issubclass(llm_toolkit_schema.SchemaValidationError, llm_toolkit_schema.LLMSchemaError)
-        assert issubclass(llm_toolkit_schema.ULIDError, llm_toolkit_schema.LLMSchemaError)
-        assert issubclass(llm_toolkit_schema.SerializationError, llm_toolkit_schema.LLMSchemaError)
+        assert issubclass(tracium.SchemaValidationError, tracium.LLMSchemaError)
+        assert issubclass(tracium.ULIDError, tracium.LLMSchemaError)
+        assert issubclass(tracium.SerializationError, tracium.LLMSchemaError)
 
     def test_generate_ulid_public(self) -> None:
         ulid = generate_ulid()
@@ -120,8 +120,8 @@ class TestPublicApiExports:
 
 @pytest.mark.integration
 class TestErrorPropagation:
-    def test_all_errors_catchable_as_llm_toolkit_schema_error(self) -> None:
-        """The unified catch pattern must work for all llm_toolkit_schema exceptions."""
+    def test_all_errors_catchable_as_tracium_error(self) -> None:
+        """The unified catch pattern must work for all tracium exceptions."""
         bad_event = Event(
             event_type="bad-event-type",
             source="bad-source",

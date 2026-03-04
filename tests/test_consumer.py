@@ -1,4 +1,4 @@
-"""Tests for llm_toolkit_schema.consumer (ConsumerRegistry API)."""
+﻿"""Tests for tracium.consumer (ConsumerRegistry API)."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from collections.abc import Generator
 
 import pytest
 
-from llm_toolkit_schema.consumer import (
+from tracium.consumer import (
     ConsumerRecord,
     ConsumerRegistry,
     IncompatibleSchemaError,

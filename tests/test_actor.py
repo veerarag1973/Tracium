@@ -1,10 +1,10 @@
-"""Tests for llm_toolkit_schema.actor.ActorContext."""
+﻿"""Tests for tracium.actor.ActorContext."""
 
 from __future__ import annotations
 
 import pytest
 
-from llm_toolkit_schema.actor import ActorContext
+from tracium.actor import ActorContext
 
 
 # ---------------------------------------------------------------------------
@@ -125,25 +125,25 @@ class TestActorContext:
 
     def test_embed_in_event_payload(self):
         """ActorContext.to_dict() can be seamlessly embedded in an event payload."""
-        from llm_toolkit_schema import Event
-        from llm_toolkit_schema.types import EventType
-        from llm_toolkit_schema.namespaces.prompt import PromptPromotedPayload
+        from tracium import Event
+        from tracium.types import EventType
+        from tracium.namespaces.prompt import PromptVersionChangedPayload
 
         actor = ActorContext(
             user_id="usr_abc",
             org_id="org_123",
             email="priya@acme.com",
         )
-        promoted = PromptPromotedPayload(
-            prompt_id="pmt_xyz",
-            version="v7",
-            from_environment="staging",
-            to_environment="production",
+        changed = PromptVersionChangedPayload(
+            template_id="pmt_xyz",
+            previous_version="v6",
+            new_version="v7",
+            change_reason="Production release",
         )
         event = Event(
-            event_type=EventType.PROMPT_PROMOTED,
+            event_type=EventType.PROMPT_VERSION_CHANGED,
             source="promptlock@1.0.0",
-            payload={**promoted.to_dict(), "actor": actor.to_dict()},
+            payload={**changed.to_dict(), "actor": actor.to_dict()},
         )
         assert event.payload["actor"]["user_id"] == "usr_abc"
         assert event.payload["actor"]["org_id"] == "org_123"
@@ -151,6 +151,6 @@ class TestActorContext:
 
 class TestActorContextTopLevelExport:
     def test_accessible_from_package_root(self):
-        import llm_toolkit_schema
-        assert hasattr(llm_toolkit_schema, "ActorContext")
-        assert llm_toolkit_schema.ActorContext is ActorContext
+        import tracium
+        assert hasattr(tracium, "ActorContext")
+        assert tracium.ActorContext is ActorContext

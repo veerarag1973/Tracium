@@ -1,4 +1,4 @@
-"""Tests for llm_toolkit_schema.types — EventType enum and namespace helpers.
+﻿"""Tests for tracium.types — EventType enum and namespace helpers.
 
 100% coverage target.
 """
@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import pytest
 
-from llm_toolkit_schema.exceptions import EventTypeError
-from llm_toolkit_schema.types import (
+from tracium.exceptions import EventTypeError
+from tracium.types import (
     EVENT_TYPE_PATTERN,
     EventType,
     _RESERVED_NAMESPACES,
@@ -51,9 +51,9 @@ class TestEventTypeValues:
         assert "llm.trace.span.completed" == EventType.TRACE_SPAN_COMPLETED
 
     def test_total_count(self) -> None:
-        """Ensure all 12 namespaces are represented."""
+        """Ensure all 11 namespaces are represented."""
         namespaces = {et.namespace for et in EventType}
-        assert len(namespaces) == 12  # noqa: PLR2004
+        assert len(namespaces) == 11  # noqa: PLR2004
 
 
 # ---------------------------------------------------------------------------
@@ -67,13 +67,13 @@ class TestEventTypeNamespace:
         assert EventType.TRACE_SPAN_COMPLETED.namespace == "llm.trace"
 
     def test_diff_namespace(self) -> None:
-        assert EventType.DIFF_COMPARISON_STARTED.namespace == "llm.diff"
+        assert EventType.DIFF_COMPUTED.namespace == "llm.diff"
 
     def test_prompt_namespace(self) -> None:
-        assert EventType.PROMPT_PROMOTED.namespace == "llm.prompt"
+        assert EventType.PROMPT_VERSION_CHANGED.namespace == "llm.prompt"
 
     def test_cost_namespace(self) -> None:
-        assert EventType.COST_RECORDED.namespace == "llm.cost"
+        assert EventType.COST_TOKEN_RECORDED.namespace == "llm.cost"
 
     def test_eval_namespace(self) -> None:
         assert EventType.EVAL_SCENARIO_COMPLETED.namespace == "llm.eval"
@@ -82,16 +82,16 @@ class TestEventTypeNamespace:
         assert EventType.GUARD_INPUT_BLOCKED.namespace == "llm.guard"
 
     def test_redact_namespace(self) -> None:
-        assert EventType.REDACT_PII_REDACTED.namespace == "llm.redact"
+        assert EventType.REDACT_PII_DETECTED.namespace == "llm.redact"
 
     def test_fence_namespace(self) -> None:
-        assert EventType.FENCE_VALIDATION_FAILED.namespace == "llm.fence"
+        assert EventType.FENCE_VALIDATED.namespace == "llm.fence"
 
     def test_cache_namespace(self) -> None:
         assert EventType.CACHE_HIT.namespace == "llm.cache"
 
     def test_template_namespace(self) -> None:
-        assert EventType.TEMPLATE_RENDERED.namespace == "llm.template"
+        assert EventType.TEMPLATE_REGISTERED.namespace == "llm.template"
 
 
 # ---------------------------------------------------------------------------
@@ -100,6 +100,7 @@ class TestEventTypeNamespace:
 
 
 @pytest.mark.unit
+@pytest.mark.skip(reason="et.tool property removed in v2.0; use et.description instead")
 class TestEventTypeTool:
     def test_trace_tool(self) -> None:
         assert EventType.TRACE_SPAN_COMPLETED.tool == "llm-trace"
@@ -194,8 +195,8 @@ class TestKnownValues:
     def test_trace_span_completed(self) -> None:
         assert EventType.TRACE_SPAN_COMPLETED.value == "llm.trace.span.completed"
 
-    def test_prompt_promoted(self) -> None:
-        assert EventType.PROMPT_PROMOTED.value == "llm.prompt.promoted"
+    def test_prompt_version_changed(self) -> None:
+        assert EventType.PROMPT_VERSION_CHANGED.value == "llm.prompt.version.changed"
 
     def test_guard_input_blocked(self) -> None:
         assert EventType.GUARD_INPUT_BLOCKED.value == "llm.guard.input.blocked"
@@ -203,8 +204,8 @@ class TestKnownValues:
     def test_cache_hit(self) -> None:
         assert EventType.CACHE_HIT.value == "llm.cache.hit"
 
-    def test_cost_budget_exceeded(self) -> None:
-        assert EventType.COST_BUDGET_EXCEEDED.value == "llm.cost.budget.exceeded"
+    def test_cost_token_recorded(self) -> None:
+        assert EventType.COST_TOKEN_RECORDED.value == "llm.cost.token.recorded"
 
 
 # ---------------------------------------------------------------------------
@@ -261,8 +262,8 @@ class TestNamespaceOf:
         assert "llm.trace" in _RESERVED_NAMESPACES
         assert "llm.guard" in _RESERVED_NAMESPACES
         assert "llm.audit" in _RESERVED_NAMESPACES
-        assert "llm.inspect" in _RESERVED_NAMESPACES
-        assert len(_RESERVED_NAMESPACES) == 12  # noqa: PLR2004
+        assert "llm.inspect" not in _RESERVED_NAMESPACES  # removed in v2.0
+        assert len(_RESERVED_NAMESPACES) == 11  # noqa: PLR2004
 
 
 # ---------------------------------------------------------------------------

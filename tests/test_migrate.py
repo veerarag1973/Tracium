@@ -1,4 +1,4 @@
-"""Tests for llm_toolkit_schema.migrate.
+﻿"""Tests for tracium.migrate.
 
 Covers:
 - MigrationResult dataclass (creation, field access, immutability)
@@ -11,14 +11,14 @@ from __future__ import annotations
 
 import pytest
 
-from llm_toolkit_schema.migrate import (
+from tracium.migrate import (
     DeprecationRecord,
     MigrationResult,
     SunsetPolicy,
     v1_to_v2,
     v2_migration_roadmap,
 )
-from llm_toolkit_schema import Event, EventType
+from tracium import Event, EventType
 
 
 # ---------------------------------------------------------------------------

@@ -116,6 +116,24 @@ v2.0 â€” RFC-0001 AGENTOBS v2.0 SDK baseline.  Canonical 36-type EventType
 
 from __future__ import annotations
 
+# ---------------------------------------------------------------------------
+# Phase 1: Configuration layer
+# ---------------------------------------------------------------------------
+from tracium.config import TraciumConfig, configure, get_config
+
+# ---------------------------------------------------------------------------
+# Phase 2: Core tracer + span
+# ---------------------------------------------------------------------------
+from tracium._tracer import Tracer, tracer
+from tracium._span import (
+    AgentRunContext,
+    AgentStepContext,
+    Span,
+    SpanContextManager,
+    AgentRunContextManager,
+    AgentStepContextManager,
+)
+
 from tracium.event import SCHEMA_VERSION, Event, Tags
 from tracium.exceptions import (
     DeserializationError,
@@ -265,9 +283,22 @@ from tracium.namespaces.trace import (
     ToolCall,
 )
 
-__version__: str = "0.1.0"
+__version__: str = "0.2.0"
 
 __all__: list[str] = [
+    # Phase 1 — Configuration
+    "TraciumConfig",
+    "configure",
+    "get_config",
+    # Phase 2 — Tracer + Span
+    "Tracer",
+    "tracer",
+    "Span",
+    "SpanContextManager",
+    "AgentRunContext",
+    "AgentRunContextManager",
+    "AgentStepContext",
+    "AgentStepContextManager",
     # Core envelope
     "Event",
     "Tags",

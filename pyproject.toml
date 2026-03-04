@@ -7,7 +7,7 @@ build-backend = "hatchling.build"
 # ---------------------------------------------------------------------------
 [project]
 name = "tracium"
-version = "0.1.0"
+version = "0.2.0"
 description = "Tracium — the official Python SDK for the SpanForge Observability Standard"
 readme = "README.md"
 license = { text = "MIT" }

@@ -1,20 +1,16 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/llm-toolkit/llm-toolkit-schema/main/docs/_static/logo.png" alt="llm-toolkit-schema" width="120" />
-</p>
-
-<h1 align="center">llm-toolkit-schema</h1>
+﻿<h1 align="center">tracium</h1>
 
 <p align="center">
-  <strong>The shared language every LLM tool speaks.</strong><br/>
-  A lightweight Python library that gives your AI applications a common, structured way to record, sign, redact, and export events — with zero mandatory dependencies.
+  <strong>Structured observability for AI applications.</strong><br/>
+  A lightweight Python SDK that gives your AI applications a common, structured way to record, sign, redact, and export events — with zero mandatory dependencies.
 </p>
 
 <p align="center">
-  <a href="https://pypi.org/project/llm-toolkit-schema/"><img src="https://img.shields.io/pypi/v/llm-toolkit-schema?color=4c8cbf&label=PyPI&logo=pypi&logoColor=white" alt="PyPI version"/></a>
-  <a href="https://pypi.org/project/llm-toolkit-schema/"><img src="https://img.shields.io/pypi/pyversions/llm-toolkit-schema?color=4c8cbf&logo=python&logoColor=white" alt="Python versions"/></a>
-  <a href="https://pypi.org/project/llm-toolkit-schema/"><img src="https://img.shields.io/pypi/dm/llm-toolkit-schema?color=4c8cbf&label=downloads" alt="Monthly downloads"/></a>
-  <img src="https://img.shields.io/badge/coverage-100%25-brightgreen" alt="100% test coverage"/>
-  <img src="https://img.shields.io/badge/tests-1302%20passing-brightgreen" alt="1302 tests"/>
+  <a href="https://pypi.org/project/tracium/"><img src="https://img.shields.io/pypi/v/tracium?color=4c8cbf&label=PyPI&logo=pypi&logoColor=white" alt="PyPI version"/></a>
+  <a href="https://pypi.org/project/tracium/"><img src="https://img.shields.io/pypi/pyversions/tracium?color=4c8cbf&logo=python&logoColor=white" alt="Python versions"/></a>
+  <a href="https://pypi.org/project/tracium/"><img src="https://img.shields.io/pypi/dm/tracium?color=4c8cbf&label=downloads" alt="Monthly downloads"/></a>
+  <img src="https://img.shields.io/badge/coverage-99%25-brightgreen" alt="99% test coverage"/>
+  <img src="https://img.shields.io/badge/tests-1526%20passing-brightgreen" alt="1526 tests"/>
   <img src="https://img.shields.io/badge/dependencies-zero-brightgreen" alt="Zero dependencies"/>
   <a href="docs/index.md"><img src="https://img.shields.io/badge/docs-local-4c8cbf" alt="Documentation"/></a>
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license"/>
@@ -24,34 +20,34 @@
 
 ## What is this?
 
-> Think of `llm-toolkit-schema` as a **universal receipt format** for your AI application.
+> Think of ``tracium`` as a **universal receipt format** for your AI application.
 > Every time your app calls a language model, makes a decision, redacts private data, or checks a guardrail — this library gives that action a consistent, structured record that any tool in your stack can read.
 
-Without a shared schema, every team invents their own log format. With `llm-toolkit-schema`, your logs, dashboards, compliance reports, and monitoring tools all speak the same language — automatically.
+Without a shared schema, every team invents their own log format. With ``tracium``, your logs, dashboards, compliance reports, and monitoring tools all speak the same language — automatically.
 
 ---
 
 ## Why use it?
 
-| Without llm-toolkit-schema | With llm-toolkit-schema |
+| Without tracium | With tracium |
 |---|---|
 | Each service logs events differently | Every event follows the same structure |
 | Hard to audit who saw what data | Built-in HMAC signing creates a tamper-proof audit trail |
 | PII scattered across logs | First-class PII redaction before data leaves your app |
 | Vendor-specific observability | OpenTelemetry-compatible — works with any monitoring stack |
 | No way to check compatibility | CLI + programmatic compliance checks in CI |
-| Complex integration glue | Zero required dependencies — just `pip install` |
+| Complex integration glue | Zero required dependencies — just ``pip install`` |
 
 ---
 
 ## Install
 
 ```bash
-pip install llm-toolkit-schema
+pip install tracium
 ```
 
 ```python
-import llm_toolkit_schema  # that's it — no configuration needed
+import tracium  # that's it — no configuration needed
 ```
 
 **Requires Python 3.9 or later.** No other packages are required for core usage.
@@ -59,25 +55,43 @@ import llm_toolkit_schema  # that's it — no configuration needed
 ### Optional extras
 
 ```bash
-pip install "llm-toolkit-schema[jsonschema]"   # strict JSON Schema validation
-pip install "llm-toolkit-schema[http]"         # Webhook + OTLP export
-pip install "llm-toolkit-schema[pydantic]"     # Pydantic v2 model layer
-pip install "llm-toolkit-schema[otel]"         # OpenTelemetry SDK integration
-pip install "llm-toolkit-schema[kafka]"        # EventStream.from_kafka() via kafka-python
-pip install "llm-toolkit-schema[langchain]"    # LangChain callback handler
-pip install "llm-toolkit-schema[llamaindex]"   # LlamaIndex event handler
-pip install "llm-toolkit-schema[datadog]"      # Datadog APM + metrics exporter
-pip install "llm-toolkit-schema[all]"          # everything above
+pip install "tracium[jsonschema]"   # strict JSON Schema validation
+pip install "tracium[http]"         # Webhook + OTLP export
+pip install "tracium[pydantic]"     # Pydantic v2 model layer
+pip install "tracium[otel]"         # OpenTelemetry SDK integration
+pip install "tracium[kafka]"        # EventStream.from_kafka() via kafka-python
+pip install "tracium[langchain]"    # LangChain callback handler
+pip install "tracium[llamaindex]"   # LlamaIndex event handler
+pip install "tracium[datadog]"      # Datadog APM + metrics exporter
+pip install "tracium[all]"          # everything above
 ```
 
 ---
 
 ## Five-minute tour
 
-### 1 — Record an event
+### 1 — Trace an LLM call with the span API
 
 ```python
-from llm_toolkit_schema import Event, EventType, Tags
+import tracium
+
+tracium.configure(exporter="console", service_name="my-agent")
+
+with tracium.span("call-llm") as span:
+    span.set_model(model="gpt-4o", system="openai")
+    result = call_llm(prompt)                          # your LLM call here
+    span.set_token_usage(input=512, output=128, total=640)
+    span.set_status("ok")
+```
+
+The context manager automatically records start/end times, parent-child span relationships, and emits a structured event when it exits.
+
+---
+
+### 2 — Record a raw event
+
+```python
+from tracium import Event, EventType, Tags
 
 event = Event(
     event_type=EventType.TRACE_SPAN_COMPLETED,
@@ -100,10 +114,10 @@ Every event gets a **ULID** (a time-sortable unique ID) automatically — no nee
 
 ---
 
-### 2 — Redact private information before logging
+### 3 — Redact private information before logging
 
 ```python
-from llm_toolkit_schema.redact import Redactable, RedactionPolicy, Sensitivity
+from tracium.redact import Redactable, RedactionPolicy, Sensitivity
 
 policy = RedactionPolicy(min_sensitivity=Sensitivity.PII, redacted_by="policy:gdpr-v1")
 
@@ -111,20 +125,20 @@ policy = RedactionPolicy(min_sensitivity=Sensitivity.PII, redacted_by="policy:gd
 prompt = Redactable("Call me at 555-867-5309", sensitivity=Sensitivity.PII)
 
 result = policy.apply({"prompt": prompt})
-# result["prompt"] → "[REDACTED by policy:gdpr-v1]"
+# result["prompt"] -> "[REDACTED by policy:gdpr-v1]"
 ```
 
-`Redactable` is a string wrapper. You mark fields as sensitive at the point where they're created; the policy decides what to remove before the event is written to any log.
+``Redactable`` is a string wrapper. You mark fields as sensitive at the point where they are created; the policy decides what to remove before the event is written to any log.
 
 ---
 
-### 3 — Sign events for tamper-proof audit trails
+### 4 — Sign events for tamper-proof audit trails
 
 ```python
-from llm_toolkit_schema.signing import sign_event, verify_chain, AuditStream
+from tracium.signing import sign, verify_chain, AuditStream
 
 # Sign a single event
-signed = sign_event(event, org_secret="my-org-secret")
+signed = sign(event, org_secret="my-org-secret")
 
 # Or build a chain — every event references the one before it,
 # so any gap or modification is immediately detectable.
@@ -132,22 +146,22 @@ stream = AuditStream(org_secret="my-org-secret")
 for e in events:
     stream.append(e)
 
-is_valid, violations = verify_chain(stream.events, org_secret="my-org-secret")
+result = verify_chain(stream.events, org_secret="my-org-secret")
 ```
 
 This is the same principle used in certificate chains and blockchain — each event's signature covers the previous event's signature, so you cannot alter history without breaking the chain.
 
 ---
 
-### 4 — Export to anywhere
+### 5 — Export to anywhere
 
 ```python
-from llm_toolkit_schema.stream import EventStream
-from llm_toolkit_schema.export.jsonl import JSONLExporter
-from llm_toolkit_schema.export.webhook import WebhookExporter
-from llm_toolkit_schema.export.otlp import OTLPExporter
-from llm_toolkit_schema.export.datadog import DatadogExporter
-from llm_toolkit_schema.export.grafana import GrafanaLokiExporter
+from tracium.stream import EventStream
+from tracium.export.jsonl import JSONLExporter
+from tracium.export.webhook import WebhookExporter
+from tracium.export.otlp import OTLPExporter
+from tracium.export.datadog import DatadogExporter
+from tracium.export.grafana import GrafanaLokiExporter
 
 stream = EventStream(events)
 
@@ -171,7 +185,7 @@ await stream.drain(GrafanaLokiExporter(
     labels={"app": "my-app", "env": "production"},
 ))
 
-# Fan-out: guard-blocked events → Slack webhook
+# Fan-out: guard-blocked events -> Slack webhook
 await stream.route(
     WebhookExporter("https://hooks.slack.com/your-webhook"),
     predicate=lambda e: e.event_type == "llm.guard.blocked",
@@ -181,7 +195,7 @@ await stream.route(
 #### Kafka source
 
 ```python
-from llm_toolkit_schema.stream import EventStream
+from tracium.stream import EventStream
 
 # Drain a Kafka topic directly into an EventStream
 stream = EventStream.from_kafka(
@@ -195,17 +209,35 @@ await stream.drain(exporter)
 
 ---
 
-### 5 — Check compliance from the command line
+### 6 — Sync exporters for non-async workflows
+
+```python
+from tracium.exporters.jsonl import SyncJSONLExporter
+from tracium.exporters.console import SyncConsoleExporter
+
+# Log all events to a JSONL file synchronously
+exporter = SyncJSONLExporter("events.jsonl")
+exporter.export(event)
+exporter.close()
+
+# Pretty-print events to the terminal during development
+console = SyncConsoleExporter()
+console.export(event)
+```
+
+---
+
+### 7 — Check compliance from the command line
 
 ```bash
-llm-toolkit-schema check-compat events.json
+tracium check-compat events.json
 ```
 
 ```
-✓  CHK-1  All required fields present          (500 / 500 events)
-✓  CHK-2  Event types valid                    (500 / 500 events)
-✓  CHK-3  Source identifiers well-formed       (500 / 500 events)
-✓  CHK-5  Event IDs are valid ULIDs            (500 / 500 events)
+CHK-1  All required fields present          (500 / 500 events)
+CHK-2  Event types valid                    (500 / 500 events)
+CHK-3  Source identifiers well-formed       (500 / 500 events)
+CHK-5  Event IDs are valid ULIDs            (500 / 500 events)
 All checks passed.
 ```
 
@@ -213,7 +245,7 @@ Drop this into your CI pipeline and catch schema drift before it reaches product
 
 ---
 
-## What's inside the box
+## What is inside the box
 
 <table>
 <thead>
@@ -221,72 +253,87 @@ Drop this into your CI pipeline and catch schema drift before it reaches product
 </thead>
 <tbody>
 <tr>
-  <td><code>llm_toolkit_schema.event</code></td>
+  <td><code>tracium.event</code></td>
   <td>The core <code>Event</code> envelope — the one structure all tools share</td>
   <td>Everyone</td>
 </tr>
 <tr>
-  <td><code>llm_toolkit_schema.types</code></td>
+  <td><code>tracium.types</code></td>
   <td>All built-in event type strings (trace, cost, cache, eval, guard…)</td>
   <td>Everyone</td>
 </tr>
 <tr>
-  <td><code>llm_toolkit_schema.redact</code></td>
+  <td><code>tracium.config</code></td>
+  <td><code>configure()</code> and <code>get_config()</code> — global SDK configuration</td>
+  <td>Everyone</td>
+</tr>
+<tr>
+  <td><code>tracium._span</code></td>
+  <td>Span, AgentRun, AgentStep context managers — the runtime tracing API</td>
+  <td>App developers</td>
+</tr>
+<tr>
+  <td><code>tracium.redact</code></td>
   <td>PII detection, sensitivity levels, redaction policies</td>
   <td>Data privacy / GDPR teams</td>
 </tr>
 <tr>
-  <td><code>llm_toolkit_schema.signing</code></td>
+  <td><code>tracium.signing</code></td>
   <td>HMAC-SHA256 event signing and tamper-evident audit chains</td>
   <td>Security / compliance teams</td>
 </tr>
 <tr>
-  <td><code>llm_toolkit_schema.compliance</code></td>
-  <td>Programmatic v1.0 compatibility checks — no pytest required</td>
+  <td><code>tracium.compliance</code></td>
+  <td>Programmatic v2.0 compatibility checks — no pytest required</td>
   <td>Platform / DevOps teams</td>
 </tr>
 <tr>
-  <td><code>llm_toolkit_schema.export</code></td>
+  <td><code>tracium.export</code></td>
   <td>Ship events to files (JSONL), HTTP webhooks, OTLP collectors, Datadog APM, or Grafana Loki</td>
   <td>Infra / observability teams</td>
 </tr>
 <tr>
-  <td><code>llm_toolkit_schema.stream</code></td>
+  <td><code>tracium.exporters</code></td>
+  <td>Sync exporters — <code>SyncJSONLExporter</code> and <code>SyncConsoleExporter</code> for non-async code</td>
+  <td>App developers</td>
+</tr>
+<tr>
+  <td><code>tracium.stream</code></td>
   <td>Fan-out router — one <code>drain()</code> call reaches multiple backends; Kafka source via <code>from_kafka()</code></td>
   <td>Platform engineers</td>
 </tr>
 <tr>
-  <td><code>llm_toolkit_schema.validate</code></td>
-  <td>JSON Schema validation against the published v1.0 schema</td>
+  <td><code>tracium.validate</code></td>
+  <td>JSON Schema validation against the published v2.0 schema</td>
   <td>All teams</td>
 </tr>
 <tr>
-  <td><code>llm_toolkit_schema.consumer</code></td>
-  <td>Declare schema-namespace dependencies; fail fast at startup if version requirements aren’t met</td>
+  <td><code>tracium.consumer</code></td>
+  <td>Declare schema-namespace dependencies; fail fast at startup if version requirements are not met</td>
   <td>Platform / integration teams</td>
 </tr>
 <tr>
-  <td><code>llm_toolkit_schema.governance</code></td>
+  <td><code>tracium.governance</code></td>
   <td>Policy-based event gating — block prohibited types, warn on deprecated usage, enforce custom rules</td>
   <td>Platform / compliance teams</td>
 </tr>
 <tr>
-  <td><code>llm_toolkit_schema.deprecations</code></td>
+  <td><code>tracium.deprecations</code></td>
   <td>Register and surface per-event-type deprecation notices at runtime</td>
   <td>Library maintainers</td>
 </tr>
 <tr>
-  <td><code>llm_toolkit_schema.integrations</code></td>
-  <td>Plug-in adapters for LangChain (<code>LLMSchemaCallbackHandler</code>) and LlamaIndex (<code>LLMSchemaEventHandler</code>)</td>
+  <td><code>tracium.integrations</code></td>
+  <td>Plug-in adapters for LangChain and LlamaIndex</td>
   <td>App developers</td>
 </tr>
 <tr>
-  <td><code>llm_toolkit_schema.namespaces</code></td>
+  <td><code>tracium.namespaces</code></td>
   <td>Typed payload dataclasses for all 10 built-in event namespaces</td>
   <td>Tool authors</td>
 </tr>
 <tr>
-  <td><code>llm_toolkit_schema.models</code></td>
+  <td><code>tracium.models</code></td>
   <td>Optional Pydantic v2 models for teams that prefer validated schemas</td>
   <td>API / backend teams</td>
 </tr>
@@ -297,30 +344,32 @@ Drop this into your CI pipeline and catch schema drift before it reaches product
 
 ## Event namespaces
 
-Every event carries a `payload` — a dictionary whose shape is defined by the event's **namespace**. The ten built-in namespaces cover everything from raw model traces to safety guardrails:
+Every event carries a ``payload`` — a dictionary whose shape is defined by the event's **namespace**. The ten built-in namespaces cover everything from raw model traces to safety guardrails:
 
 | Namespace prefix | Dataclass | What it records |
 |---|---|---|
-| `llm.trace.*` | `TracePayload` | Model call — tokens, latency, finish reason **(frozen v1)** |
-| `llm.cost.*` | `CostPayload` | Per-call cost in USD |
-| `llm.cache.*` | `CachePayload` | Cache hit/miss, backend, TTL |
-| `llm.eval.*` | `EvalScenarioPayload` | Scores, labels, evaluator identity |
-| `llm.guard.*` | `GuardPayload` | Safety classifier output, block decisions |
-| `llm.fence.*` | `FencePayload` | Topic constraints, allow/block lists |
-| `llm.prompt.*` | `PromptPayload` | Prompt template version, rendered text |
-| `llm.redact.*` | `RedactPayload` | PII audit record — what was found and removed |
-| `llm.diff.*` | `DiffPayload` | Prompt/response delta between two events |
-| `llm.template.*` | `TemplatePayload` | Template registry metadata |
+| ``llm.trace.*`` | ``SpanPayload``, ``AgentRunPayload``, ``AgentStepPayload`` | Model call — tokens, latency, finish reason **(frozen v2)** |
+| ``llm.cost.*`` | ``CostPayload`` | Per-call cost in USD |
+| ``llm.cache.*`` | ``CachePayload`` | Cache hit/miss, backend, TTL |
+| ``llm.eval.*`` | ``EvalScenarioPayload`` | Scores, labels, evaluator identity |
+| ``llm.guard.*`` | ``GuardPayload`` | Safety classifier output, block decisions |
+| ``llm.fence.*`` | ``FencePayload`` | Topic constraints, allow/block lists |
+| ``llm.prompt.*`` | ``PromptPayload`` | Prompt template version, rendered text |
+| ``llm.redact.*`` | ``RedactPayload`` | PII audit record — what was found and removed |
+| ``llm.diff.*`` | ``DiffPayload`` | Prompt/response delta between two events |
+| ``llm.template.*`` | ``TemplatePayload`` | Template registry metadata |
 
 ```python
-from llm_toolkit_schema.namespaces.trace import TracePayload
+from tracium.namespaces.trace import SpanPayload
+from tracium import Event
 
-payload = TracePayload(
-    model="gpt-4o",
-    prompt_tokens=512,
-    completion_tokens=128,
-    latency_ms=340.5,
-    finish_reason="stop",
+payload = SpanPayload(
+    span_name="call-llm",
+    span_id="abc123",
+    trace_id="def456",
+    start_time_ns=1_000_000_000,
+    end_time_ns=1_340_000_000,
+    status="ok",
 )
 
 event = Event(
@@ -334,44 +383,52 @@ event = Event(
 
 ## Quality standards
 
-- **1 302 tests** — unit, integration, property-based (Hypothesis), and performance benchmarks
-- **100 % line and branch coverage** — no dead code ships
+- **1 526 tests** — unit, integration, property-based (Hypothesis), and performance benchmarks
+- **99 % line and branch coverage** — measured with ``pytest-cov``
 - **Zero required dependencies** — the entire core runs on Python's standard library alone
-- **Typed** — full `py.typed` marker; works with mypy and pyright out of the box
-- **Frozen v1 trace schema** — `llm.trace.*` payload fields will never break between minor releases
+- **Typed** — full ``py.typed`` marker; works with mypy and pyright out of the box
+- **Frozen v2 trace schema** — ``llm.trace.*`` payload fields will never break between minor releases
 
 ---
 
 ## Project structure
 
 ```
-llm_toolkit_schema/
-├── event.py          ← The Event envelope (start here)
-├── types.py          ← EventType enum
-├── signing.py        ← HMAC signing & audit chains
-├── redact.py         ← PII redaction
-├── validate.py       ← JSON Schema validation
-├── consumer.py       ← Consumer registry & schema-version compatibility
-├── governance.py     ← Event governance policies
-├── deprecations.py   ← Per-event-type deprecation tracking
-├── compliance/       ← Compatibility checklist suite
+tracium/
+├── __init__.py       <- Public API surface (start here)
+├── event.py          <- The Event envelope
+├── types.py          <- EventType enum
+├── config.py         <- configure() / get_config() / TraciumConfig
+├── _span.py          <- Span, AgentRun, AgentStep context managers
+├── _tracer.py        <- Tracer — top-level tracing entry point
+├── _stream.py        <- Internal stream helpers
+├── signing.py        <- HMAC signing & audit chains
+├── redact.py         <- PII redaction
+├── validate.py       <- JSON Schema validation
+├── consumer.py       <- Consumer registry & schema-version compatibility
+├── governance.py     <- Event governance policies
+├── deprecations.py   <- Per-event-type deprecation tracking
+├── compliance/       <- Compatibility checklist suite
 ├── export/
-│   ├── jsonl.py      ← Local file export
-│   ├── webhook.py    ← HTTP POST export
-│   ├── otlp.py       ← OpenTelemetry export
-│   ├── datadog.py    ← Datadog APM traces + metrics
-│   └── grafana.py    ← Grafana Loki export
-├── stream.py         ← EventStream fan-out router (+ Kafka source)
+│   ├── jsonl.py      <- Local file export (async)
+│   ├── webhook.py    <- HTTP POST export
+│   ├── otlp.py       <- OpenTelemetry export
+│   ├── datadog.py    <- Datadog APM traces + metrics
+│   └── grafana.py    <- Grafana Loki export
+├── exporters/
+│   ├── jsonl.py      <- SyncJSONLExporter
+│   └── console.py    <- SyncConsoleExporter
+├── stream.py         <- EventStream fan-out router (+ Kafka source)
 ├── integrations/
-│   ├── langchain.py  ← LangChain callback handler
-│   └── llamaindex.py ← LlamaIndex event handler
-├── namespaces/       ← Typed payload dataclasses
-│   ├── trace.py        (frozen v1)
+│   ├── langchain.py  <- LangChain callback handler
+│   └── llamaindex.py <- LlamaIndex event handler
+├── namespaces/       <- Typed payload dataclasses
+│   ├── trace.py        (SpanPayload, AgentRunPayload, AgentStepPayload — frozen v2)
 │   ├── cost.py
 │   ├── cache.py
-│   └── …
-├── models.py         ← Optional Pydantic v2 models
-└── migrate.py        ← Schema migration helpers & v2 roadmap
+│   └── ...
+├── models.py         <- Optional Pydantic v2 models
+└── migrate.py        <- Schema migration helpers
 ```
 
 ---
@@ -379,15 +436,15 @@ llm_toolkit_schema/
 ## Development setup
 
 ```bash
-git clone https://github.com/llm-toolkit/llm-toolkit-schema.git
-cd llm-toolkit-schema
+git clone https://github.com/llm-toolkit/tracium.git
+cd tracium
 
 python -m venv .venv
 .venv\Scripts\activate          # Windows
 # source .venv/bin/activate     # macOS / Linux
 
 pip install -e ".[dev]"
-pytest                          # run all 1 302 tests
+pytest                          # run all 1 526 tests
 ```
 
 <details>
@@ -396,8 +453,8 @@ pytest                          # run all 1 302 tests
 ```bash
 ruff check .                  # linting
 ruff format .                 # auto-format
-mypy llm_toolkit_schema       # type checking
-pytest --cov                  # tests + coverage report
+mypy tracium                  # type checking
+pytest --cov                  # tests + coverage report (>=99% required)
 ```
 
 </details>
@@ -415,21 +472,21 @@ sphinx-build -b html . _build/html   # open _build/html/index.html
 
 ---
 
-## Compatibility & versioning
+## Compatibility and versioning
 
 This project follows [Semantic Versioning](https://semver.org/):
 
-- **Patch** releases (`1.0.x`) — bug fixes only, fully backwards-compatible
-- **Minor** releases (`1.x.0`) — new features, backwards-compatible
-- **Major** releases (`x.0.0`) — breaking changes, announced in advance
+- **Patch** releases (``0.2.x``) — bug fixes only, fully backwards-compatible
+- **Minor** releases (``0.x.0``) — new features, backwards-compatible
+- **Major** releases (``x.0.0``) — breaking changes, announced in advance
 
-The `llm.trace.*` namespace payload schema is **additionally frozen at v1**: even a major release will not remove or rename fields from `TracePayload`.
+The ``llm.trace.*`` namespace payload schema is **additionally frozen at v2**: even a major release will not remove or rename fields from ``SpanPayload``, ``AgentRunPayload``, or ``AgentStepPayload``.
 
 ---
 
 ## Changelog
 
-See [docs/changelog.md](docs/changelog.md) or the [release history on PyPI](https://pypi.org/project/llm-toolkit-schema/#history).
+See [docs/changelog.md](docs/changelog.md) or the [release history on PyPI](https://pypi.org/project/tracium/#history).
 
 ---
 
@@ -438,9 +495,9 @@ See [docs/changelog.md](docs/changelog.md) or the [release history on PyPI](http
 Contributions are welcome! Please read the [Contributing Guide](docs/contributing.md) first, then open an issue or pull request.
 
 Key rules:
-- All new code must maintain **100 % test coverage**
+- All new code must maintain **>= 99 % test coverage**
 - Follow the existing **Google-style docstrings**
-- Run `ruff` and `mypy` before submitting
+- Run ``ruff`` and ``mypy`` before submitting
 
 ---
 
@@ -452,9 +509,9 @@ Key rules:
 
 <p align="center">
   Made with care for the LLM Developer Toolkit ecosystem.<br/>
-  <a href="https://pypi.org/project/llm-toolkit-schema/">PyPI</a> ·
+  <a href="https://pypi.org/project/tracium/">PyPI</a> ·
   <a href="docs/index.md">Docs</a> ·
   <a href="docs/quickstart.md">Quickstart</a> ·
   <a href="docs/api/index.md">API Reference</a> ·
-  <a href="https://github.com/llm-toolkit/llm-toolkit-schema/issues">Report a bug</a>
+  <a href="https://github.com/llm-toolkit/tracium/issues">Report a bug</a>
 </p>

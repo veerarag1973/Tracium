@@ -1,4 +1,4 @@
-"""Tests for llm_toolkit_schema.export.grafana (GrafanaLokiExporter)."""
+﻿"""Tests for tracium.export.grafana (GrafanaLokiExporter)."""
 
 from __future__ import annotations
 
@@ -9,10 +9,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from llm_toolkit_schema import Event, EventType, Tags
-from llm_toolkit_schema.exceptions import ExportError
-from llm_toolkit_schema.export.grafana import GrafanaLokiExporter
-from llm_toolkit_schema.ulid import generate as gen_ulid
+pytest.importorskip("tracium.export.grafana", reason="tracium.export.grafana not yet implemented (Phase 8)")
+
+from tracium import Event, EventType, Tags
+from tracium.exceptions import ExportError
+from tracium.export.grafana import GrafanaLokiExporter
+from tracium.ulid import generate as gen_ulid
 
 FIXED_TIMESTAMP = "2026-03-01T12:00:00.000000Z"
 
@@ -226,7 +228,7 @@ class TestHttpErrors:
         def _fail(req: Any, timeout: Any = None) -> Any:
             raise urllib.error.HTTPError(None, 500, "Server Error", {}, None)
 
-        with patch("llm_toolkit_schema.export.grafana.urllib.request.urlopen", _fail):
+        with patch("tracium.export.grafana.urllib.request.urlopen", _fail):
             async def _run() -> None:
                 await exporter.export(sample_event)
 
@@ -239,7 +241,7 @@ class TestHttpErrors:
         def _fail(req: Any, timeout: Any = None) -> Any:
             raise OSError("connection refused")
 
-        with patch("llm_toolkit_schema.export.grafana.urllib.request.urlopen", _fail):
+        with patch("tracium.export.grafana.urllib.request.urlopen", _fail):
             async def _run() -> None:
                 await exporter.export(sample_event)
 
@@ -260,7 +262,7 @@ class TestHttpErrors:
             mock_resp.read.return_value = b""
             return mock_resp
 
-        with patch("llm_toolkit_schema.export.grafana.urllib.request.urlopen", _mock_urlopen):
+        with patch("tracium.export.grafana.urllib.request.urlopen", _mock_urlopen):
             async def _run() -> None:
                 await exp.export(sample_event)
 

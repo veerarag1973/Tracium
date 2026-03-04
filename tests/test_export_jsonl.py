@@ -1,4 +1,4 @@
-"""Tests for llm_toolkit_schema/export/jsonl.py — JSONLExporter.
+﻿"""Tests for tracium/export/jsonl.py — JSONLExporter.
 
 Coverage targets
 ----------------
@@ -25,8 +25,8 @@ from unittest.mock import patch
 
 import pytest
 
-from llm_toolkit_schema.event import Event
-from llm_toolkit_schema.export.jsonl import JSONLExporter
+from tracium.event import Event
+from tracium.export.jsonl import JSONLExporter
 
 
 # ---------------------------------------------------------------------------

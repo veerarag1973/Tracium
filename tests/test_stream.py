@@ -1,4 +1,4 @@
-"""Tests for llm_toolkit_schema/stream.py — EventStream.
+﻿"""Tests for tracium/stream.py — EventStream.
 
 Coverage targets
 ----------------
@@ -28,9 +28,9 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from llm_toolkit_schema.event import Event, Tags
-from llm_toolkit_schema.exceptions import DeserializationError
-from llm_toolkit_schema.stream import EventStream, Exporter
+from tracium.event import Event, Tags
+from tracium.exceptions import DeserializationError
+from tracium.stream import EventStream, Exporter
 
 
 # ---------------------------------------------------------------------------

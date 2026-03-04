@@ -1,4 +1,4 @@
-"""Tests for llm_toolkit_schema.redact — PII redaction framework.
+﻿"""Tests for tracium.redact — PII redaction framework.
 
 100% branch coverage target.
 """
@@ -10,8 +10,8 @@ from typing import Any, Dict
 
 import pytest
 
-from llm_toolkit_schema import Event, EventType
-from llm_toolkit_schema.redact import (
+from tracium import Event, EventType
+from tracium.redact import (
     PIINotRedactedError,
     PII_TYPES,
     Redactable,
@@ -37,7 +37,7 @@ _SOURCE = "promptlock@1.0.0"
 
 def _simple_event(payload: Dict[str, Any]) -> Event:
     return Event(
-        event_type=EventType.PROMPT_SAVED,
+        event_type=EventType.PROMPT_RENDERED,
         source=_SOURCE,
         payload=payload,
         timestamp=FIXED_TIMESTAMP,
@@ -181,8 +181,8 @@ class TestRedactable:
 
 @pytest.mark.unit
 class TestPIINotRedactedError:
-    def test_is_llm_toolkit_schema_error(self) -> None:
-        from llm_toolkit_schema.exceptions import LLMSchemaError
+    def test_is_tracium_error(self) -> None:
+        from tracium.exceptions import LLMSchemaError
         err = PIINotRedactedError(count=2)
         assert isinstance(err, LLMSchemaError)
 
@@ -364,7 +364,7 @@ class TestRedactionPolicyApply:
     def test_optional_fields_preserved(self) -> None:
         policy = RedactionPolicy()
         event = Event(
-            event_type=EventType.PROMPT_SAVED,
+            event_type=EventType.PROMPT_RENDERED,
             source=_SOURCE,
             payload={"x": Redactable("v", Sensitivity.PII)},
             timestamp=FIXED_TIMESTAMP,
@@ -380,10 +380,10 @@ class TestRedactionPolicyApply:
         assert result.event.span_id == "b" * 16
 
     def test_tags_preserved(self) -> None:
-        from llm_toolkit_schema.event import Tags
+        from tracium.event import Tags
         policy = RedactionPolicy()
         event = Event(
-            event_type=EventType.PROMPT_SAVED,
+            event_type=EventType.PROMPT_RENDERED,
             source=_SOURCE,
             payload={"x": Redactable("v", Sensitivity.PII)},
             timestamp=FIXED_TIMESTAMP,

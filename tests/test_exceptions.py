@@ -1,4 +1,4 @@
-"""Tests for llm_toolkit_schema.exceptions — exception hierarchy and message quality.
+﻿"""Tests for tracium.exceptions — exception hierarchy and message quality.
 
 100% coverage target.
 """
@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from llm_toolkit_schema.exceptions import (
+from tracium.exceptions import (
     DeserializationError,
     EventTypeError,
     LLMSchemaError,
@@ -63,7 +63,7 @@ class TestSchemaValidationError:
         # only type name (str) should appear, not the value itself
         assert pii not in str(exc)
 
-    def test_is_llm_toolkit_schema_error(self) -> None:
+    def test_is_tracium_error(self) -> None:
         assert isinstance(SchemaValidationError("f", "v", "r"), LLMSchemaError)
 
 
@@ -78,7 +78,7 @@ class TestULIDError:
         assert "ULID error" in str(exc)
         assert "overflow" in str(exc)
 
-    def test_is_llm_toolkit_schema_error(self) -> None:
+    def test_is_tracium_error(self) -> None:
         assert isinstance(ULIDError("d"), LLMSchemaError)
 
 
@@ -94,7 +94,7 @@ class TestSerializationError:
         assert "01ARYZ" in str(exc)
         assert "bad type" in str(exc)
 
-    def test_is_llm_toolkit_schema_error(self) -> None:
+    def test_is_tracium_error(self) -> None:
         assert isinstance(SerializationError("id", "r"), LLMSchemaError)
 
 
@@ -114,7 +114,7 @@ class TestDeserializationError:
         assert "bad schema" in str(exc)
         assert "data.json" in str(exc)
 
-    def test_is_llm_toolkit_schema_error(self) -> None:
+    def test_is_tracium_error(self) -> None:
         assert isinstance(DeserializationError("r"), LLMSchemaError)
 
 
@@ -130,5 +130,5 @@ class TestEventTypeError:
         assert "llm.bad.type" in str(exc)
         assert "reserved namespace" in str(exc)
 
-    def test_is_llm_toolkit_schema_error(self) -> None:
+    def test_is_tracium_error(self) -> None:
         assert isinstance(EventTypeError("t", "r"), LLMSchemaError)
