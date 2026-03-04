@@ -1,13 +1,18 @@
 ﻿<h1 align="center">tracium</h1>
 
 <p align="center">
-  <strong>Structured observability for AI applications.</strong><br/>
+  <strong>The reference implementation of the AGENTOBS Standard.</strong><br/>
   A lightweight Python SDK that gives your AI applications a common, structured way to record, sign, redact, and export events — with zero mandatory dependencies.
+</p>
+
+<p align="center">
+  <em>AGENTOBS (RFC-0001) is the open event-schema standard for observability of agentic AI systems.</em>
 </p>
 
 <p align="center">
   <a href="https://pypi.org/project/tracium/"><img src="https://img.shields.io/pypi/v/tracium?color=4c8cbf&label=PyPI&logo=pypi&logoColor=white" alt="PyPI version"/></a>
   <a href="https://pypi.org/project/tracium/"><img src="https://img.shields.io/pypi/pyversions/tracium?color=4c8cbf&logo=python&logoColor=white" alt="Python versions"/></a>
+  <a href="RFC-0001-AGENTOBS.md"><img src="https://img.shields.io/badge/standard-AGENTOBS_RFC--0001-4c8cbf" alt="AGENTOBS RFC-0001"/></a>
   <a href="https://pypi.org/project/tracium/"><img src="https://img.shields.io/pypi/dm/tracium?color=4c8cbf&label=downloads" alt="Monthly downloads"/></a>
   <img src="https://img.shields.io/badge/coverage-97%25-brightgreen" alt="97% test coverage"/>
   <img src="https://img.shields.io/badge/tests-1791%20passing-brightgreen" alt="1791 tests"/>
@@ -20,14 +25,18 @@
 
 ## What is this?
 
+``tracium`` is the **reference implementation of [RFC-0001 AGENTOBS](RFC-0001-AGENTOBS.md)** — the open event-schema standard for observability of agentic AI systems.
+
+AGENTOBS defines a structured, typed event envelope that every LLM-adjacent instrumentation tool can emit and every observability backend can consume. It covers the full lifecycle: event envelopes, agent span hierarchies, token and cost models, HMAC audit chains, PII redaction, OTLP-compatible export, and schema governance.
+
 > Think of ``tracium`` as a **universal receipt format** for your AI application.
 > Every time your app calls a language model, makes a decision, redacts private data, or checks a guardrail — this library gives that action a consistent, structured record that any tool in your stack can read.
-
-Without a shared schema, every team invents their own log format. With ``tracium``, your logs, dashboards, compliance reports, and monitoring tools all speak the same language — automatically.
 
 ---
 
 ## Why use it?
+
+Without a shared schema, every team invents their own log format. With ``tracium`` (and the AGENTOBS standard it implements), your logs, dashboards, compliance reports, and monitoring tools all speak the same language — automatically.
 
 | Without tracium | With tracium |
 |---|---|
@@ -503,6 +512,8 @@ sphinx-build -b html . _build/html   # open _build/html/index.html
 ---
 
 ## Compatibility and versioning
+
+``tracium`` implements **RFC-0001 AGENTOBS** (Observability Schema Standard for Agentic AI Systems). The current schema version is **2.0**.
 
 This project follows [Semantic Versioning](https://semver.org/):
 
