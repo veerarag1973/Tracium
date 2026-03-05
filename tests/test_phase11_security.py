@@ -253,5 +253,5 @@ class TestConfigureIntegration:
         configure(redaction_policy=None)  # clean up
 
     def test_version_is_1_0_0(self):
-        """tracium.__version__ must be 1.0.0 for this release."""
-        assert tracium.__version__ == "1.0.0"
+        """tracium.__version__ must match the current release."""
+        assert tracium.__version__ == "1.0.3"

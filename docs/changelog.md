@@ -6,13 +6,15 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
-## Unreleased
+## 1.0.3 (current) — 2026-03-05
 
-*(No unreleased changes.)*
+**Version bump**
+
+- Updated version references in `docs/index.md` and `docs/changelog.md` to match `pyproject.toml`.
 
 ---
 
-## 1.0.2 (current) — 2026-03-04
+## 1.0.2 — 2026-03-04
 
 **Packaging fix**
 
