@@ -6,7 +6,15 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
-## 1.0.3 (current) — 2026-03-05
+## 1.0.4 (current) — 2026-03-05
+
+**Version bump**
+
+- Bumped version to 1.0.4 across `pyproject.toml`, `tracium/__init__.py`, docs, and tests.
+
+---
+
+## 1.0.3 — 2026-03-05
 
 **Version bump**
 
