@@ -1,4 +1,4 @@
-# tracium.stream
+# agentobs.stream
 
 In-memory event stream with filtering, routing, and export capabilities.
 
@@ -48,7 +48,7 @@ All filter methods return a **new** `EventStream` without modifying the original
 **Example:**
 
 ```python
-from tracium.stream import EventStream
+from agentobs.stream import EventStream
 
 stream = EventStream([event1, event2, event3])
 filtered = stream.filter_by_type("llm.trace.span.completed")
@@ -151,7 +151,7 @@ if `kafka-python` is not installed.
 **Example:**
 
 ```python
-from tracium.stream import EventStream
+from agentobs.stream import EventStream
 
 stream = EventStream.from_kafka(
     topic="llm-events",
@@ -281,7 +281,7 @@ and yielded individually without loading the entire file into memory.
 **Example:**
 
 ```python
-from tracium.stream import iter_file
+from agentobs.stream import iter_file
 
 for event in iter_file("events.ndjson"):
     process(event)
@@ -310,7 +310,7 @@ Reads the file via `asyncio.to_thread` to avoid blocking the event loop on I/O.
 **Example:**
 
 ```python
-from tracium.stream import aiter_file
+from agentobs.stream import aiter_file
 
 async for event in aiter_file("events.ndjson"):
     await process(event)

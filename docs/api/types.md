@@ -1,4 +1,4 @@
-# tracium.types
+# agentobs.types
 
 Namespaced event type registry and custom type validation helpers.
 
@@ -137,7 +137,7 @@ A one-line human-readable description of this event type.
 Return `True` if `event_type` is a registered first-party `EventType` value.
 
 ```python
-from tracium.types import is_registered
+from agentobs.types import is_registered
 
 is_registered("llm.trace.span.completed")  # True
 is_registered("x.my-org.custom.event")      # False

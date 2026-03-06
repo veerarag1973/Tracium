@@ -1,4 +1,4 @@
-﻿<h1 align="center">AgentOBS</h1>
+<h1 align="center">AgentOBS</h1>
 
 <p align="center">
   <strong>The reference implementation of the AGENTOBS Standard.</strong><br/>
@@ -24,7 +24,7 @@
 
 ## What is this?
 
-**AgentOBS** (``tracium``) is the **reference implementation of [RFC-0001 AGENTOBS](https://www.getspanforge.com/standard)** — the open event-schema standard for observability of agentic AI systems.
+**AgentOBS** (``agentobs``) is the **reference implementation of [RFC-0001 AGENTOBS](https://www.getspanforge.com/standard)** — the open event-schema standard for observability of agentic AI systems.
 
 AGENTOBS defines a structured, typed event envelope that every LLM-adjacent instrumentation tool can emit and every observability backend can consume. It covers the full lifecycle: event envelopes, agent span hierarchies, token and cost models, HMAC audit chains, PII redaction, OTLP-compatible export, and schema governance.
 
@@ -35,7 +35,7 @@ AGENTOBS defines a structured, typed event envelope that every LLM-adjacent inst
 
 ## Why use it?
 
-Without a shared schema, every team invents their own log format. With ``tracium`` (and the AGENTOBS standard it implements), your logs, dashboards, compliance reports, and monitoring tools all speak the same language — automatically.
+Without a shared schema, every team invents their own log format. With ``agentobs`` (and the AGENTOBS standard it implements), your logs, dashboards, compliance reports, and monitoring tools all speak the same language — automatically.
 
 | Without AgentOBS | With AgentOBS |
 |---|---|
@@ -55,12 +55,12 @@ pip install agentobs
 ```
 
 ```python
-import tracium  # distribution name is agentobs, import name is tracium
+import agentobs  # distribution name is agentobs, import name is agentobs
 ```
 
 **Requires Python 3.9 or later.** No other packages are required for core usage.
 
-> **Note:** The PyPI distribution is named `agentobs`. The Python import name remains `tracium`.
+> **Note:** The PyPI distribution is named `agentobs`. The Python import name remains `agentobs`.
 
 ### Optional extras
 
@@ -83,11 +83,11 @@ pip install "agentobs[all]"          # everything above
 ### 1 — Trace an LLM call with the span API
 
 ```python
-import tracium
+import agentobs
 
-tracium.configure(exporter="console", service_name="my-agent")
+agentobs.configure(exporter="console", service_name="my-agent")
 
-with tracium.span("call-llm") as span:
+with agentobs.span("call-llm") as span:
     span.set_model(model="gpt-4o", system="openai")
     result = call_llm(prompt)                          # your LLM call here
     span.set_token_usage(input=512, output=128, total=640)
@@ -101,7 +101,7 @@ The context manager automatically records start/end times, parent-child span rel
 ### 2 — Record a raw event
 
 ```python
-from tracium import Event, EventType, Tags
+from agentobs import Event, EventType, Tags
 
 event = Event(
     event_type=EventType.TRACE_SPAN_COMPLETED,
@@ -127,8 +127,8 @@ Every event gets a **ULID** (a time-sortable unique ID) automatically — no nee
 ### 3 — Redact private information before logging
 
 ```python
-from tracium import Event, EventType
-from tracium.redact import Redactable, RedactionPolicy, Sensitivity
+from agentobs import Event, EventType
+from agentobs.redact import Redactable, RedactionPolicy, Sensitivity
 
 policy = RedactionPolicy(min_sensitivity=Sensitivity.PII, redacted_by="policy:gdpr-v1")
 
@@ -145,7 +145,7 @@ result = policy.apply(event)
 ``Redactable`` is a string wrapper. You mark fields as sensitive at the point where they are created; the policy decides what to remove before the event is written to any log.
 
 > **Tip — auto-redact every span:** pass `redaction_policy=policy` to
-> `tracium.configure()` and the policy runs automatically inside `_dispatch()`
+> `agentobs.configure()` and the policy runs automatically inside `_dispatch()`
 > before any exporter sees the event.
 
 ---
@@ -153,7 +153,7 @@ result = policy.apply(event)
 ### 4 — Sign events for tamper-proof audit trails
 
 ```python
-from tracium.signing import sign, verify_chain, AuditStream
+from agentobs.signing import sign, verify_chain, AuditStream
 
 # Sign a single event
 signed = sign(event, org_secret="my-org-secret")
@@ -169,19 +169,19 @@ result = verify_chain(stream.events, org_secret="my-org-secret")
 
 This is the same principle used in certificate chains and blockchain — each event's signature covers the previous event's signature, so you cannot alter history without breaking the chain.
 > **Tip — auto-sign every span:** pass `signing_key="your-secret"` to
-> `tracium.configure()` and every emitted span is signed and chained
+> `agentobs.configure()` and every emitted span is signed and chained
 > automatically, with no per-event boilerplate.
 ---
 
 ### 5 — Export to anywhere
 
 ```python
-from tracium.stream import EventStream
-from tracium.export.jsonl import JSONLExporter
-from tracium.export.webhook import WebhookExporter
-from tracium.export.otlp import OTLPExporter
-from tracium.export.datadog import DatadogExporter
-from tracium.export.grafana import GrafanaLokiExporter
+from agentobs.stream import EventStream
+from agentobs.export.jsonl import JSONLExporter
+from agentobs.export.webhook import WebhookExporter
+from agentobs.export.otlp import OTLPExporter
+from agentobs.export.datadog import DatadogExporter
+from agentobs.export.grafana import GrafanaLokiExporter
 
 stream = EventStream(events)
 
@@ -215,7 +215,7 @@ await stream.route(
 #### Kafka source
 
 ```python
-from tracium.stream import EventStream
+from agentobs.stream import EventStream
 
 # Drain a Kafka topic directly into an EventStream
 stream = EventStream.from_kafka(
@@ -232,8 +232,8 @@ await stream.drain(exporter)
 ### 6 — Sync exporters for non-async workflows
 
 ```python
-from tracium.exporters.jsonl import SyncJSONLExporter
-from tracium.exporters.console import SyncConsoleExporter
+from agentobs.exporters.jsonl import SyncJSONLExporter
+from agentobs.exporters.console import SyncConsoleExporter
 
 # Log all events to a JSONL file synchronously
 exporter = SyncJSONLExporter("events.jsonl")
@@ -250,14 +250,14 @@ console.export(event)
 ### 7 — Check compliance and inspect events from the command line
 
 ```bash
-tracium check-compat events.json        # v1.0 compatibility checklist
-tracium validate events.jsonl           # JSON Schema validation per event
-tracium audit-chain events.jsonl        # verify HMAC signing chain integrity
-tracium inspect <EVENT_ID> events.jsonl # pretty-print a single event
-tracium stats events.jsonl              # summary: counts, tokens, cost, timestamps
-tracium list-deprecated                 # list all deprecated event types
-tracium migration-roadmap [--json]      # v2 migration roadmap
-tracium check-consumers                 # consumer registry compatibility check
+agentobs check-compat events.json        # v1.0 compatibility checklist
+agentobs validate events.jsonl           # JSON Schema validation per event
+agentobs audit-chain events.jsonl        # verify HMAC signing chain integrity
+agentobs inspect <EVENT_ID> events.jsonl # pretty-print a single event
+agentobs stats events.jsonl              # summary: counts, tokens, cost, timestamps
+agentobs list-deprecated                 # list all deprecated event types
+agentobs migration-roadmap [--json]      # v2 migration roadmap
+agentobs check-consumers                 # consumer registry compatibility check
 ```
 
 ```
@@ -280,92 +280,92 @@ Drop any of these into your CI pipeline to catch schema drift, signing failures,
 </thead>
 <tbody>
 <tr>
-  <td><code>tracium.event</code></td>
+  <td><code>agentobs.event</code></td>
   <td>The core <code>Event</code> envelope — the one structure all tools share</td>
   <td>Everyone</td>
 </tr>
 <tr>
-  <td><code>tracium.types</code></td>
+  <td><code>agentobs.types</code></td>
   <td>All built-in event type strings (trace, cost, cache, eval, guard…)</td>
   <td>Everyone</td>
 </tr>
 <tr>
-  <td><code>tracium.config</code></td>
+  <td><code>agentobs.config</code></td>
   <td><code>configure()</code> and <code>get_config()</code> — global SDK configuration</td>
   <td>Everyone</td>
 </tr>
 <tr>
-  <td><code>tracium._span</code></td>
+  <td><code>agentobs._span</code></td>
   <td>Span, AgentRun, AgentStep context managers — the runtime tracing API</td>
   <td>App developers</td>
 </tr>
 <tr>
-  <td><code>tracium._cli</code></td>
+  <td><code>agentobs._cli</code></td>
   <td>8 CLI sub-commands: <code>check-compat</code>, <code>validate</code>, <code>audit-chain</code>, <code>inspect</code>, <code>stats</code>, <code>list-deprecated</code>, <code>migration-roadmap</code>, <code>check-consumers</code></td>
   <td>DevOps / CI teams</td>
 </tr>
 <tr>
-  <td><code>tracium.redact</code></td>
+  <td><code>agentobs.redact</code></td>
   <td>PII detection, sensitivity levels, redaction policies</td>
   <td>Data privacy / GDPR teams</td>
 </tr>
 <tr>
-  <td><code>tracium.signing</code></td>
+  <td><code>agentobs.signing</code></td>
   <td>HMAC-SHA256 event signing and tamper-evident audit chains</td>
   <td>Security / compliance teams</td>
 </tr>
 <tr>
-  <td><code>tracium.compliance</code></td>
+  <td><code>agentobs.compliance</code></td>
   <td>Programmatic v2.0 compatibility checks — no pytest required</td>
   <td>Platform / DevOps teams</td>
 </tr>
 <tr>
-  <td><code>tracium.export</code></td>
+  <td><code>agentobs.export</code></td>
   <td>Ship events to files (JSONL), HTTP webhooks, OTLP collectors, Datadog APM, or Grafana Loki</td>
   <td>Infra / observability teams</td>
 </tr>
 <tr>
-  <td><code>tracium.exporters</code></td>
+  <td><code>agentobs.exporters</code></td>
   <td>Sync exporters — <code>SyncJSONLExporter</code> and <code>SyncConsoleExporter</code> for non-async code</td>
   <td>App developers</td>
 </tr>
 <tr>
-  <td><code>tracium.stream</code></td>
+  <td><code>agentobs.stream</code></td>
   <td>Fan-out router — one <code>drain()</code> call reaches multiple backends; Kafka source via <code>from_kafka()</code></td>
   <td>Platform engineers</td>
 </tr>
 <tr>
-  <td><code>tracium.validate</code></td>
+  <td><code>agentobs.validate</code></td>
   <td>JSON Schema validation against the published v2.0 schema</td>
   <td>All teams</td>
 </tr>
 <tr>
-  <td><code>tracium.consumer</code></td>
+  <td><code>agentobs.consumer</code></td>
   <td>Declare schema-namespace dependencies; fail fast at startup if version requirements are not met</td>
   <td>Platform / integration teams</td>
 </tr>
 <tr>
-  <td><code>tracium.governance</code></td>
+  <td><code>agentobs.governance</code></td>
   <td>Policy-based event gating — block prohibited types, warn on deprecated usage, enforce custom rules</td>
   <td>Platform / compliance teams</td>
 </tr>
 <tr>
-  <td><code>tracium.deprecations</code></td>
+  <td><code>agentobs.deprecations</code></td>
   <td>Register and surface per-event-type deprecation notices at runtime</td>
   <td>Library maintainers</td>
 </tr>
 <tr>
-  <td><code>tracium.integrations</code></td>
+  <td><code>agentobs.integrations</code></td>
   <td>Plug-in adapters for OpenAI, LangChain, LlamaIndex, Anthropic, Groq, Ollama, and Together</td>
   <td>App developers</td>
 </tr>
 <tr>
-  <td><code>tracium.namespaces</code></td>
+  <td><code>agentobs.namespaces</code></td>
   <td>Typed payload dataclasses for all 10 built-in event namespaces</td>
   <td>Tool authors</td>
 </tr>
 <tr>
-  <td><code>tracium.models</code></td>
+  <td><code>agentobs.models</code></td>
   <td>Optional Pydantic v2 models for teams that prefer validated schemas</td>
   <td>API / backend teams</td>
 </tr>
@@ -392,8 +392,8 @@ Every event carries a ``payload`` — a dictionary whose shape is defined by the
 | ``llm.template.*`` | ``TemplatePayload`` | Template registry metadata |
 
 ```python
-from tracium.namespaces.trace import SpanPayload
-from tracium import Event
+from agentobs.namespaces.trace import SpanPayload
+from agentobs import Event
 
 payload = SpanPayload(
     span_name="call-llm",
@@ -426,11 +426,11 @@ event = Event(
 ## Project structure
 
 ```
-tracium/
+agentobs/
 ├── __init__.py       <- Public API surface (start here)
 ├── event.py          <- The Event envelope
 ├── types.py          <- EventType enum
-├── config.py         <- configure() / get_config() / TraciumConfig
+├── config.py         <- configure() / get_config() / AgentOBSConfig
 ├── _span.py          <- Span, AgentRun, AgentStep context managers
 ├── _tracer.py        <- Tracer — top-level tracing entry point
 ├── _stream.py        <- Internal dispatch: redact → sign → export
@@ -493,7 +493,7 @@ pytest                          # run all 1 837 tests
 ```bash
 ruff check .                  # linting
 ruff format .                 # auto-format
-mypy tracium                  # type checking
+mypy agentobs                  # type checking
 pytest --cov                  # tests + coverage report (>=90% required)
 ```
 
@@ -514,7 +514,7 @@ sphinx-build -b html . _build/html   # open _build/html/index.html
 
 ## Compatibility and versioning
 
-``tracium`` implements **RFC-0001 AGENTOBS** (Observability Schema Standard for Agentic AI Systems). The current schema version is **2.0**.
+``agentobs`` implements **RFC-0001 AGENTOBS** (Observability Schema Standard for Agentic AI Systems). The current schema version is **2.0**.
 
 This project follows [Semantic Versioning](https://semver.org/):
 

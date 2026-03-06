@@ -1,4 +1,4 @@
-﻿"""Tests for tracium.consumer (ConsumerRegistry API)."""
+"""Tests for agentobs.consumer (ConsumerRegistry API)."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tracium.consumer import (
+from agentobs.consumer import (
     ConsumerRecord,
     ConsumerRegistry,
     IncompatibleSchemaError,

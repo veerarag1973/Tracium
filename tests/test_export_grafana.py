@@ -1,4 +1,4 @@
-﻿"""Tests for tracium.export.grafana (GrafanaLokiExporter)."""
+"""Tests for agentobs.export.grafana (GrafanaLokiExporter)."""
 
 from __future__ import annotations
 
@@ -9,12 +9,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-pytest.importorskip("tracium.export.grafana", reason="tracium.export.grafana not yet implemented (Phase 8)")  # noqa: E501
+pytest.importorskip("agentobs.export.grafana", reason="agentobs.export.grafana not yet implemented (Phase 8)")  # noqa: E501
 
-from tracium import Event, EventType, Tags
-from tracium.exceptions import ExportError
-from tracium.export.grafana import GrafanaLokiExporter
-from tracium.ulid import generate as gen_ulid
+from agentobs import Event, EventType, Tags
+from agentobs.exceptions import ExportError
+from agentobs.export.grafana import GrafanaLokiExporter
+from agentobs.ulid import generate as gen_ulid
 
 FIXED_TIMESTAMP = "2026-03-01T12:00:00.000000Z"
 
@@ -228,7 +228,7 @@ class TestHttpErrors:
         def _fail(req: Any, timeout: Any = None) -> Any:
             raise urllib.error.HTTPError(None, 500, "Server Error", {}, None)
 
-        with patch("tracium.export.grafana.urllib.request.urlopen", _fail):
+        with patch("agentobs.export.grafana.urllib.request.urlopen", _fail):
             async def _run() -> None:
                 await exporter.export(sample_event)
 
@@ -241,7 +241,7 @@ class TestHttpErrors:
         def _fail(req: Any, timeout: Any = None) -> Any:
             raise OSError("connection refused")
 
-        with patch("tracium.export.grafana.urllib.request.urlopen", _fail):
+        with patch("agentobs.export.grafana.urllib.request.urlopen", _fail):
             async def _run() -> None:
                 await exporter.export(sample_event)
 
@@ -262,7 +262,7 @@ class TestHttpErrors:
             mock_resp.read.return_value = b""
             return mock_resp
 
-        with patch("tracium.export.grafana.urllib.request.urlopen", _mock_urlopen):
+        with patch("agentobs.export.grafana.urllib.request.urlopen", _mock_urlopen):
             async def _run() -> None:
                 await exp.export(sample_event)
 

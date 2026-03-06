@@ -1,7 +1,7 @@
 # API Reference
 
-The tracium API surface is organised by module. All public symbols are
-exported at the top-level package under `tracium`.
+The agentobs API surface is organised by module. All public symbols are
+exported at the top-level package under `agentobs`.
 
 ## Modules
 
@@ -26,19 +26,19 @@ exported at the top-level package under `tracium`.
 
 | Module | Responsibility |
 |--------|---------------|
-| `tracium.event` | `Event` envelope and serialisation |
-| `tracium.types` | `EventType` enum, custom type validation |
-| `tracium.signing` | HMAC signing, `AuditStream`, chain verification |
-| `tracium.redact` | `Redactable`, `RedactionPolicy`, PII helpers |
-| `tracium.compliance` | Compatibility checks, isolation, chain integrity, scope verification |
-| `tracium.export` | OTLP, Webhook, JSONL, Datadog, and Grafana Loki export backends |
-| `tracium.stream` | `EventStream` multiplexer with Kafka support |
-| `tracium.validate` | JSON Schema validation helpers |
-| `tracium.migrate` | `MigrationResult`, `SunsetPolicy`, `DeprecationRecord`, `v2_migration_roadmap()` |
-| `tracium.consumer` | `ConsumerRegistry`, `ConsumerRecord`, `IncompatibleSchemaError` |
-| `tracium.governance` | `EventGovernancePolicy`, `GovernanceViolationError`, `GovernanceWarning` |
-| `tracium.deprecations` | `DeprecationRegistry`, `DeprecationNotice`, `warn_if_deprecated()` |
-| `tracium.integrations` | `LLMSchemaCallbackHandler` (LangChain), `LLMSchemaEventHandler` (LlamaIndex) |
-| `tracium.ulid` | ULID generation and helpers |
-| `tracium.exceptions` | Package-level exception hierarchy |
-| `tracium.models` | Shared Pydantic base models |
+| `agentobs.event` | `Event` envelope and serialisation |
+| `agentobs.types` | `EventType` enum, custom type validation |
+| `agentobs.signing` | HMAC signing, `AuditStream`, chain verification |
+| `agentobs.redact` | `Redactable`, `RedactionPolicy`, PII helpers |
+| `agentobs.compliance` | Compatibility checks, isolation, chain integrity, scope verification |
+| `agentobs.export` | OTLP, Webhook, JSONL, Datadog, and Grafana Loki export backends |
+| `agentobs.stream` | `EventStream` multiplexer with Kafka support |
+| `agentobs.validate` | JSON Schema validation helpers |
+| `agentobs.migrate` | `MigrationResult`, `SunsetPolicy`, `DeprecationRecord`, `v2_migration_roadmap()` |
+| `agentobs.consumer` | `ConsumerRegistry`, `ConsumerRecord`, `IncompatibleSchemaError` |
+| `agentobs.governance` | `EventGovernancePolicy`, `GovernanceViolationError`, `GovernanceWarning` |
+| `agentobs.deprecations` | `DeprecationRegistry`, `DeprecationNotice`, `warn_if_deprecated()` |
+| `agentobs.integrations` | `LLMSchemaCallbackHandler` (LangChain), `LLMSchemaEventHandler` (LlamaIndex) |
+| `agentobs.ulid` | ULID generation and helpers |
+| `agentobs.exceptions` | Package-level exception hierarchy |
+| `agentobs.models` | Shared Pydantic base models |

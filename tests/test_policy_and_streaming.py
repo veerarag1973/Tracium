@@ -1,4 +1,4 @@
-﻿"""Tests for new runtime-policy classes and streaming iterators.
+"""Tests for new runtime-policy classes and streaming iterators.
 
 Coverage targets
 ----------------
@@ -20,15 +20,15 @@ import asyncio
 
 import pytest
 
-from tracium import Event, EventType
-from tracium.exceptions import DeserializationError
-from tracium.governance import (
+from agentobs import Event, EventType
+from agentobs.exceptions import DeserializationError
+from agentobs.governance import (
     EventGovernancePolicy,
     GovernanceViolationError,
 )
 
 try:
-    from tracium.namespaces.fence import (
+    from agentobs.namespaces.fence import (
         FencePolicy,
         FenceValidationFailedPayload,
         RetryTriggeredPayload,
@@ -37,7 +37,7 @@ try:
 except ImportError:
     FencePolicy = FenceValidationFailedPayload = RetryTriggeredPayload = ValidationPassedPayload = None  # type: ignore[assignment]  # noqa: E501
 try:
-    from tracium.namespaces.guard import (
+    from agentobs.namespaces.guard import (
         GuardBlockedPayload,
         GuardFlaggedPayload,
         GuardPolicy,
@@ -45,7 +45,7 @@ try:
 except ImportError:
     GuardBlockedPayload = GuardFlaggedPayload = GuardPolicy = None  # type: ignore[assignment]
 try:
-    from tracium.namespaces.template import (
+    from agentobs.namespaces.template import (
         TemplatePolicy,
         TemplateRenderedPayload,
         TemplateValidationFailedPayload,
@@ -55,8 +55,8 @@ except ImportError:
     TemplatePolicy = TemplateRenderedPayload = TemplateValidationFailedPayload = VariableMissingPayload = None  # type: ignore[assignment]  # noqa: E501
 from typing import TYPE_CHECKING
 
-from tracium.stream import EventStream, aiter_file, iter_file
-from tracium.ulid import generate as gen_ulid
+from agentobs.stream import EventStream, aiter_file, iter_file
+from agentobs.ulid import generate as gen_ulid
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -457,7 +457,7 @@ class TestAiterFile:
 
 class TestDatadogExporterDdSiteValidation:
     def test_valid_dd_site_accepted(self) -> None:
-        from tracium.export.datadog import DatadogExporter  # noqa: PLC0415
+        from agentobs.export.datadog import DatadogExporter  # noqa: PLC0415
 
         exp = DatadogExporter(
             service="svc",
@@ -468,7 +468,7 @@ class TestDatadogExporterDdSiteValidation:
         assert exp  # construction succeeds
 
     def test_empty_dd_site_rejected(self) -> None:
-        from tracium.export.datadog import DatadogExporter  # noqa: PLC0415
+        from agentobs.export.datadog import DatadogExporter  # noqa: PLC0415
 
         with pytest.raises(ValueError, match="dd_site"):
             DatadogExporter(
@@ -479,7 +479,7 @@ class TestDatadogExporterDdSiteValidation:
             )
 
     def test_dd_site_with_slash_rejected(self) -> None:
-        from tracium.export.datadog import DatadogExporter  # noqa: PLC0415
+        from agentobs.export.datadog import DatadogExporter  # noqa: PLC0415
 
         with pytest.raises(ValueError, match="dd_site"):
             DatadogExporter(
@@ -490,7 +490,7 @@ class TestDatadogExporterDdSiteValidation:
             )
 
     def test_dd_site_without_dot_rejected(self) -> None:
-        from tracium.export.datadog import DatadogExporter  # noqa: PLC0415
+        from agentobs.export.datadog import DatadogExporter  # noqa: PLC0415
 
         with pytest.raises(ValueError, match="dd_site"):
             DatadogExporter(
@@ -501,7 +501,7 @@ class TestDatadogExporterDdSiteValidation:
             )
 
     def test_dd_site_with_space_rejected(self) -> None:
-        from tracium.export.datadog import DatadogExporter  # noqa: PLC0415
+        from agentobs.export.datadog import DatadogExporter  # noqa: PLC0415
 
         with pytest.raises(ValueError, match="dd_site"):
             DatadogExporter(
@@ -512,7 +512,7 @@ class TestDatadogExporterDdSiteValidation:
             )
 
     def test_eu_dd_site_accepted(self) -> None:
-        from tracium.export.datadog import DatadogExporter  # noqa: PLC0415
+        from agentobs.export.datadog import DatadogExporter  # noqa: PLC0415
 
         exp = DatadogExporter(
             service="svc",
@@ -523,7 +523,7 @@ class TestDatadogExporterDdSiteValidation:
         assert exp
 
     def test_invalid_agent_url_rejected(self) -> None:
-        from tracium.export.datadog import DatadogExporter  # noqa: PLC0415
+        from agentobs.export.datadog import DatadogExporter  # noqa: PLC0415
 
         with pytest.raises(ValueError, match="agent_url"):
             DatadogExporter(
@@ -533,7 +533,7 @@ class TestDatadogExporterDdSiteValidation:
             )
 
     def test_timeout_zero_rejected(self) -> None:
-        from tracium.export.datadog import DatadogExporter  # noqa: PLC0415
+        from agentobs.export.datadog import DatadogExporter  # noqa: PLC0415
 
         with pytest.raises(ValueError, match="timeout"):
             DatadogExporter(
@@ -544,7 +544,7 @@ class TestDatadogExporterDdSiteValidation:
             )
 
     def test_empty_service_rejected(self) -> None:
-        from tracium.export.datadog import DatadogExporter  # noqa: PLC0415
+        from agentobs.export.datadog import DatadogExporter  # noqa: PLC0415
 
         with pytest.raises(ValueError, match="service"):
             DatadogExporter(service="", env="prod")
@@ -704,7 +704,7 @@ class TestFromKafka:
     def test_from_kafka_raises_on_bad_message_by_default(self) -> None:
         from unittest.mock import MagicMock, patch  # noqa: PLC0415
 
-        from tracium.exceptions import DeserializationError  # noqa: PLC0415
+        from agentobs.exceptions import DeserializationError  # noqa: PLC0415
 
         bad_msg = MagicMock()
         bad_msg.value = '{"not": "an event"}'

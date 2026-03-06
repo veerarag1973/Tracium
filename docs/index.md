@@ -1,7 +1,7 @@
 # Documentation Index
 
-> **AgentOBS** (`tracium`) — The reference implementation of the [AGENTOBS Standard](https://www.getspanforge.com/standard) (RFC-0001), the open event-schema standard for observability of agentic AI systems.  
-> Current release: **1.0.4** — [Changelog](changelog.md) · [![PyPI](https://img.shields.io/pypi/v/agentobs?color=4c8cbf&logo=pypi&logoColor=white)](https://pypi.org/project/agentobs/)
+> **AgentOBS** (`agentobs`) — The reference implementation of the [AGENTOBS Standard](https://www.getspanforge.com/standard) (RFC-0001), the open event-schema standard for observability of agentic AI systems.  
+> Current release: **1.0.5** — [Changelog](changelog.md) · [![PyPI](https://img.shields.io/pypi/v/agentobs?color=4c8cbf&logo=pypi&logoColor=white)](https://pypi.org/project/agentobs/)
 
 This index links to every documentation page in this folder.
 
@@ -36,22 +36,22 @@ This index links to every documentation page in this folder.
 | Page | Module |
 |------|--------|
 | [API Reference](api/index.md) | Module summary and full listing |
-| [event](api/event.md) | `tracium.event` — Event envelope and serialisation |
-| [types](api/types.md) | `tracium.types` — EventType enum, custom type validation |
-| [signing](api/signing.md) | `tracium.signing` — HMAC signing and AuditStream |
-| [redact](api/redact.md) | `tracium.redact` — Redactable, RedactionPolicy, PII helpers |
-| [compliance](api/compliance.md) | `tracium.compliance` — Compatibility and isolation checks |
-| [export](api/export.md) | `tracium.export` — OTLP, Webhook, JSONL, Datadog, Grafana Loki backends |
-| [stream](api/stream.md) | `tracium.stream` — EventStream multiplexer with Kafka support |
-| [validate](api/validate.md) | `tracium.validate` — JSON Schema validation |
-| [migrate](api/migrate.md) | `tracium.migrate` — Migration scaffold, `SunsetPolicy`, `v2_migration_roadmap()` |
-| [consumer](api/consumer.md) | `tracium.consumer` — ConsumerRegistry, IncompatibleSchemaError |
-| [governance](api/governance.md) | `tracium.governance` — EventGovernancePolicy, GovernanceViolationError |
-| [deprecations](api/deprecations.md) | `tracium.deprecations` — DeprecationRegistry, warn_if_deprecated() |
-| [integrations](api/integrations.md) | `tracium.integrations` — LangChain + LlamaIndex adapters |
-| [ulid](api/ulid.md) | `tracium.ulid` — ULID generation and helpers |
-| [exceptions](api/exceptions.md) | `tracium.exceptions` — Exception hierarchy |
-| [models](api/models.md) | `tracium.models` — Pydantic v2 model layer |
+| [event](api/event.md) | `agentobs.event` — Event envelope and serialisation |
+| [types](api/types.md) | `agentobs.types` — EventType enum, custom type validation |
+| [signing](api/signing.md) | `agentobs.signing` — HMAC signing and AuditStream |
+| [redact](api/redact.md) | `agentobs.redact` — Redactable, RedactionPolicy, PII helpers |
+| [compliance](api/compliance.md) | `agentobs.compliance` — Compatibility and isolation checks |
+| [export](api/export.md) | `agentobs.export` — OTLP, Webhook, JSONL, Datadog, Grafana Loki backends |
+| [stream](api/stream.md) | `agentobs.stream` — EventStream multiplexer with Kafka support |
+| [validate](api/validate.md) | `agentobs.validate` — JSON Schema validation |
+| [migrate](api/migrate.md) | `agentobs.migrate` — Migration scaffold, `SunsetPolicy`, `v2_migration_roadmap()` |
+| [consumer](api/consumer.md) | `agentobs.consumer` — ConsumerRegistry, IncompatibleSchemaError |
+| [governance](api/governance.md) | `agentobs.governance` — EventGovernancePolicy, GovernanceViolationError |
+| [deprecations](api/deprecations.md) | `agentobs.deprecations` — DeprecationRegistry, warn_if_deprecated() |
+| [integrations](api/integrations.md) | `agentobs.integrations` — LangChain + LlamaIndex adapters |
+| [ulid](api/ulid.md) | `agentobs.ulid` — ULID generation and helpers |
+| [exceptions](api/exceptions.md) | `agentobs.exceptions` — Exception hierarchy |
+| [models](api/models.md) | `agentobs.models` — Pydantic v2 model layer |
 
 ---
 
@@ -78,7 +78,7 @@ This index links to every documentation page in this folder.
 
 | Page | Description |
 |------|-------------|
-| [CLI](cli.md) | `tracium` command reference: `check-compat`, `validate`, `audit-chain`, `inspect`, `stats`, `list-deprecated`, `migration-roadmap`, `check-consumers` |
+| [CLI](cli.md) | `agentobs` command reference: `check-compat`, `validate`, `audit-chain`, `inspect`, `stats`, `list-deprecated`, `migration-roadmap`, `check-consumers` |
 
 ---
 

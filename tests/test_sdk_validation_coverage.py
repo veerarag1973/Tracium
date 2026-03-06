@@ -13,20 +13,20 @@ import pytest
 # ---------------------------------------------------------------------------
 # Secondary namespace payload classes
 # ---------------------------------------------------------------------------
-from tracium.namespaces.diff import DiffComputedPayload, DiffRegressionFlaggedPayload
-from tracium.namespaces.eval_ import (
+from agentobs.namespaces.diff import DiffComputedPayload, DiffRegressionFlaggedPayload
+from agentobs.namespaces.eval_ import (
     EvalRegressionDetectedPayload,
     EvalScenarioStartedPayload,
     EvalScoreRecordedPayload,
 )
-from tracium.namespaces.fence import (
+from agentobs.namespaces.fence import (
     FenceMaxRetriesExceededPayload,
     FenceRetryTriggeredPayload,
     FenceValidatedPayload,
 )
-from tracium.namespaces.prompt import PromptRenderedPayload, PromptVersionChangedPayload
-from tracium.namespaces.redact import RedactAppliedPayload, RedactPiiDetectedPayload
-from tracium.namespaces.template import (
+from agentobs.namespaces.prompt import PromptRenderedPayload, PromptVersionChangedPayload
+from agentobs.namespaces.redact import RedactAppliedPayload, RedactPiiDetectedPayload
+from agentobs.namespaces.template import (
     TemplateRegisteredPayload,
     TemplateValidationFailedPayload,
 )
@@ -34,7 +34,7 @@ from tracium.namespaces.template import (
 # ---------------------------------------------------------------------------
 # trace.py validation paths
 # ---------------------------------------------------------------------------
-from tracium.namespaces.trace import (
+from agentobs.namespaces.trace import (
     AgentRunPayload,
     AgentStepPayload,
     CostBreakdown,
@@ -839,7 +839,7 @@ class TestPromptValidation:
             )
 
     def test_invalid_source_raises_for_loaded(self) -> None:
-        from tracium.namespaces.prompt import PromptTemplateLoadedPayload  # noqa: PLC0415
+        from agentobs.namespaces.prompt import PromptTemplateLoadedPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="source"):
             PromptTemplateLoadedPayload(
                 template_id="t1",
@@ -886,7 +886,7 @@ class TestTemplateValidation:
             )
 
     def test_invalid_value_type_raises(self) -> None:
-        from tracium.namespaces.template import TemplateVariableBoundPayload  # noqa: PLC0415
+        from agentobs.namespaces.template import TemplateVariableBoundPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="value_type"):
             TemplateVariableBoundPayload(
                 template_id="t1",
@@ -896,7 +896,7 @@ class TestTemplateValidation:
             )
 
     def test_invalid_value_hash_raises(self) -> None:
-        from tracium.namespaces.template import TemplateVariableBoundPayload  # noqa: PLC0415
+        from agentobs.namespaces.template import TemplateVariableBoundPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="value_hash"):
             TemplateVariableBoundPayload(
                 template_id="t1",

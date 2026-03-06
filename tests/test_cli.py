@@ -14,10 +14,10 @@ from unittest.mock import patch
 
 import pytest
 
-from tracium._cli import main
-from tracium.event import Event
-from tracium.signing import sign
-from tracium.types import EventType
+from agentobs._cli import main
+from agentobs.event import Event
+from agentobs.signing import sign
+from agentobs.types import EventType
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -113,13 +113,13 @@ class TestValidateCommand:
 
     def test_schema_validation_failure_exits_1(self, tmp_path, capsys):
         """Patch validate_event to raise SchemaValidationError for one event."""
-        from tracium.exceptions import SchemaValidationError  # noqa: PLC0415
+        from agentobs.exceptions import SchemaValidationError  # noqa: PLC0415
 
         f = tmp_path / "events.jsonl"
         ev = _make_event()
         _write_jsonl(f, [ev])
 
-        with patch("tracium.validate.validate_event", side_effect=SchemaValidationError(field="source", received="bad", reason="bad value")):  # noqa: E501
+        with patch("agentobs.validate.validate_event", side_effect=SchemaValidationError(field="source", received="bad", reason="bad value")):  # noqa: E501
             exc = _run(["validate", str(f)])
 
         assert exc.value.code == 1
@@ -152,20 +152,20 @@ class TestAuditChainCommand:
         return events
 
     def test_missing_env_var_exits_2(self, tmp_path, capsys, monkeypatch):
-        monkeypatch.delenv("TRACIUM_SIGNING_KEY", raising=False)
+        monkeypatch.delenv("AGENTOBS_SIGNING_KEY", raising=False)
         f = tmp_path / "chain.jsonl"
         _write_jsonl(f, [_make_event()])
         exc = _run(["audit-chain", str(f)])
         assert exc.value.code == 2
-        assert "TRACIUM_SIGNING_KEY" in capsys.readouterr().err
+        assert "AGENTOBS_SIGNING_KEY" in capsys.readouterr().err
 
     def test_missing_file_exits_2(self, tmp_path, capsys, monkeypatch):
-        monkeypatch.setenv("TRACIUM_SIGNING_KEY", self._SECRET)
+        monkeypatch.setenv("AGENTOBS_SIGNING_KEY", self._SECRET)
         exc = _run(["audit-chain", str(tmp_path / "ghost.jsonl")])
         assert exc.value.code == 2
 
     def test_empty_file_exits_0(self, tmp_path, capsys, monkeypatch):
-        monkeypatch.setenv("TRACIUM_SIGNING_KEY", self._SECRET)
+        monkeypatch.setenv("AGENTOBS_SIGNING_KEY", self._SECRET)
         f = tmp_path / "empty.jsonl"
         f.write_text("", encoding="utf-8")
         exc = _run(["audit-chain", str(f)])
@@ -173,7 +173,7 @@ class TestAuditChainCommand:
         assert "No events" in capsys.readouterr().out
 
     def test_valid_chain_exits_0(self, tmp_path, capsys, monkeypatch):
-        monkeypatch.setenv("TRACIUM_SIGNING_KEY", self._SECRET)
+        monkeypatch.setenv("AGENTOBS_SIGNING_KEY", self._SECRET)
         f = tmp_path / "chain.jsonl"
         _write_jsonl(f, self._signed_chain(3))
         exc = _run(["audit-chain", str(f)])
@@ -181,7 +181,7 @@ class TestAuditChainCommand:
         assert "OK" in capsys.readouterr().out
 
     def test_tampered_chain_exits_1(self, tmp_path, capsys, monkeypatch):
-        monkeypatch.setenv("TRACIUM_SIGNING_KEY", self._SECRET)
+        monkeypatch.setenv("AGENTOBS_SIGNING_KEY", self._SECRET)
         f = tmp_path / "chain.jsonl"
         events = self._signed_chain(3)
         # Tamper: overwrite the signature of the second event
@@ -195,7 +195,7 @@ class TestAuditChainCommand:
         assert "tampered" in out
 
     def test_bad_json_in_chain_file_exits_2(self, tmp_path, capsys, monkeypatch):
-        monkeypatch.setenv("TRACIUM_SIGNING_KEY", self._SECRET)
+        monkeypatch.setenv("AGENTOBS_SIGNING_KEY", self._SECRET)
         f = tmp_path / "bad_chain.jsonl"
         good = json.dumps(self._signed_chain(1)[0].to_dict())
         f.write_text(good + "\n{bad json\n", encoding="utf-8")
@@ -204,7 +204,7 @@ class TestAuditChainCommand:
         assert "could not be parsed" in capsys.readouterr().err
 
     def test_chain_with_gaps_exits_1(self, tmp_path, capsys, monkeypatch):
-        monkeypatch.setenv("TRACIUM_SIGNING_KEY", self._SECRET)
+        monkeypatch.setenv("AGENTOBS_SIGNING_KEY", self._SECRET)
         f = tmp_path / "gapped.jsonl"
         # Create chain of 3, remove middle event → gap at position 1
         events = self._signed_chain(3)

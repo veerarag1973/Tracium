@@ -1,4 +1,4 @@
-﻿"""Integration tests — cross-module end-to-end scenarios.
+"""Integration tests — cross-module end-to-end scenarios.
 
 These tests exercise the full stack: ULID → EventType → Event → JSON → re-parse.
 """
@@ -9,10 +9,10 @@ import json
 
 import pytest
 
-import tracium
+import agentobs
 from tests.conftest import FIXED_TIMESTAMP
-from tracium import Event, EventType, Tags, generate_ulid, validate_ulid
-from tracium.exceptions import LLMSchemaError
+from agentobs import Event, EventType, Tags, generate_ulid, validate_ulid
+from agentobs.exceptions import LLMSchemaError
 
 
 @pytest.mark.integration
@@ -101,16 +101,16 @@ class TestFullRoundTrip:
 @pytest.mark.integration
 class TestPublicApiExports:
     def test_version_present(self) -> None:
-        assert hasattr(tracium, "__version__")
-        assert tracium.__version__  # non-empty string is sufficient
+        assert hasattr(agentobs, "__version__")
+        assert agentobs.__version__  # non-empty string is sufficient
 
     def test_schema_version_constant(self) -> None:
-        assert tracium.SCHEMA_VERSION == "2.0"
+        assert agentobs.SCHEMA_VERSION == "2.0"
 
     def test_all_exceptions_exported(self) -> None:
-        assert issubclass(tracium.SchemaValidationError, tracium.LLMSchemaError)
-        assert issubclass(tracium.ULIDError, tracium.LLMSchemaError)
-        assert issubclass(tracium.SerializationError, tracium.LLMSchemaError)
+        assert issubclass(agentobs.SchemaValidationError, agentobs.LLMSchemaError)
+        assert issubclass(agentobs.ULIDError, agentobs.LLMSchemaError)
+        assert issubclass(agentobs.SerializationError, agentobs.LLMSchemaError)
 
     def test_generate_ulid_public(self) -> None:
         ulid = generate_ulid()
@@ -119,8 +119,8 @@ class TestPublicApiExports:
 
 @pytest.mark.integration
 class TestErrorPropagation:
-    def test_all_errors_catchable_as_tracium_error(self) -> None:
-        """The unified catch pattern must work for all tracium exceptions."""
+    def test_all_errors_catchable_as_agentobs_error(self) -> None:
+        """The unified catch pattern must work for all agentobs exceptions."""
         bad_event = Event(
             event_type="bad-event-type",
             source="bad-source",

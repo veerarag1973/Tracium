@@ -1,4 +1,4 @@
-# tracium.migrate
+# agentobs.migrate
 
 Migration helpers for upgrading events from one schema version to the next,
 plus the Phase 9 v2 migration roadmap with structured deprecation records.
@@ -119,7 +119,7 @@ and the `SunsetPolicy` governing its removal timeline.
 **Example:**
 
 ```python
-from tracium.migrate import v2_migration_roadmap
+from agentobs.migrate import v2_migration_roadmap
 
 for record in v2_migration_roadmap():
     print(record.summary())
@@ -148,7 +148,7 @@ Migrate a v1.0 event to the v2.0 schema.
 **Example:**
 
 ```python
-from tracium.migrate import v1_to_v2
+from agentobs.migrate import v1_to_v2
 
 try:
     new_event, result = v1_to_v2(event)

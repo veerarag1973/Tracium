@@ -1,4 +1,4 @@
-# tracium.redact
+# agentobs.redact
 
 PII redaction framework: sensitivity levels, policy-driven field redaction,
 and redaction guards.
@@ -31,7 +31,7 @@ minimum sensitivity threshold.
 **Example:**
 
 ```python
-from tracium.redact import Sensitivity
+from agentobs.redact import Sensitivity
 
 assert Sensitivity.PII > Sensitivity.MEDIUM
 assert Sensitivity.PHI > Sensitivity.PII
@@ -61,7 +61,7 @@ preventing accidental logging of sensitive data.
 **Example:**
 
 ```python
-from tracium.redact import Redactable, Sensitivity
+from agentobs.redact import Redactable, Sensitivity
 
 field = Redactable("alice@example.com", Sensitivity.PII, frozenset({"email"}))
 str(field)           # '<Redactable:pii>'
@@ -154,7 +154,7 @@ All three fields are configurable at construction time.
 **Example:**
 
 ```python
-from tracium.redact import RedactionPolicy, Sensitivity
+from agentobs.redact import RedactionPolicy, Sensitivity
 
 policy = RedactionPolicy(min_sensitivity=Sensitivity.MEDIUM)
 result = policy.apply(event)

@@ -1,4 +1,4 @@
-﻿"""Tests for tracium.validate — Event envelope JSON Schema validation.
+"""Tests for agentobs.validate — Event envelope JSON Schema validation.
 
 Coverage targets
 ----------------
@@ -22,10 +22,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from tracium.event import Event, Tags
-from tracium.exceptions import SchemaValidationError
-from tracium.types import EventType
-from tracium.validate import _stdlib_validate, load_schema, validate_event
+from agentobs.event import Event, Tags
+from agentobs.exceptions import SchemaValidationError
+from agentobs.types import EventType
+from agentobs.validate import _stdlib_validate, load_schema, validate_event
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -89,7 +89,7 @@ class TestLoadSchema:
 
     def test_missing_schema_raises_file_not_found(self, tmp_path, monkeypatch):
         """Point schema path at a non-existent file; expect FileNotFoundError."""
-        import tracium.validate as v_module  # noqa: PLC0415
+        import agentobs.validate as v_module  # noqa: PLC0415
 
         original_path = v_module._SCHEMA_PATH
         original_cache = v_module._CACHED_SCHEMA
@@ -362,7 +362,7 @@ class TestValidateSignedEvent:
         # Simulate signing fields manually.
         doc["checksum"] = "sha256:" + "a" * 64
         doc["signature"] = "hmac-sha256:" + "b" * 64
-        from tracium.ulid import generate as _gen  # noqa: PLC0415
+        from agentobs.ulid import generate as _gen  # noqa: PLC0415
         doc["prev_id"] = _gen()
 
         _stdlib_validate(doc)  # must not raise
@@ -402,7 +402,7 @@ class TestStdlibValidateBranchCoverage:
             _stdlib_validate(doc)
 
     def test_valid_prev_id_passes(self):
-        from tracium.ulid import generate as _gen  # noqa: PLC0415
+        from agentobs.ulid import generate as _gen  # noqa: PLC0415
         doc = _minimal_event().to_dict()
         doc["prev_id"] = _gen()
         _stdlib_validate(doc)

@@ -1,4 +1,4 @@
-"""Tests for tracium.exporters — SyncJSONLExporter and SyncConsoleExporter.
+"""Tests for agentobs.exporters — SyncJSONLExporter and SyncConsoleExporter.
 
 Phase 5 SDK coverage target.
 """
@@ -11,9 +11,9 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tracium.event import Event
-from tracium.exporters import SyncConsoleExporter, SyncJSONLExporter
-from tracium.exporters.console import (
+from agentobs.event import Event
+from agentobs.exporters import SyncConsoleExporter, SyncJSONLExporter
+from agentobs.exporters.console import (
     _format_cost,
     _format_duration,
     _format_event,
@@ -21,7 +21,7 @@ from tracium.exporters.console import (
     _get,
     _status_colour,
 )
-from tracium.types import EventType
+from agentobs.types import EventType
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -395,19 +395,19 @@ class TestConsoleHelpers:
         assert _format_duration({"duration_ms": None}) is None
 
     def test_status_colour_ok(self) -> None:
-        from tracium.exporters.console import _GREEN  # noqa: PLC0415
+        from agentobs.exporters.console import _GREEN  # noqa: PLC0415
         assert _status_colour("ok") == _GREEN
 
     def test_status_colour_error(self) -> None:
-        from tracium.exporters.console import _RED  # noqa: PLC0415
+        from agentobs.exporters.console import _RED  # noqa: PLC0415
         assert _status_colour("error") == _RED
 
     def test_status_colour_timeout(self) -> None:
-        from tracium.exporters.console import _RED  # noqa: PLC0415
+        from agentobs.exporters.console import _RED  # noqa: PLC0415
         assert _status_colour("timeout") == _RED
 
     def test_status_colour_unknown(self) -> None:
-        from tracium.exporters.console import _YELLOW  # noqa: PLC0415
+        from agentobs.exporters.console import _YELLOW  # noqa: PLC0415
         assert _status_colour("pending") == _YELLOW
 
     def test_format_event_returns_string(self) -> None:
@@ -457,9 +457,9 @@ class TestConsoleHelpers:
 @pytest.mark.unit
 class TestExportersInit:
     def test_sync_jsonl_exporter_importable(self) -> None:
-        from tracium.exporters import SyncJSONLExporter as J  # noqa: PLC0415
+        from agentobs.exporters import SyncJSONLExporter as J  # noqa: PLC0415
         assert J is SyncJSONLExporter
 
     def test_sync_console_exporter_importable(self) -> None:
-        from tracium.exporters import SyncConsoleExporter as C  # noqa: PLC0415
+        from agentobs.exporters import SyncConsoleExporter as C  # noqa: PLC0415
         assert C is SyncConsoleExporter

@@ -1,4 +1,4 @@
-﻿"""Tests for tracium/export/jsonl.py — JSONLExporter.
+"""Tests for agentobs/export/jsonl.py — JSONLExporter.
 
 Coverage targets
 ----------------
@@ -24,8 +24,8 @@ from unittest.mock import patch
 
 import pytest
 
-from tracium.event import Event
-from tracium.export.jsonl import JSONLExporter
+from agentobs.event import Event
+from agentobs.export.jsonl import JSONLExporter
 
 if TYPE_CHECKING:
     from pathlib import Path

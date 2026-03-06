@@ -1,6 +1,6 @@
 # Events
 
-The `Event` class is the central object in Tracium.
+The `Event` class is the central object in AgentOBS.
 Every interaction between an LLM tool and the outside world — a trace span,
 a cost record, a prompt save, a guard block — is represented as an Event.
 
@@ -35,7 +35,7 @@ Every event carries a common **envelope** regardless of the event type:
 All first-party event types are members of the `EventType` enum:
 
 ```python
-from tracium import EventType
+from agentobs import EventType
 
 # Trace namespace
 EventType.TRACE_SPAN_COMPLETED       # "llm.trace.span.completed"
@@ -88,19 +88,19 @@ assert event == event2 == event3
 event.validate()   # silent on success; raises on first error
 ```
 
-For full JSON Schema validation (requires `pip install "tracium[jsonschema]"`):
+For full JSON Schema validation (requires `pip install "agentobs[jsonschema]"`):
 
 ```python
-from tracium.validate import validate_event
+from agentobs.validate import validate_event
 validate_event(event)
 ```
 
 ## Pydantic integration
 
-For tools that use Pydantic v2 (requires `pip install "tracium[pydantic]"`):
+For tools that use Pydantic v2 (requires `pip install "agentobs[pydantic]"`):
 
 ```python
-from tracium.models import EventModel
+from agentobs.models import EventModel
 
 model = EventModel.from_event(event)
 schema = model.model_json_schema()
@@ -113,7 +113,7 @@ Event IDs use the [ULID](https://github.com/ulid/spec) format — 26-character,
 URL-safe, time-ordered, sortable unique identifiers:
 
 ```python
-from tracium.ulid import generate, validate, extract_timestamp_ms
+from agentobs.ulid import generate, validate, extract_timestamp_ms
 
 ulid = generate()                         # "01JPXXXXXXXXXXXXXXXXXXXXXXXX"
 assert validate(ulid) is True

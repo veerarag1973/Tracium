@@ -1,4 +1,4 @@
-# SDK-SPEC-0001 — Tracium Python SDK Specification
+# SDK-SPEC-0001 — AgentOBS Python SDK Specification
 
 **Reference Implementation for the SpanForge Observability Standard**
 
@@ -15,7 +15,7 @@
 
 ## 1. Purpose
 
-Tracium is the official Python reference SDK for the SpanForge Observability Standard.
+AgentOBS is the official Python reference SDK for the SpanForge Observability Standard.
 
 The SDK provides:
 
@@ -50,7 +50,7 @@ The SDK MUST prioritize (in order):
 Instrumentation MUST be possible in ≤5 lines of code.
 
 ```python
-from tracium import tracer
+from agentobs import tracer
 
 with tracer.span("chat", model="gpt-4o"):
     response = client.chat(...)
@@ -67,7 +67,7 @@ The SDK MUST automatically generate:
 
 ### P2 — SpanForge Compliance
 
-All events emitted by Tracium MUST conform to the SpanForge standard. This includes:
+All events emitted by AgentOBS MUST conform to the SpanForge standard. This includes:
 
 - Event envelope
 - Namespace taxonomy
@@ -81,10 +81,10 @@ The core SDK MUST depend only on the Python standard library.
 Optional integrations MAY introduce dependencies.
 
 ```
-pip install tracium           # core only — stdlib dependencies
-pip install tracium[otlp]     # + opentelemetry-exporter-otlp
-pip install tracium[openai]   # + openai HTTP response parsing
-pip install tracium[datadog]  # + datadog agent client
+pip install agentobs           # core only — stdlib dependencies
+pip install agentobs[otlp]     # + opentelemetry-exporter-otlp
+pip install agentobs[openai]   # + openai HTTP response parsing
+pip install agentobs[datadog]  # + datadog agent client
 ```
 
 ### P4 — Deterministic Serialization
@@ -97,7 +97,7 @@ All event serialization MUST produce canonical JSON as defined by the SpanForge 
 
 ### P5 — Safe Defaults
 
-Tracium MUST:
+AgentOBS MUST:
 
 - Auto-generate ULIDs
 - Auto-create spans
@@ -108,13 +108,13 @@ Tracium MUST:
 
 ## 3. Package Name
 
-**Official Python package name:** `tracium`
+**Official Python package name:** `agentobs`
 
 ```
-pip install tracium
+pip install agentobs
 ```
 
-**Import root:** `tracium`
+**Import root:** `agentobs`
 
 **Previous name:** `llm_toolkit_schema` (superseded)
 
@@ -127,14 +127,14 @@ The SDK MUST expose a minimal top-level API.
 ### Primary interface
 
 ```python
-from tracium import tracer
-from tracium import configure
+from agentobs import tracer
+from agentobs import configure
 ```
 
 ### Optional
 
 ```python
-from tracium import span
+from agentobs import span
 ```
 
 ---
@@ -157,7 +157,7 @@ configure(
 
 | Exporter key | Purpose |
 |---|---|
-| `jsonl` | Local file export to `tracium_events.jsonl` |
+| `jsonl` | Local file export to `agentobs_events.jsonl` |
 | `console` | Pretty-print for development and debugging |
 | `webhook` | HTTP POST delivery to external endpoints |
 | `otlp` | Export to OpenTelemetry collectors |
@@ -170,11 +170,11 @@ Environment variables MUST override defaults and MAY supplement `configure()` kw
 
 | Env var | Maps to |
 |---|---|
-| `TRACIUM_EXPORTER` | `exporter` |
-| `TRACIUM_ENDPOINT` | `endpoint` |
-| `TRACIUM_ORG_ID` | `org_id` |
-| `TRACIUM_SERVICE_NAME` | `service_name` |
-| `TRACIUM_ENV` | `env` |
+| `AGENTOBS_EXPORTER` | `exporter` |
+| `AGENTOBS_ENDPOINT` | `endpoint` |
+| `AGENTOBS_ORG_ID` | `org_id` |
+| `AGENTOBS_SERVICE_NAME` | `service_name` |
+| `AGENTOBS_ENV` | `env` |
 
 ---
 
@@ -183,7 +183,7 @@ Environment variables MUST override defaults and MAY supplement `configure()` kw
 The `tracer` object manages span creation and is a module-level singleton.
 
 ```python
-from tracium import tracer
+from agentobs import tracer
 
 with tracer.span("chat", model="gpt-4o"):
     ...
@@ -234,7 +234,7 @@ with tracer.span("chat") as span:
 
 ## 8. Automatic Span Population
 
-Tracium MUST automatically populate these fields on every span:
+AgentOBS MUST automatically populate these fields on every span:
 
 | Field | Source |
 |---|---|
@@ -249,7 +249,7 @@ Tracium MUST automatically populate these fields on every span:
 
 ## 9. Event Creation
 
-On span completion, Tracium MUST emit an event of type:
+On span completion, AgentOBS MUST emit an event of type:
 
 ```
 llm.trace.span.completed
@@ -261,7 +261,7 @@ The payload MUST match `SpanPayload` as defined in the SpanForge standard (RFC-0
 
 ## 10. Agent Instrumentation
 
-Tracium MUST support nested agent workflows via:
+AgentOBS MUST support nested agent workflows via:
 
 ```python
 tracer.agent_run(name: str, ...) -> AgentRunContextManager
@@ -299,16 +299,16 @@ The SDK SHOULD provide built-in provider integrations as optional extras.
 
 | Provider | Install extra |
 |---|---|
-| OpenAI | `tracium[openai]` |
-| Anthropic | `tracium[anthropic]` *(planned)* |
-| Ollama | `tracium[ollama]` *(planned)* |
-| Groq | `tracium[groq]` *(planned)* |
-| Together AI | `tracium[together]` *(planned)* |
+| OpenAI | `agentobs[openai]` |
+| Anthropic | `agentobs[anthropic]` *(planned)* |
+| Ollama | `agentobs[ollama]` *(planned)* |
+| Groq | `agentobs[groq]` *(planned)* |
+| Together AI | `agentobs[together]` *(planned)* |
 
 ### Usage
 
 ```python
-from tracium.integrations import openai
+from agentobs.integrations import openai
 ```
 
 ### Integration contract
@@ -376,7 +376,7 @@ class Exporter(Protocol):
 
 Writes newline-delimited JSON events to a file.
 
-- Default file: `tracium_events.jsonl`
+- Default file: `agentobs_events.jsonl`
 - Configurable via `endpoint` parameter
 
 #### ConsoleExporter
@@ -387,7 +387,7 @@ Pretty-prints events to stdout for development use.
 
 Exports events to an OpenTelemetry-compatible collector.
 
-- Requires `tracium[otlp]`
+- Requires `agentobs[otlp]`
 
 #### WebhookExporter
 
@@ -409,7 +409,7 @@ The SDK MUST maintain an internal `EventStream` buffer with the following capabi
 
 ## 16. ULID Generation
 
-Tracium MUST implement ULID generation using Crockford Base32 encoding.
+AgentOBS MUST implement ULID generation using Crockford Base32 encoding.
 
 Requirements:
 
@@ -470,12 +470,12 @@ Supported sensitivity levels: `LOW`, `MEDIUM`, `HIGH`, `PII`, `PHI`
 
 ## 20. CLI Tool
 
-Tracium SHOULD provide a CLI entry point.
+AgentOBS SHOULD provide a CLI entry point.
 
 ```
-tracium check-compat events.jsonl
-tracium validate events.jsonl
-tracium audit-chain events.jsonl
+agentobs check-compat events.jsonl
+agentobs validate events.jsonl
+agentobs audit-chain events.jsonl
 ```
 
 | Command | Function |
@@ -492,18 +492,18 @@ The SDK SHOULD provide integrations for:
 
 | Framework | Module |
 |---|---|
-| OpenTelemetry | `tracium.integrations.otel` |
-| FastAPI | `tracium.integrations.fastapi` |
-| LangChain | `tracium.integrations.langchain` |
-| LangGraph | `tracium.integrations.langgraph` |
-| CrewAI | `tracium.integrations.crewai` |
+| OpenTelemetry | `agentobs.integrations.otel` |
+| FastAPI | `agentobs.integrations.fastapi` |
+| LangChain | `agentobs.integrations.langchain` |
+| LangGraph | `agentobs.integrations.langgraph` |
+| CrewAI | `agentobs.integrations.crewai` |
 
 ---
 
 ## 22. Minimal Example
 
 ```python
-from tracium import tracer, configure
+from agentobs import tracer, configure
 
 configure(exporter="jsonl")
 
@@ -518,7 +518,7 @@ The generated event MUST be compliant with the SpanForge standard.
 ## 23. Agent Workflow Example
 
 ```python
-from tracium import tracer, configure
+from agentobs import tracer, configure
 
 configure(exporter="jsonl", service_name="research-service")
 
@@ -535,7 +535,7 @@ with tracer.agent_run("research_agent"):
 
 ## 24. Versioning
 
-Tracium MUST follow [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`).
+AgentOBS MUST follow [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`).
 
 - Initial production release: `1.0.0`
 - Pre-release series: `0.x.y`
@@ -545,7 +545,7 @@ Tracium MUST follow [Semantic Versioning](https://semver.org/) (`MAJOR.MINOR.PAT
 
 ## 25. Reference Implementation
 
-Tracium is the reference implementation of the SpanForge Observability Standard.
+AgentOBS is the reference implementation of the SpanForge Observability Standard.
 
 SDKs in other languages SHOULD follow the same API design patterns and field naming conventions defined in this document.
 
@@ -553,7 +553,7 @@ SDKs in other languages SHOULD follow the same API design patterns and field nam
 
 ## 26. Success Criteria
 
-Tracium will be considered production-ready (`1.0.0`) when all of the following are met:
+AgentOBS will be considered production-ready (`1.0.0`) when all of the following are met:
 
 | Criterion | Target |
 |---|---|

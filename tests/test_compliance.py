@@ -1,4 +1,4 @@
-﻿"""Tests for the tracium.compliance package.
+"""Tests for the agentobs.compliance package.
 
 Covers:
 - compliance.test_isolation  (IsolationViolation, IsolationResult,
@@ -14,8 +14,8 @@ from __future__ import annotations
 
 import pytest
 
-from tracium import Event, EventType
-from tracium.compliance import (
+from agentobs import Event, EventType
+from agentobs.compliance import (
     ChainIntegrityResult,
     ChainIntegrityViolation,
     CompatibilityResult,
@@ -26,13 +26,13 @@ from tracium.compliance import (
     verify_events_scoped,
     verify_tenant_isolation,
 )
-from tracium.compliance import (
+from agentobs.compliance import (
     test_compatibility as run_compat_check,
 )
-from tracium.compliance._compat import _check_event
-from tracium.compliance.test_chain import _check_monotonic_timestamps
-from tracium.compliance.test_isolation import _check_org_disjoint
-from tracium.signing import AuditStream
+from agentobs.compliance._compat import _check_event
+from agentobs.compliance.test_chain import _check_monotonic_timestamps
+from agentobs.compliance.test_isolation import _check_org_disjoint
+from agentobs.signing import AuditStream
 
 # ---------------------------------------------------------------------------
 # Helpers

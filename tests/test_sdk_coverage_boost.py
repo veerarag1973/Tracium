@@ -12,36 +12,36 @@ import pytest
 # ---------------------------------------------------------------------------
 # Namespace payloads
 # ---------------------------------------------------------------------------
-from tracium.namespaces.audit import (
+from agentobs.namespaces.audit import (
     AuditChainTamperedPayload,
     AuditKeyRotatedPayload,
 )
-from tracium.namespaces.cache import (
+from agentobs.namespaces.cache import (
     CacheEvictedPayload,
     CacheHitPayload,
     CacheMissPayload,
 )
-from tracium.namespaces.cost import (
+from agentobs.namespaces.cost import (
     CostAttributedPayload,
     CostSessionRecordedPayload,
     CostTokenRecordedPayload,
 )
-from tracium.namespaces.diff import DiffComputedPayload
-from tracium.namespaces.eval_ import (
+from agentobs.namespaces.diff import DiffComputedPayload
+from agentobs.namespaces.eval_ import (
     EvalRegressionDetectedPayload,
     EvalScenarioCompletedPayload,
     EvalScenarioStartedPayload,
     EvalScoreRecordedPayload,
 )
-from tracium.namespaces.fence import (
+from agentobs.namespaces.fence import (
     FenceMaxRetriesExceededPayload,
     FenceRetryTriggeredPayload,
     FenceValidatedPayload,
 )
-from tracium.namespaces.guard import GuardPayload
-from tracium.namespaces.prompt import PromptRenderedPayload, PromptTemplateLoadedPayload
-from tracium.namespaces.redact import RedactPhiDetectedPayload, RedactPiiDetectedPayload
-from tracium.namespaces.template import (
+from agentobs.namespaces.guard import GuardPayload
+from agentobs.namespaces.prompt import PromptRenderedPayload, PromptTemplateLoadedPayload
+from agentobs.namespaces.redact import RedactPhiDetectedPayload, RedactPiiDetectedPayload
+from agentobs.namespaces.template import (
     TemplateRegisteredPayload,
     TemplateVariableBoundPayload,
 )
@@ -49,7 +49,7 @@ from tracium.namespaces.template import (
 # ---------------------------------------------------------------------------
 # trace.py value objects
 # ---------------------------------------------------------------------------
-from tracium.namespaces.trace import (
+from agentobs.namespaces.trace import (
     AgentRunPayload,
     AgentStepPayload,
     CostBreakdown,
@@ -664,7 +664,7 @@ class TestCacheNamespaceFull:
 @pytest.mark.unit
 class TestCostNamespaceFull:
     def test_cost_token_recorded_with_all_optionals(self) -> None:
-        from tracium.namespaces.trace import PricingTier  # noqa: PLC0415
+        from agentobs.namespaces.trace import PricingTier  # noqa: PLC0415
         p = CostTokenRecordedPayload(
             cost=_cost(),
             token_usage=_token_usage(),
@@ -1027,6 +1027,6 @@ class TestTemplateNamespaceFull:
 class TestIntegrationsInit:
     def test_integrations_package_importable(self) -> None:
         try:  # noqa: SIM105
-            import tracium.integrations  # noqa: F401, PLC0415
+            import agentobs.integrations  # noqa: F401, PLC0415
         except ImportError:
             pass  # optional dependency not installed — still covers the import lines

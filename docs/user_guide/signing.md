@@ -20,8 +20,8 @@ directly on the event.
 ## Signing a single event
 
 ```python
-from tracium import Event, EventType
-from tracium.signing import sign, verify, assert_verified
+from agentobs import Event, EventType
+from agentobs.signing import sign, verify, assert_verified
 
 event = Event(
     event_type=EventType.TRACE_SPAN_COMPLETED,
@@ -48,8 +48,8 @@ Use `AuditStream` to build a chain where each event is linked to the previous
 one via `prev_id`:
 
 ```python
-from tracium import Event, EventType
-from tracium.signing import AuditStream
+from agentobs import Event, EventType
+from agentobs.signing import AuditStream
 
 stream = AuditStream(org_secret="my-org-secret", source="my-tool@1.0.0")
 
@@ -71,7 +71,7 @@ print(stream.events[1].prev_id)     # == stream.events[0].event_id
 ## Verifying a chain
 
 ```python
-from tracium.signing import verify_chain
+from agentobs.signing import verify_chain
 
 result = stream.verify()             # or: verify_chain(events, org_secret="...")
 
@@ -84,7 +84,7 @@ assert result.first_tampered is None # first tampered event_id, or None
 ### Detecting tampering
 
 ```python
-from tracium.signing import verify_chain
+from agentobs.signing import verify_chain
 
 # Tamper with an event's payload after signing
 signed_events = list(stream.events)
@@ -130,12 +130,12 @@ assert result.valid
 
 ## Higher-level compliance wrapper
 
-The `tracium.compliance` module provides a richer wrapper over
+The `agentobs.compliance` module provides a richer wrapper over
 `verify_chain()` that includes gap reporting, violation objects, and
 timestamp monotonicity checks:
 
 ```python
-from tracium.compliance import verify_chain_integrity
+from agentobs.compliance import verify_chain_integrity
 
 result = verify_chain_integrity(events, org_secret="my-org-secret")
 if not result:

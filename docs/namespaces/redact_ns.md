@@ -2,10 +2,10 @@
 
 > **Note:** This namespace records *metadata about a redaction operation* —
 > for example, which PII categories were detected and which fields were
-> affected. It is distinct from the runtime `tracium.redact` module that
+> affected. It is distinct from the runtime `agentobs.redact` module that
 > performs the actual field-level redaction.
 
-> **Auto-documented module:** `tracium.namespaces.redact`
+> **Auto-documented module:** `agentobs.namespaces.redact`
 
 The `llm.redact.*` namespace provides payload dataclasses for PII and PHI
 detection events and redaction audit records (RFC-0001 §2).
@@ -36,8 +36,8 @@ detection events and redaction audit records (RFC-0001 §2).
 ## Example
 
 ```python
-from tracium import Event, EventType
-from tracium.namespaces.redact import RedactPiiDetectedPayload
+from agentobs import Event, EventType
+from agentobs.namespaces.redact import RedactPiiDetectedPayload
 
 payload = RedactPiiDetectedPayload(
     detected_categories=["email", "phone"],

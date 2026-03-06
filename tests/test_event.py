@@ -1,4 +1,4 @@
-﻿"""Tests for tracium.event — Event, Tags, and helpers.
+"""Tests for agentobs.event — Event, Tags, and helpers.
 
 100% branch and line coverage target.
 """
@@ -13,7 +13,7 @@ from typing import Any
 import pytest
 
 from tests.conftest import FIXED_SPAN_ID, FIXED_TIMESTAMP, FIXED_TRACE_ID
-from tracium.event import (
+from agentobs.event import (
     SCHEMA_VERSION,
     Event,
     Tags,
@@ -31,13 +31,13 @@ from tracium.event import (
     _validate_timestamp,
     _validate_ulid_field,
 )
-from tracium.exceptions import (
+from agentobs.exceptions import (
     DeserializationError,
     SchemaValidationError,
     SerializationError,
 )
-from tracium.types import EventType
-from tracium.ulid import generate as gen_ulid
+from agentobs.types import EventType
+from agentobs.ulid import generate as gen_ulid
 
 # ===========================================================================
 # Tags
@@ -140,7 +140,7 @@ class TestEventConstruction:
             timestamp=FIXED_TIMESTAMP,
         )
         assert len(event.event_id) == 26
-        from tracium.ulid import validate  # noqa: PLC0415
+        from agentobs.ulid import validate  # noqa: PLC0415
         assert validate(event.event_id)
 
     def test_auto_timestamp(self) -> None:

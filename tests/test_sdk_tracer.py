@@ -1,4 +1,4 @@
-"""Tests for tracium._tracer — Tracer class and module-level tracer singleton.
+"""Tests for agentobs._tracer — Tracer class and module-level tracer singleton.
 
 Phase 3 SDK coverage target.
 """
@@ -7,14 +7,14 @@ from __future__ import annotations
 
 import pytest
 
-from tracium._span import (
+from agentobs._span import (
     AgentRunContextManager,
     AgentStepContextManager,
     SpanContextManager,
     _run_stack,
     _span_stack,
 )
-from tracium._tracer import Tracer, tracer
+from agentobs._tracer import Tracer, tracer
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -41,7 +41,7 @@ class TestTracerSpan:
         assert isinstance(cm, SpanContextManager)
 
     def test_enter_yields_span(self) -> None:
-        from tracium._span import Span  # noqa: PLC0415
+        from agentobs._span import Span  # noqa: PLC0415
         with tracer.span("test") as span:
             assert isinstance(span, Span)
 
@@ -100,7 +100,7 @@ class TestTracerAgentRun:
         assert isinstance(cm, AgentRunContextManager)
 
     def test_enter_yields_agent_run_context(self) -> None:
-        from tracium._span import AgentRunContext  # noqa: PLC0415
+        from agentobs._span import AgentRunContext  # noqa: PLC0415
         with tracer.agent_run("agent") as run:
             assert isinstance(run, AgentRunContext)
 
@@ -152,7 +152,7 @@ class TestTracerAgentStep:
             pass
 
     def test_step_inside_run_works(self) -> None:
-        from tracium._span import AgentStepContext  # noqa: PLC0415
+        from agentobs._span import AgentStepContext  # noqa: PLC0415
         with tracer.agent_run("agent"), tracer.agent_step("step") as step:
             assert isinstance(step, AgentStepContext)
 

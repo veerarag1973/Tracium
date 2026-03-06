@@ -1,4 +1,4 @@
-# tracium.compliance
+# agentobs.compliance
 
 Programmatic compliance testing: v1.0 compatibility checks, audit chain
 integrity verification, and multi-tenant isolation testing.
@@ -61,7 +61,7 @@ Evaluates as `True` in a boolean context only when `passed=True`.
 
 ### `test_compatibility(events: Sequence[Event]) -> CompatibilityResult`
 
-Apply the tracium v1.0 compatibility checklist to `events`.
+Apply the agentobs v1.0 compatibility checklist to `events`.
 
 **Checks performed:**
 
@@ -83,7 +83,7 @@ Apply the tracium v1.0 compatibility checklist to `events`.
 **Example:**
 
 ```python
-from tracium.compliance import test_compatibility
+from agentobs.compliance import test_compatibility
 
 result = test_compatibility(my_events)
 if not result:

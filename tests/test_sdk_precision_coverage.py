@@ -14,7 +14,7 @@ import pytest
 class TestRedactPhiPrecision:
     def test_phi_empty_detected_categories_raises(self) -> None:
         """Line 87: raise in RedactPhiDetectedPayload for empty detected_categories."""
-        from tracium.namespaces.redact import RedactPhiDetectedPayload  # noqa: PLC0415
+        from agentobs.namespaces.redact import RedactPhiDetectedPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="detected_categories"):
             RedactPhiDetectedPayload(
                 detected_categories=[],  # empty → raise
@@ -24,7 +24,7 @@ class TestRedactPhiPrecision:
 
     def test_phi_invalid_sensitivity_level_raises(self) -> None:
         """Line 91: raise in RedactPhiDetectedPayload when sensitivity != 'PHI'."""
-        from tracium.namespaces.redact import RedactPhiDetectedPayload  # noqa: PLC0415
+        from agentobs.namespaces.redact import RedactPhiDetectedPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="sensitivity_level"):
             RedactPhiDetectedPayload(
                 detected_categories=["ssn"],
@@ -34,7 +34,7 @@ class TestRedactPhiPrecision:
 
     def test_phi_basic_valid_creation(self) -> None:
         """Baseline: valid RedactPhiDetectedPayload creation doesn't raise."""
-        from tracium.namespaces.redact import RedactPhiDetectedPayload  # noqa: PLC0415
+        from agentobs.namespaces.redact import RedactPhiDetectedPayload  # noqa: PLC0415
         p = RedactPhiDetectedPayload(
             detected_categories=["ssn", "dob"],
             field_names=["patient.ssn"],
@@ -52,7 +52,7 @@ class TestRedactPhiPrecision:
 class TestRedactAppliedCountPrecision:
     def test_applied_negative_redacted_count_raises(self) -> None:
         """Line 141: raise in RedactAppliedPayload for redacted_count < 0."""
-        from tracium.namespaces.redact import RedactAppliedPayload  # noqa: PLC0415
+        from agentobs.namespaces.redact import RedactAppliedPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="redacted_count"):
             RedactAppliedPayload(
                 policy_min_sensitivity="HIGH",
@@ -69,7 +69,7 @@ class TestRedactAppliedCountPrecision:
 class TestTemplateRegisteredVersionPrecision:
     def test_registered_empty_version_raises(self) -> None:
         """Line 48: raise in TemplateRegisteredPayload for empty version."""
-        from tracium.namespaces.template import TemplateRegisteredPayload  # noqa: PLC0415
+        from agentobs.namespaces.template import TemplateRegisteredPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="version"):
             TemplateRegisteredPayload(
                 template_id="t1",
@@ -86,7 +86,7 @@ class TestTemplateRegisteredVersionPrecision:
 class TestTemplateVarBoundVersionPrecision:
     def test_variable_bound_empty_version_raises(self) -> None:
         """Line 109: raise in TemplateVariableBoundPayload for empty version."""
-        from tracium.namespaces.template import TemplateVariableBoundPayload  # noqa: PLC0415
+        from agentobs.namespaces.template import TemplateVariableBoundPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="version"):
             TemplateVariableBoundPayload(
                 template_id="t1",
@@ -96,7 +96,7 @@ class TestTemplateVarBoundVersionPrecision:
 
     def test_variable_bound_empty_variable_name_raises_2(self) -> None:
         """Line 111: raise in TemplateVariableBoundPayload for empty variable_name."""
-        from tracium.namespaces.template import TemplateVariableBoundPayload  # noqa: PLC0415
+        from agentobs.namespaces.template import TemplateVariableBoundPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="variable_name"):
             TemplateVariableBoundPayload(
                 template_id="t1",
@@ -113,7 +113,7 @@ class TestTemplateVarBoundVersionPrecision:
 class TestTemplateValFailedReasonPrecision:
     def test_validation_failed_empty_failure_reason_raises_2(self) -> None:
         """Line 164: raise in TemplateValidationFailedPayload for empty failure_reason."""
-        from tracium.namespaces.template import TemplateValidationFailedPayload  # noqa: PLC0415
+        from agentobs.namespaces.template import TemplateValidationFailedPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="failure_reason"):
             TemplateValidationFailedPayload(
                 template_id="tmpl-a",
@@ -123,7 +123,7 @@ class TestTemplateValFailedReasonPrecision:
 
     def test_validation_failed_empty_version_raises(self) -> None:
         """Line 162: raise in TemplateValidationFailedPayload for empty version."""
-        from tracium.namespaces.template import TemplateValidationFailedPayload  # noqa: PLC0415
+        from agentobs.namespaces.template import TemplateValidationFailedPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="version"):
             TemplateValidationFailedPayload(
                 template_id="t1",
@@ -140,7 +140,7 @@ class TestTemplateValFailedReasonPrecision:
 class TestEvalScenarioStartedIdPrecision:
     def test_scenario_started_empty_scenario_id_raises(self) -> None:
         """Line 150: raise in EvalScenarioStartedPayload for empty scenario_id."""
-        from tracium.namespaces.eval_ import EvalScenarioStartedPayload  # noqa: PLC0415
+        from agentobs.namespaces.eval_ import EvalScenarioStartedPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="scenario_id"):
             EvalScenarioStartedPayload(
                 scenario_id="",      # empty → raise
@@ -157,7 +157,7 @@ class TestEvalScenarioStartedIdPrecision:
 class TestAgentRunStartTimePrecision:
     def test_agent_run_negative_start_time_raises(self) -> None:
         """Line 810: raise in AgentRunPayload for start_time_unix_nano < 0."""
-        from tracium.namespaces.trace import (  # noqa: PLC0415
+        from agentobs.namespaces.trace import (  # noqa: PLC0415
             AgentRunPayload,
             CostBreakdown,
             TokenUsage,

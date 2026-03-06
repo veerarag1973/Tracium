@@ -1,4 +1,4 @@
-"""Tests for tracium._span — Span, SpanContextManager, AgentRun/Step contexts.
+"""Tests for agentobs._span — Span, SpanContextManager, AgentRun/Step contexts.
 
 Phase 2 + 4 SDK coverage target.
 """
@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from tracium._span import (
+from agentobs._span import (
     AgentRunContext,
     AgentRunContextManager,
     AgentStepContext,
@@ -20,7 +20,7 @@ from tracium._span import (
     _span_stack,
     _trace_id,
 )
-from tracium.namespaces.trace import (
+from agentobs.namespaces.trace import (
     CostBreakdown,
     GenAISystem,
     TokenUsage,

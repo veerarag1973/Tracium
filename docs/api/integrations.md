@@ -1,20 +1,20 @@
-# tracium.integrations
+# agentobs.integrations
 
 Lightweight adapters for third-party LLM orchestration frameworks.
 
 Each integration is a **soft dependency** — the framework is only required when
 you actually instantiate the handler. All adapters are importable lazily via the
-`tracium.integrations` package without triggering an import error if
+`agentobs.integrations` package without triggering an import error if
 the underlying framework is not installed.
 
 ---
 
-## `tracium.integrations.langchain` — LangChain
+## `agentobs.integrations.langchain` — LangChain
 
 ### Installation
 
 ```bash
-pip install "tracium[langchain]"
+pip install "agentobs[langchain]"
 # or
 pip install langchain-core
 ```
@@ -31,7 +31,7 @@ class LLMSchemaCallbackHandler(BaseCallbackHandler):
     )
 ```
 
-LangChain callback handler that emits `tracium` events as LangChain
+LangChain callback handler that emits `agentobs` events as LangChain
 operations occur. Subclasses `langchain_core.callbacks.BaseCallbackHandler`
 (or `langchain.callbacks.BaseCallbackHandler` for older LangChain versions).
 
@@ -49,7 +49,7 @@ Importing or instantiating this class raises `ImportError` if neither
 **Example:**
 
 ```python
-from tracium.integrations.langchain import LLMSchemaCallbackHandler
+from agentobs.integrations.langchain import LLMSchemaCallbackHandler
 
 handler = LLMSchemaCallbackHandler(source="my-app@1.0.0", org_id="acme")
 
@@ -85,12 +85,12 @@ Clear the internal event list.
 
 ---
 
-## `tracium.integrations.llamaindex` — LlamaIndex
+## `agentobs.integrations.llamaindex` — LlamaIndex
 
 ### Installation
 
 ```bash
-pip install "tracium[llamaindex]"
+pip install "agentobs[llamaindex]"
 # or
 pip install llama-index-core
 ```
@@ -108,7 +108,7 @@ class LLMSchemaEventHandler:
 ```
 
 LlamaIndex callback event handler that converts LlamaIndex callback events to
-`tracium` events.
+`agentobs` events.
 
 Importing or instantiating this class raises `ImportError` if neither
 `llama_index.core` nor `llama_index` is installed.
@@ -125,7 +125,7 @@ Importing or instantiating this class raises `ImportError` if neither
 
 ```python
 from llama_index.core import Settings
-from tracium.integrations.llamaindex import LLMSchemaEventHandler
+from agentobs.integrations.llamaindex import LLMSchemaEventHandler
 
 handler = LLMSchemaEventHandler(source="my-app@1.0.0", org_id="acme")
 Settings.callback_manager.add_handler(handler)
@@ -163,14 +163,14 @@ No-op — provided for LlamaIndex callback manager protocol compliance.
 ## Lazy top-level imports
 
 Both handlers are accessible via module attribute access on
-`tracium.integrations` without importing the sub-module explicitly:
+`agentobs.integrations` without importing the sub-module explicitly:
 
 ```python
-import tracium.integrations as integrations
+import agentobs.integrations as integrations
 
-# Equivalent to: from tracium.integrations.langchain import ...
+# Equivalent to: from agentobs.integrations.langchain import ...
 Handler = integrations.LLMSchemaCallbackHandler
 
-# Equivalent to: from tracium.integrations.llamaindex import ...
+# Equivalent to: from agentobs.integrations.llamaindex import ...
 Handler = integrations.LLMSchemaEventHandler
 ```

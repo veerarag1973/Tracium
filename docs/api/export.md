@@ -1,15 +1,15 @@
-# tracium.export
+# agentobs.export
 
-Export backends for delivering tracium events to external systems.
+Export backends for delivering agentobs events to external systems.
 
-All exporters implement the `Exporter` protocol from `tracium.stream`
+All exporters implement the `Exporter` protocol from `agentobs.stream`
 (async `export_batch` method) and satisfy the `EventStream.drain()` / `route()` API.
 
 See the [Export User Guide](../user_guide/export.md) for usage examples.
 
 ---
 
-## `tracium.export.jsonl` — JSONL File Exporter
+## `agentobs.export.jsonl` — JSONL File Exporter
 
 ### `JSONLExporter`
 
@@ -40,7 +40,7 @@ Async exporter that appends events as newline-delimited JSON.
 **Example:**
 
 ```python
-from tracium.export.jsonl import JSONLExporter
+from agentobs.export.jsonl import JSONLExporter
 
 async with JSONLExporter("events.jsonl") as exporter:
     for event in events:
@@ -73,7 +73,7 @@ Flush and close the underlying file handle. Idempotent. Does not close stdout.
 
 ---
 
-## `tracium.export.otlp` — OTLP Exporter
+## `agentobs.export.otlp` — OTLP Exporter
 
 ### `ResourceAttributes`
 
@@ -129,14 +129,14 @@ Async exporter that serialises events to OTLP/JSON and HTTP-POSTs to a collector
 |-----------|------|---------|-------------|
 | `endpoint` | `str` | — | Full OTLP HTTP URL, e.g. `"http://otel-collector:4318/v1/traces"`. |
 | `headers` | `Dict[str, str] \| None` | `None` | Optional extra HTTP request headers (e.g. API keys). |
-| `resource_attrs` | `ResourceAttributes \| None` | `None` | OTel resource attributes. Defaults to `service_name="Tracium"`. |
+| `resource_attrs` | `ResourceAttributes \| None` | `None` | OTel resource attributes. Defaults to `service_name="AgentOBS"`. |
 | `timeout` | `float` | `5.0` | HTTP request timeout in seconds. |
 | `batch_size` | `int` | `500` | Maximum events per `export_batch` call. |
 
 **Example:**
 
 ```python
-from tracium.export.otlp import OTLPExporter, ResourceAttributes
+from agentobs.export.otlp import OTLPExporter, ResourceAttributes
 
 exporter = OTLPExporter(
     endpoint="http://localhost:4318/v1/traces",
@@ -216,7 +216,7 @@ Construct a W3C TraceContext `traceparent` header (RFC 9429).
 **Example:**
 
 ```python
-from tracium.export.otlp import make_traceparent
+from agentobs.export.otlp import make_traceparent
 
 header = make_traceparent(event.trace_id, event.span_id)
 # → "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
@@ -245,7 +245,7 @@ Parse W3C TraceContext `traceparent` / `tracestate` headers.
 **Example:**
 
 ```python
-from tracium.export.otlp import extract_trace_context
+from agentobs.export.otlp import extract_trace_context
 
 ctx = extract_trace_context({"traceparent": "00-abc...def-1234567890abcdef-01"})
 # ctx = {"trace_id": "abc...def", "span_id": "1234567890abcdef", "sampled": True}
@@ -253,9 +253,9 @@ ctx = extract_trace_context({"traceparent": "00-abc...def-1234567890abcdef-01"})
 
 ---
 
-## `tracium.export.otel_bridge` — OTel SDK Bridge Exporter
+## `agentobs.export.otel_bridge` — OTel SDK Bridge Exporter
 
-Requires the `[otel]` optional extra: `pip install "tracium[otel]"`.
+Requires the `[otel]` optional extra: `pip install "agentobs[otel]"`.
 
 ### `OTelBridgeExporter`
 
@@ -281,7 +281,7 @@ and all registered `SpanExporter` instances fire as normal.
 **Example:**
 
 ```python
-from tracium.export.otel_bridge import OTelBridgeExporter
+from agentobs.export.otel_bridge import OTelBridgeExporter
 
 exporter = OTelBridgeExporter(tracer_name="my-service")
 exporter.export(event)                # synchronous (starts + ends span immediately)
@@ -307,7 +307,7 @@ Emit spans for all events via the active `TracerProvider`.
 
 ---
 
-## `tracium.export.webhook` — Webhook Exporter
+## `agentobs.export.webhook` — Webhook Exporter
 
 ### `WebhookExporter`
 
@@ -345,7 +345,7 @@ Async exporter that sends events to an HTTP webhook endpoint.
 **Example:**
 
 ```python
-from tracium.export.webhook import WebhookExporter
+from agentobs.export.webhook import WebhookExporter
 
 exporter = WebhookExporter(
     url="https://hooks.example.com/events",
@@ -370,13 +370,13 @@ Export multiple events as a JSON array in a single HTTP POST.
 
 **Raises:** `ExportError` — if all retry attempts fail.
 
-> **Auto-documented module:** `tracium.export.webhook`
+> **Auto-documented module:** `agentobs.export.webhook`
 
 `WebhookExporter` — POSTs events as JSON to an arbitrary HTTP endpoint.
 
 ---
 
-## `tracium.export.datadog` — Datadog APM Exporter
+## `agentobs.export.datadog` — Datadog APM Exporter
 
 ### `DatadogResourceAttributes`
 
@@ -452,7 +452,7 @@ Datadog Metrics API.
 **Example:**
 
 ```python
-from tracium.export.datadog import DatadogExporter
+from agentobs.export.datadog import DatadogExporter
 
 exporter = DatadogExporter(
     service="llm-gateway",
@@ -507,7 +507,7 @@ Send multiple events. Each is converted to a span and any metric series.
 
 ---
 
-## `tracium.export.grafana` — Grafana Loki Exporter
+## `agentobs.export.grafana` — Grafana Loki Exporter
 
 ### `GrafanaLokiExporter`
 
@@ -549,7 +549,7 @@ Async exporter that pushes events to a Grafana Loki instance via the
 **Example:**
 
 ```python
-from tracium.export.grafana import GrafanaLokiExporter
+from agentobs.export.grafana import GrafanaLokiExporter
 
 exporter = GrafanaLokiExporter(
     url="http://loki:3100",
@@ -591,6 +591,6 @@ Convert an ISO-8601 timestamp string to UNIX nanoseconds.
 
 ## JSONL Backend
 
-> **Auto-documented module:** `tracium.export.jsonl`
+> **Auto-documented module:** `agentobs.export.jsonl`
 
 `JSONLExporter` — writes events as newline-delimited JSON to a local file.

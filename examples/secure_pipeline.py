@@ -8,15 +8,15 @@ Usage
 -----
     pip install agentobs
     python examples/secure_pipeline.py
-    tracium audit-chain secure_events.jsonl   # verify the chain
+    agentobs audit-chain secure_events.jsonl   # verify the chain
 """
 
 from __future__ import annotations
 
 import secrets
 
-from tracium import configure, tracer
-from tracium.redact import RedactionPolicy, Sensitivity
+from agentobs import configure, tracer
+from agentobs.redact import RedactionPolicy, Sensitivity
 
 # Generate a random signing key for this demo (in production, load from a
 # secret manager and persist it across restarts to maintain the chain).
@@ -51,4 +51,4 @@ if __name__ == "__main__":
     print(f"Signing key (save this to verify later): {SIGNING_KEY}")
     print()
     print("Verify the chain with:")
-    print(f"  TRACIUM_SIGNING_KEY={SIGNING_KEY} tracium audit-chain secure_events.jsonl")
+    print(f"  AGENTOBS_SIGNING_KEY={SIGNING_KEY} agentobs audit-chain secure_events.jsonl")

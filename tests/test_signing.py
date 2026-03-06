@@ -1,4 +1,4 @@
-﻿"""Tests for tracium.signing — HMAC-SHA256 signing and audit chain.
+"""Tests for agentobs.signing — HMAC-SHA256 signing and audit chain.
 
 100% branch/statement coverage target.
 """
@@ -10,9 +10,9 @@ import time
 import pytest
 
 from tests.conftest import FIXED_SPAN_ID, FIXED_TIMESTAMP, FIXED_TRACE_ID
-from tracium import Event, EventType, Tags
-from tracium.exceptions import SigningError, VerificationError
-from tracium.signing import (
+from agentobs import Event, EventType, Tags
+from agentobs.exceptions import SigningError, VerificationError
+from agentobs.signing import (
     AuditStream,
     ChainVerificationResult,
     _canonical_payload_bytes,
@@ -232,7 +232,7 @@ class TestVerify:
     def test_missing_signature_returns_false(self) -> None:
         # Build event with checksum but no signature
         event = _event()
-        from tracium.signing import _compute_checksum as _cc  # noqa: PLC0415
+        from agentobs.signing import _compute_checksum as _cc  # noqa: PLC0415
         payload_copy = dict(event.payload)
         cs = _cc(payload_copy)
         # Manually create event with checksum but no signature
@@ -325,8 +325,8 @@ class TestAssertVerified:
             assert_verified(event, _SECRET)
         assert exc_info.value.event_id == event.event_id
 
-    def test_verification_error_is_tracium_error(self) -> None:
-        from tracium.exceptions import LLMSchemaError  # noqa: PLC0415
+    def test_verification_error_is_agentobs_error(self) -> None:
+        from agentobs.exceptions import LLMSchemaError  # noqa: PLC0415
         err = VerificationError(event_id="01ARYZ3NDEKTSV4RRFFQ69G5FA")
         assert isinstance(err, LLMSchemaError)
 
@@ -708,14 +708,14 @@ class TestAuditEventTypes:
     def test_audit_namespace(self) -> None:
         assert EventType.AUDIT_KEY_ROTATED.namespace == "llm.audit"
 
-    def test_audit_tool_is_tracium(self) -> None:
+    def test_audit_tool_is_agentobs(self) -> None:
         # et.tool removed in v2.0; use et.description instead
         assert isinstance(EventType.AUDIT_KEY_ROTATED.description, str)
         assert len(EventType.AUDIT_KEY_ROTATED.description) > 0
 
     def test_audit_reserved_namespace(self) -> None:
-        from tracium.exceptions import EventTypeError  # noqa: PLC0415
-        from tracium.types import validate_custom  # noqa: PLC0415
+        from agentobs.exceptions import EventTypeError  # noqa: PLC0415
+        from agentobs.types import validate_custom  # noqa: PLC0415
         with pytest.raises(EventTypeError):
             validate_custom("llm.audit.custom.event")
 
@@ -727,8 +727,8 @@ class TestAuditEventTypes:
 
 @pytest.mark.unit
 class TestSigningError:
-    def test_is_tracium_error(self) -> None:
-        from tracium.exceptions import LLMSchemaError  # noqa: PLC0415
+    def test_is_agentobs_error(self) -> None:
+        from agentobs.exceptions import LLMSchemaError  # noqa: PLC0415
         err = SigningError("bad key")
         assert isinstance(err, LLMSchemaError)
 

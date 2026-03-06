@@ -1,4 +1,4 @@
-﻿"""Tests for tracium/stream.py — EventStream.
+"""Tests for agentobs/stream.py — EventStream.
 
 Coverage targets
 ----------------
@@ -25,9 +25,9 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tracium.event import Event, Tags
-from tracium.exceptions import DeserializationError
-from tracium.stream import EventStream, Exporter
+from agentobs.event import Event, Tags
+from agentobs.exceptions import DeserializationError
+from agentobs.stream import EventStream, Exporter
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

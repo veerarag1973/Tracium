@@ -1,6 +1,6 @@
 # llm.diff — Prompt/Response Delta
 
-> **Auto-documented module:** `tracium.namespaces.diff`
+> **Auto-documented module:** `agentobs.namespaces.diff`
 
 The `llm.diff.*` namespace records computed differences between two events,
 allowing regression detection and prompt-drift analysis (RFC-0001 §6).
@@ -34,8 +34,8 @@ allowing regression detection and prompt-drift analysis (RFC-0001 §6).
 ## Example
 
 ```python
-from tracium import Event, EventType
-from tracium.namespaces.diff import DiffComputedPayload
+from agentobs import Event, EventType
+from agentobs.namespaces.diff import DiffComputedPayload
 
 payload = DiffComputedPayload(
     ref_event_id="01HXABC0000000000000000000",

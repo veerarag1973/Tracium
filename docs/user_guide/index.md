@@ -1,6 +1,6 @@
 # User Guide
 
-This guide covers all major features of tracium in depth.
+This guide covers all major features of agentobs in depth.
 Start with [Events](events.md) if you are new to the library, then proceed to
 whichever features your use case requires.
 

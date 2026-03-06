@@ -12,14 +12,14 @@ Usage
 
 from __future__ import annotations
 
-import tracium
-from tracium import configure, tracer
-from tracium.integrations import openai as openai_integration  # noqa: F401 (auto-patches)
+import agentobs
+from agentobs import configure, tracer
+from agentobs.integrations import openai as openai_integration  # noqa: F401 (auto-patches)
 
-# Configure Tracium to write events to a JSONL file.
+# Configure AgentOBS to write events to a JSONL file.
 configure(
     exporter="jsonl",
-    endpoint="tracium_events.jsonl",
+    endpoint="agentobs_events.jsonl",
     service_name="openai-chat-example",
     env="development",
 )
@@ -45,4 +45,4 @@ def chat(prompt: str) -> str:
 if __name__ == "__main__":
     answer = chat("What is LLM observability in one sentence?")
     print(f"Answer: {answer}")
-    print("Events written to tracium_events.jsonl")
+    print("Events written to agentobs_events.jsonl")

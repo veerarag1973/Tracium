@@ -1,4 +1,4 @@
-# tracium.governance
+# agentobs.governance
 
 Policy-based event governance — block prohibited event types, warn on deprecated
 usage, and enforce custom domain rules.
@@ -34,7 +34,7 @@ trigger deprecation warnings, and any custom rule callbacks.
 **Example:**
 
 ```python
-from tracium.governance import EventGovernancePolicy
+from agentobs.governance import EventGovernancePolicy
 
 policy = EventGovernancePolicy(
     blocked_types={"llm.internal.debug"},
@@ -144,7 +144,7 @@ Equivalent to `get_global_policy().check_event(event)`.
 **Example:**
 
 ```python
-from tracium.governance import (
+from agentobs.governance import (
     EventGovernancePolicy, GovernanceViolationError,
     set_global_policy, check_event,
 )

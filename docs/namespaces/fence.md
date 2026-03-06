@@ -1,6 +1,6 @@
 # llm.fence — Perimeter / Schema Validation
 
-> **Auto-documented module:** `tracium.namespaces.fence`
+> **Auto-documented module:** `agentobs.namespaces.fence`
 
 The `llm.fence.*` namespace records the outcome of structured-output
 validation, retry attempts, and hard failures when a schema fence rejects
@@ -32,8 +32,8 @@ model output (RFC-0001 §4).
 ## Example
 
 ```python
-from tracium import Event, EventType
-from tracium.namespaces.fence import FenceValidatedPayload
+from agentobs import Event, EventType
+from agentobs.namespaces.fence import FenceValidatedPayload
 
 payload = FenceValidatedPayload(
     fence_id="customer-reply-schema-v2",

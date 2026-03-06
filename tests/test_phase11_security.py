@@ -15,12 +15,12 @@ import time
 from typing import TYPE_CHECKING
 from unittest.mock import patch
 
-import tracium
-from tracium import configure, tracer
-from tracium._stream import _reset_exporter
-from tracium.event import Event
-from tracium.redact import RedactionPolicy, Sensitivity
-from tracium.signing import verify_chain
+import agentobs
+from agentobs import configure, tracer
+from agentobs._stream import _reset_exporter
+from agentobs.event import Event
+from agentobs.redact import RedactionPolicy, Sensitivity
+from agentobs.signing import verify_chain
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -33,7 +33,7 @@ _SECRET = "phase11-test-signing-key-xyz"  # noqa: S105
 
 
 def _emit_spans(n: int, tmp_path: Path, signing_key: str | None = None, redaction_policy=None) -> list[dict]:  # noqa: E501
-    """Configure Tracium, emit n spans, return parsed JSONL dicts."""
+    """Configure AgentOBS, emit n spans, return parsed JSONL dicts."""
     jsonl = tmp_path / "events.jsonl"
     kwargs: dict = {
         "exporter": "jsonl",
@@ -157,7 +157,7 @@ class TestSigningChain:
 class TestRedactionPipeline:
     def test_redaction_policy_apply_called(self, tmp_path):
         """RedactionPolicy.apply() must be invoked for each emitted event."""
-        from tracium.redact import RedactionPolicy as _RP  # noqa: N814, PLC0415
+        from agentobs.redact import RedactionPolicy as _RP  # noqa: N814, PLC0415
 
         with patch.object(_RP, "apply", autospec=True, wraps=_RP.apply) as mock_apply:
             _emit_spans(2, tmp_path, redaction_policy=RedactionPolicy(min_sensitivity=Sensitivity.PII))  # noqa: E501
@@ -173,7 +173,7 @@ class TestRedactionPipeline:
 
     def test_redaction_before_signing(self, tmp_path):
         """Redaction must run before signing so signatures cover the redacted payload."""
-        from tracium.redact import RedactionPolicy as _RP  # noqa: N814, PLC0415
+        from agentobs.redact import RedactionPolicy as _RP  # noqa: N814, PLC0415
 
         call_order: list[str] = []
         policy = RedactionPolicy(min_sensitivity=Sensitivity.PII)
@@ -192,7 +192,7 @@ class TestRedactionPipeline:
         _reset_exporter()
 
         with patch.object(_RP, "apply", spy_apply), \
-             patch("tracium.signing.sign") as mock_sign:
+             patch("agentobs.signing.sign") as mock_sign:
             mock_sign.side_effect = lambda event, org_secret, prev_event=None: event
             with tracer.span("order-test"):
                 pass
@@ -206,7 +206,7 @@ class TestRedactionPipeline:
 
     def test_no_redaction_without_policy(self, tmp_path):
         """Without a redaction_policy, apply() must never be called."""
-        with patch("tracium.redact.RedactionPolicy.apply") as mock_apply:
+        with patch("agentobs.redact.RedactionPolicy.apply") as mock_apply:
             _emit_spans(2, tmp_path, signing_key=None, redaction_policy=None)
             mock_apply.assert_not_called()
 
@@ -239,19 +239,19 @@ class TestSigningAndRedactionTogether:
 class TestConfigureIntegration:
     def test_configure_signing_key_flows_to_stream(self, tmp_path):
         """Setting signing_key via configure() must reach _dispatch."""
-        from tracium.config import get_config  # noqa: PLC0415
+        from agentobs.config import get_config  # noqa: PLC0415
         configure(signing_key="my-key-abc")
         assert get_config().signing_key == "my-key-abc"
         configure(signing_key=None)  # clean up
 
     def test_configure_redaction_policy_flows_to_stream(self, tmp_path):
         """Setting redaction_policy via configure() must reach _dispatch."""
-        from tracium.config import get_config  # noqa: PLC0415
+        from agentobs.config import get_config  # noqa: PLC0415
         policy = RedactionPolicy()
         configure(redaction_policy=policy)
         assert get_config().redaction_policy is policy
         configure(redaction_policy=None)  # clean up
 
     def test_version_is_1_0_0(self):
-        """tracium.__version__ must match the current release."""
-        assert tracium.__version__ == "1.0.4"
+        """agentobs.__version__ must match the current release."""
+        assert agentobs.__version__ == "1.0.5"

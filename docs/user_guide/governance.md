@@ -1,13 +1,13 @@
 # Governance, Consumer Registry & Deprecations
 
-tracium v1.1 adds three complementary safety and lifecycle-management
+agentobs v1.1 adds three complementary safety and lifecycle-management
 subsystems:
 
 | Subsystem | Module | Purpose |
 |-----------|--------|---------|
-| **Consumer Registry** | `tracium.consumer` | Track which tools depend on which schema namespaces |
-| **Event Governance** | `tracium.governance` | Block or warn on specific event types via policy |
-| **Deprecation Tracking** | `tracium.deprecations` | Register and surface deprecation notices at runtime |
+| **Consumer Registry** | `agentobs.consumer` | Track which tools depend on which schema namespaces |
+| **Event Governance** | `agentobs.governance` | Block or warn on specific event types via policy |
+| **Deprecation Tracking** | `agentobs.deprecations` | Register and surface deprecation notices at runtime |
 
 ---
 
@@ -15,14 +15,14 @@ subsystems:
 
 Use the consumer registry to declare, at startup, which schema namespaces your
 tool reads and at what minimum schema version.  When the installed
-`tracium` package cannot satisfy a registered consumer's minimum
+`agentobs` package cannot satisfy a registered consumer's minimum
 version, `assert_compatible()` raises `IncompatibleSchemaError` immediately —
 before any events are processed.
 
 ### Register your tool
 
 ```python
-from tracium.consumer import register_consumer, assert_compatible
+from agentobs.consumer import register_consumer, assert_compatible
 
 register_consumer(
     "billing-agent",
@@ -46,7 +46,7 @@ A consumer with `schema_version="X.Y"` is **compatible** with installed version
 ### Inspect the registry
 
 ```python
-from tracium.consumer import get_registry
+from agentobs.consumer import get_registry
 
 registry = get_registry()
 
@@ -61,7 +61,7 @@ cost_consumers = registry.by_namespace("llm.cost.*")
 ### Handle incompatibilities
 
 ```python
-from tracium.consumer import assert_compatible, IncompatibleSchemaError
+from agentobs.consumer import assert_compatible, IncompatibleSchemaError
 
 try:
     assert_compatible()
@@ -73,7 +73,7 @@ except IncompatibleSchemaError as exc:
 ### CLI check
 
 ```bash
-tracium check-consumers
+agentobs check-consumers
 ```
 
 Prints a table of all registered consumers and their compatibility status.
@@ -88,7 +88,7 @@ event types are acceptable, which are deprecated, and any custom validation rule
 ### Configure a policy
 
 ```python
-from tracium.governance import (
+from agentobs.governance import (
     EventGovernancePolicy, GovernanceViolationError, GovernanceWarning,
     set_global_policy, check_event,
 )
@@ -134,7 +134,7 @@ set_global_policy(policy)
 ### Reset to defaults
 
 ```python
-from tracium.governance import set_global_policy
+from agentobs.governance import set_global_policy
 
 set_global_policy(None)  # resets to empty / permissive policy
 ```
@@ -149,7 +149,7 @@ types and warn callers when they are used.
 ### Register a deprecation notice
 
 ```python
-from tracium.deprecations import mark_deprecated
+from agentobs.deprecations import mark_deprecated
 
 mark_deprecated(
     "llm.legacy.trace",
@@ -163,7 +163,7 @@ mark_deprecated(
 ### Check and warn
 
 ```python
-from tracium.deprecations import warn_if_deprecated
+from agentobs.deprecations import warn_if_deprecated
 
 # Emits stdlib DeprecationWarning if the type is registered
 warn_if_deprecated("llm.legacy.trace")
@@ -172,7 +172,7 @@ warn_if_deprecated("llm.legacy.trace")
 ### List all deprecations
 
 ```python
-from tracium.deprecations import list_deprecated
+from agentobs.deprecations import list_deprecated
 
 for notice in list_deprecated():
     print(notice.format_message())
@@ -181,12 +181,12 @@ for notice in list_deprecated():
 ### CLI list
 
 ```bash
-tracium list-deprecated
+agentobs list-deprecated
 ```
 
 ### Pre-populated notices
 
-At import time, `tracium.deprecations` pre-populates the global
+At import time, `agentobs.deprecations` pre-populates the global
 registry with all entries from `v2_migration_roadmap()`.  This means any event
 type on the Phase 9 roadmap will automatically emit `DeprecationWarning` when
 passed to `warn_if_deprecated()` — without any configuration by the caller.
@@ -198,9 +198,9 @@ passed to `warn_if_deprecated()` — without any configuration by the caller.
 A typical application startup sequence:
 
 ```python
-import tracium
-from tracium.consumer import register_consumer, assert_compatible
-from tracium.governance import EventGovernancePolicy, set_global_policy
+import agentobs
+from agentobs.consumer import register_consumer, assert_compatible
+from agentobs.governance import EventGovernancePolicy, set_global_policy
 
 # 1. Declare dependencies
 register_consumer(
@@ -219,7 +219,7 @@ set_global_policy(EventGovernancePolicy(
 ))
 
 # 4. Process events
-from tracium.governance import check_event
+from agentobs.governance import check_event
 
 for event in incoming_events:
     check_event(event)   # raises on violation

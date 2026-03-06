@@ -1,6 +1,6 @@
 # Namespace Payload Catalogue
 
-Tracium ships typed payload dataclasses for eleven standard namespaces. Every
+AgentOBS ships typed payload dataclasses for eleven standard namespaces. Every
 namespace payload is a Python dataclass that can be serialised to/from a plain
 `dict` for storage in `Event.payload`.
 
@@ -22,23 +22,23 @@ namespace payload is a Python dataclass that can be serialised to/from a plain
 
 | Namespace prefix | Module | Key payload classes |
 |------------------|--------|---------------------|
-| `llm.trace.*` | `tracium.namespaces.trace` | `SpanPayload`, `AgentStepPayload`, `AgentRunPayload` |
-| `llm.cost.*` | `tracium.namespaces.cost` | `CostTokenRecordedPayload`, `CostSessionRecordedPayload`, `CostAttributedPayload` |
-| `llm.cache.*` | `tracium.namespaces.cache` | `CacheHitPayload`, `CacheMissPayload`, `CacheEvictedPayload`, `CacheWrittenPayload` |
-| `llm.diff.*` | `tracium.namespaces.diff` | `DiffComputedPayload`, `DiffRegressionFlaggedPayload` |
-| `llm.eval.*` | `tracium.namespaces.eval_` | `EvalScoreRecordedPayload`, `EvalRegressionDetectedPayload`, `EvalScenarioStartedPayload`, `EvalScenarioCompletedPayload` |
-| `llm.fence.*` | `tracium.namespaces.fence` | `FenceValidatedPayload`, `FenceRetryTriggeredPayload`, `FenceMaxRetriesExceededPayload` |
-| `llm.guard.*` | `tracium.namespaces.guard` | `GuardPayload` |
-| `llm.prompt.*` | `tracium.namespaces.prompt` | `PromptRenderedPayload`, `PromptTemplateLoadedPayload`, `PromptVersionChangedPayload` |
-| `llm.redact.*` | `tracium.namespaces.redact` | `RedactPiiDetectedPayload`, `RedactPhiDetectedPayload`, `RedactAppliedPayload` |
-| `llm.template.*` | `tracium.namespaces.template` | `TemplateRegisteredPayload`, `TemplateVariableBoundPayload`, `TemplateValidationFailedPayload` |
-| `llm.audit.*` | `tracium.namespaces.audit` | `AuditKeyRotatedPayload`, `AuditChainVerifiedPayload`, `AuditChainTamperedPayload` |
+| `llm.trace.*` | `agentobs.namespaces.trace` | `SpanPayload`, `AgentStepPayload`, `AgentRunPayload` |
+| `llm.cost.*` | `agentobs.namespaces.cost` | `CostTokenRecordedPayload`, `CostSessionRecordedPayload`, `CostAttributedPayload` |
+| `llm.cache.*` | `agentobs.namespaces.cache` | `CacheHitPayload`, `CacheMissPayload`, `CacheEvictedPayload`, `CacheWrittenPayload` |
+| `llm.diff.*` | `agentobs.namespaces.diff` | `DiffComputedPayload`, `DiffRegressionFlaggedPayload` |
+| `llm.eval.*` | `agentobs.namespaces.eval_` | `EvalScoreRecordedPayload`, `EvalRegressionDetectedPayload`, `EvalScenarioStartedPayload`, `EvalScenarioCompletedPayload` |
+| `llm.fence.*` | `agentobs.namespaces.fence` | `FenceValidatedPayload`, `FenceRetryTriggeredPayload`, `FenceMaxRetriesExceededPayload` |
+| `llm.guard.*` | `agentobs.namespaces.guard` | `GuardPayload` |
+| `llm.prompt.*` | `agentobs.namespaces.prompt` | `PromptRenderedPayload`, `PromptTemplateLoadedPayload`, `PromptVersionChangedPayload` |
+| `llm.redact.*` | `agentobs.namespaces.redact` | `RedactPiiDetectedPayload`, `RedactPhiDetectedPayload`, `RedactAppliedPayload` |
+| `llm.template.*` | `agentobs.namespaces.template` | `TemplateRegisteredPayload`, `TemplateVariableBoundPayload`, `TemplateValidationFailedPayload` |
+| `llm.audit.*` | `agentobs.namespaces.audit` | `AuditKeyRotatedPayload`, `AuditChainVerifiedPayload`, `AuditChainTamperedPayload` |
 
 ## Using a namespace payload
 
 ```python
-from tracium import Event, EventType
-from tracium.namespaces.trace import SpanPayload, TokenUsage, ModelInfo, GenAISystem
+from agentobs import Event, EventType
+from agentobs.namespaces.trace import SpanPayload, TokenUsage, ModelInfo, GenAISystem
 
 token_usage = TokenUsage(input_tokens=512, output_tokens=128, total_tokens=640)
 model_info  = ModelInfo(system=GenAISystem.OPENAI, name="gpt-4o")

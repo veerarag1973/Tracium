@@ -1,6 +1,6 @@
 # llm.trace — Span and Agent Trace
 
-> **Auto-documented module:** `tracium.namespaces.trace`
+> **Auto-documented module:** `agentobs.namespaces.trace`
 
 The `llm.trace.*` namespace contains payload dataclasses for recording
 individual LLM calls, agent steps, and full agent runs (RFC-0001 §8).
@@ -45,8 +45,8 @@ individual LLM calls, agent steps, and full agent runs (RFC-0001 §8).
 ## Example
 
 ```python
-from tracium import Event, EventType
-from tracium.namespaces.trace import (
+from agentobs import Event, EventType
+from agentobs.namespaces.trace import (
     SpanPayload, TokenUsage, ModelInfo, GenAISystem
 )
 

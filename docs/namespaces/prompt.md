@@ -1,6 +1,6 @@
 # llm.prompt — Prompt Rendering
 
-> **Auto-documented module:** `tracium.namespaces.prompt`
+> **Auto-documented module:** `agentobs.namespaces.prompt`
 
 The `llm.prompt.*` namespace records prompt rendering events, template
 version changes, and template load operations (RFC-0001 §3).
@@ -35,8 +35,8 @@ version changes, and template load operations (RFC-0001 §3).
 
 ```python
 import hashlib
-from tracium import Event, EventType
-from tracium.namespaces.prompt import PromptRenderedPayload
+from agentobs import Event, EventType
+from agentobs.namespaces.prompt import PromptRenderedPayload
 
 rendered = "You are a helpful assistant. User: Hello!"
 rendered_hash = hashlib.sha256(rendered.encode()).hexdigest()

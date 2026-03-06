@@ -1,4 +1,4 @@
-﻿"""Tests for tracium.integrations (LangChain + LlamaIndex handlers)."""
+"""Tests for agentobs.integrations (LangChain + LlamaIndex handlers)."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 if TYPE_CHECKING:
-    from tracium import Event
+    from agentobs import Event
 
 # ---------------------------------------------------------------------------
 # Helpers: inject fake langchain / llamaindex modules
@@ -52,14 +52,14 @@ class TestLLMSchemaCallbackHandler:
         _inject_fake_langchain()
 
     def _make_handler(self) -> Any:
-        from tracium.integrations.langchain import LLMSchemaCallbackHandler  # noqa: PLC0415
+        from agentobs.integrations.langchain import LLMSchemaCallbackHandler  # noqa: PLC0415
 
         return LLMSchemaCallbackHandler(source="test-app", org_id="org-1")
 
     def test_import_error_without_langchain(self) -> None:
         """Verify ImportError is raised when langchain is not installed."""
         with patch.dict(sys.modules, {"langchain_core": None, "langchain": None}):
-            import tracium.integrations.langchain as lc_mod  # noqa: PLC0415
+            import agentobs.integrations.langchain as lc_mod  # noqa: PLC0415
 
             with pytest.raises(ImportError, match="LangChain"):
                 lc_mod._require_langchain()
@@ -154,7 +154,7 @@ class TestLLMSchemaCallbackHandler:
         import asyncio  # noqa: PLC0415
 
         _inject_fake_langchain()
-        from tracium.integrations.langchain import LLMSchemaCallbackHandler  # noqa: PLC0415
+        from agentobs.integrations.langchain import LLMSchemaCallbackHandler  # noqa: PLC0415
 
         exported: list[Any] = []
 
@@ -188,13 +188,13 @@ class TestLLMSchemaEventHandler:
         _inject_fake_llamaindex()
 
     def _make_handler(self) -> Any:
-        from tracium.integrations.llamaindex import LLMSchemaEventHandler  # noqa: PLC0415
+        from agentobs.integrations.llamaindex import LLMSchemaEventHandler  # noqa: PLC0415
 
         return LLMSchemaEventHandler(source="rag-app", org_id="org-2")
 
     def test_import_error_without_llamaindex(self) -> None:
         with patch.dict(sys.modules, {"llama_index": None, "llama_index.core": None}):
-            import tracium.integrations.llamaindex as li_mod  # noqa: PLC0415
+            import agentobs.integrations.llamaindex as li_mod  # noqa: PLC0415
 
             with pytest.raises(ImportError, match="LlamaIndex"):
                 li_mod._require_llamaindex()
@@ -289,7 +289,7 @@ class TestLangChainAdditionalCoverage:
         _inject_fake_langchain()
 
     def _make_handler(self, exporter: Any = None) -> Any:
-        from tracium.integrations.langchain import LLMSchemaCallbackHandler  # noqa: PLC0415
+        from agentobs.integrations.langchain import LLMSchemaCallbackHandler  # noqa: PLC0415
 
         return LLMSchemaCallbackHandler(source="test-app", org_id="org-1", exporter=exporter)
 
@@ -311,7 +311,7 @@ class TestLangChainAdditionalCoverage:
                 "langchain.callbacks": fake_lc_callbacks,
             },
         ):
-            import tracium.integrations.langchain as lc_mod  # noqa: PLC0415
+            import agentobs.integrations.langchain as lc_mod  # noqa: PLC0415
 
             result = lc_mod._require_langchain()
             assert result is fake_lc_callbacks
@@ -387,7 +387,7 @@ class TestLlamaIndexAdditionalCoverage:
         _inject_fake_llamaindex()
 
     def _make_handler(self, exporter: Any = None) -> Any:
-        from tracium.integrations.llamaindex import LLMSchemaEventHandler  # noqa: PLC0415
+        from agentobs.integrations.llamaindex import LLMSchemaEventHandler  # noqa: PLC0415
 
         return LLMSchemaEventHandler(source="rag-app", org_id="org-2", exporter=exporter)
 
@@ -408,7 +408,7 @@ class TestLlamaIndexAdditionalCoverage:
                 "llama_index.callbacks": fake_callbacks,
             },
         ):
-            import tracium.integrations.llamaindex as li_mod  # noqa: PLC0415
+            import agentobs.integrations.llamaindex as li_mod  # noqa: PLC0415
 
             result = li_mod._require_llamaindex()
             assert result is fake_callbacks
@@ -435,7 +435,7 @@ class TestLlamaIndexAdditionalCoverage:
 
     def test_cb_event_type_str_enum_value(self) -> None:
         """Line 128: _cb_event_type_str returns str(event_type.value) for enum-like objects."""
-        from tracium.integrations.llamaindex import LLMSchemaEventHandler  # noqa: PLC0415
+        from agentobs.integrations.llamaindex import LLMSchemaEventHandler  # noqa: PLC0415
 
         class FakeEnum:
             value = "LLM"

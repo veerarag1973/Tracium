@@ -10,14 +10,14 @@ from __future__ import annotations
 import pytest
 
 # ── audit ─────────────────────────────────────────────────────────────────────
-from tracium.namespaces.audit import (
+from agentobs.namespaces.audit import (
     AuditChainTamperedPayload,
     AuditChainVerifiedPayload,
     AuditKeyRotatedPayload,
 )
 
 # ── cache ─────────────────────────────────────────────────────────────────────
-from tracium.namespaces.cache import (
+from agentobs.namespaces.cache import (
     CacheEvictedPayload,
     CacheHitPayload,
     CacheMissPayload,
@@ -25,54 +25,54 @@ from tracium.namespaces.cache import (
 )
 
 # ── cost ──────────────────────────────────────────────────────────────────────
-from tracium.namespaces.cost import (
+from agentobs.namespaces.cost import (
     CostSessionRecordedPayload,
     CostTokenRecordedPayload,
 )
 
 # ── diff ──────────────────────────────────────────────────────────────────────
-from tracium.namespaces.diff import DiffComputedPayload
+from agentobs.namespaces.diff import DiffComputedPayload
 
 # ── eval_ ─────────────────────────────────────────────────────────────────────
-from tracium.namespaces.eval_ import (
+from agentobs.namespaces.eval_ import (
     EvalRegressionDetectedPayload,
     EvalScenarioCompletedPayload,
     EvalScoreRecordedPayload,
 )
 
 # ── fence ─────────────────────────────────────────────────────────────────────
-from tracium.namespaces.fence import (
+from agentobs.namespaces.fence import (
     FenceMaxRetriesExceededPayload,
     FenceRetryTriggeredPayload,
     FenceValidatedPayload,
 )
 
 # ── guard ─────────────────────────────────────────────────────────────────────
-from tracium.namespaces.guard import GuardPayload
+from agentobs.namespaces.guard import GuardPayload
 
 # ── prompt ────────────────────────────────────────────────────────────────────
-from tracium.namespaces.prompt import (
+from agentobs.namespaces.prompt import (
     PromptRenderedPayload,
     PromptTemplateLoadedPayload,
     PromptVersionChangedPayload,
 )
 
 # ── redact ────────────────────────────────────────────────────────────────────
-from tracium.namespaces.redact import (
+from agentobs.namespaces.redact import (
     RedactAppliedPayload,
     RedactPhiDetectedPayload,
     RedactPiiDetectedPayload,
 )
 
 # ── template ──────────────────────────────────────────────────────────────────
-from tracium.namespaces.template import (
+from agentobs.namespaces.template import (
     TemplateRegisteredPayload,
     TemplateValidationFailedPayload,
     TemplateVariableBoundPayload,
 )
 
 # ── trace ─────────────────────────────────────────────────────────────────────
-from tracium.namespaces.trace import (
+from agentobs.namespaces.trace import (
     AgentRunPayload,
     AgentStepPayload,
     CostBreakdown,

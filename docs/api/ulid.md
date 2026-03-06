@@ -1,4 +1,4 @@
-# tracium.ulid
+# agentobs.ulid
 
 Zero-dependency ULID (Universally Unique Lexicographically Sortable Identifier)
 generation, validation, and timestamp extraction.
@@ -36,7 +36,7 @@ Properties of the returned ULID:
 **Example:**
 
 ```python
-from tracium.ulid import generate
+from agentobs.ulid import generate
 
 event_id = generate()  # e.g. "01ARYZ3NDEKTSV4RRFFQ69G5FAV"
 ```
@@ -63,7 +63,7 @@ Validation checks:
 **Example:**
 
 ```python
-from tracium.ulid import validate
+from agentobs.ulid import validate
 
 validate("01ARYZ3NDEKTSV4RRFFQ69G5FAV")  # True
 validate("not-a-ulid")                     # False
@@ -88,7 +88,7 @@ Extract the embedded millisecond timestamp from a ULID.
 **Example:**
 
 ```python
-from tracium.ulid import extract_timestamp_ms
+from agentobs.ulid import extract_timestamp_ms
 from datetime import datetime, timezone
 
 ms = extract_timestamp_ms("01ARYZ3NDEKTSV4RRFFQ69G5FAV")

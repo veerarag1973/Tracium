@@ -1,4 +1,4 @@
-﻿"""Tests for tracium/export/webhook.py — WebhookExporter.
+"""Tests for agentobs/export/webhook.py — WebhookExporter.
 
 Coverage targets
 ----------------
@@ -23,9 +23,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from tracium.event import Event
-from tracium.exceptions import ExportError
-from tracium.export.webhook import (
+from agentobs.event import Event
+from agentobs.exceptions import ExportError
+from agentobs.export.webhook import (
     _SIGNATURE_HEADER,
     WebhookExporter,
     _sign_body,
@@ -361,7 +361,7 @@ class TestRetryLogic:
             return _mock_urlopen_success()
 
         with patch("urllib.request.urlopen", side_effect=_fake):  # noqa: SIM117
-            with patch("tracium.export.webhook.asyncio.sleep", new_callable=AsyncMock):
+            with patch("agentobs.export.webhook.asyncio.sleep", new_callable=AsyncMock):
                 asyncio.run(exp.export(event))
 
         assert call_count == 3
@@ -382,7 +382,7 @@ class TestRetryLogic:
             return _mock_urlopen_success()
 
         with patch("urllib.request.urlopen", side_effect=_fake):  # noqa: SIM117
-            with patch("tracium.export.webhook.asyncio.sleep", new_callable=AsyncMock):
+            with patch("agentobs.export.webhook.asyncio.sleep", new_callable=AsyncMock):
                 asyncio.run(exp.export(event))
 
         assert call_count == 2
@@ -419,7 +419,7 @@ class TestRetryLogic:
             raise OSError("persistent failure")
 
         with patch("urllib.request.urlopen", side_effect=_fake):  # noqa: SIM117
-            with patch("tracium.export.webhook.asyncio.sleep", new_callable=AsyncMock):
+            with patch("agentobs.export.webhook.asyncio.sleep", new_callable=AsyncMock):
                 with pytest.raises(ExportError) as exc_info:
                     asyncio.run(exp.export(event))
 

@@ -1,4 +1,4 @@
-﻿"""Tests for tracium.export.datadog (DatadogExporter)."""
+"""Tests for agentobs.export.datadog (DatadogExporter)."""
 
 from __future__ import annotations
 
@@ -8,15 +8,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-pytest.importorskip("tracium.export.datadog", reason="tracium.export.datadog not yet implemented (Phase 8)")  # noqa: E501
+pytest.importorskip("agentobs.export.datadog", reason="agentobs.export.datadog not yet implemented (Phase 8)")  # noqa: E501
 
-from tracium import Event, EventType, Tags
-from tracium.exceptions import ExportError
-from tracium.export.datadog import (
+from agentobs import Event, EventType, Tags
+from agentobs.exceptions import ExportError
+from agentobs.export.datadog import (
     DatadogExporter,
     DatadogResourceAttributes,
 )
-from tracium.ulid import generate as gen_ulid
+from agentobs.ulid import generate as gen_ulid
 
 FIXED_TIMESTAMP = "2026-03-01T12:00:00.000000Z"
 
@@ -194,7 +194,7 @@ class TestExportAsync:
             mock_resp.read.return_value = b""
             return mock_resp
 
-        with patch("tracium.export.datadog.urllib.request.urlopen", _mock_urlopen):
+        with patch("agentobs.export.datadog.urllib.request.urlopen", _mock_urlopen):
             async def _run() -> None:
                 await exporter.export(sample_event)
 
@@ -210,7 +210,7 @@ class TestExportAsync:
             mock_resp.read.return_value = b""
             return mock_resp
 
-        with patch("tracium.export.datadog.urllib.request.urlopen", _mock_urlopen):
+        with patch("agentobs.export.datadog.urllib.request.urlopen", _mock_urlopen):
             async def _run() -> None:
                 await exporter.export_batch([sample_event, sample_event])
 
@@ -224,7 +224,7 @@ class TestExportAsync:
         def _fail_urlopen(req: Any, timeout: Any = None) -> Any:
             raise urllib.error.HTTPError(None, 500, "Internal Server Error", {}, None)
 
-        with patch("tracium.export.datadog.urllib.request.urlopen", _fail_urlopen):
+        with patch("agentobs.export.datadog.urllib.request.urlopen", _fail_urlopen):
             async def _run() -> None:
                 await exporter.export(sample_event)
 
@@ -237,7 +237,7 @@ class TestExportAsync:
         def _fail_urlopen(req: Any, timeout: Any = None) -> Any:
             raise OSError("connection refused")
 
-        with patch("tracium.export.datadog.urllib.request.urlopen", _fail_urlopen):
+        with patch("agentobs.export.datadog.urllib.request.urlopen", _fail_urlopen):
             async def _run() -> None:
                 await exporter.export(sample_event)
 
@@ -282,7 +282,7 @@ class TestTraceSpanExport:
             mock_resp.read.return_value = b""
             return mock_resp
 
-        with patch("tracium.export.datadog.urllib.request.urlopen", _mock_urlopen):
+        with patch("agentobs.export.datadog.urllib.request.urlopen", _mock_urlopen):
             async def _run() -> None:
                 await exporter.export(event)
 
@@ -307,7 +307,7 @@ class TestTraceSpanExport:
             mock_resp.read.return_value = b""
             return mock_resp
 
-        with patch("tracium.export.datadog.urllib.request.urlopen", _mock_urlopen):
+        with patch("agentobs.export.datadog.urllib.request.urlopen", _mock_urlopen):
             async def _run() -> None:
                 await exporter.export(event)
 
@@ -358,7 +358,7 @@ class TestTraceSpanExport:
         def _fail(req: Any, timeout: Any = None) -> Any:
             raise urllib.error.HTTPError(None, 502, "Bad Gateway", {}, None)
 
-        with patch("tracium.export.datadog.urllib.request.urlopen", _fail):
+        with patch("agentobs.export.datadog.urllib.request.urlopen", _fail):
             async def _run() -> None:
                 await exporter.export(event)
 
@@ -382,7 +382,7 @@ class TestTraceSpanExport:
         def _fail(req: Any, timeout: Any = None) -> Any:
             raise OSError("connection refused to agent")
 
-        with patch("tracium.export.datadog.urllib.request.urlopen", _fail):
+        with patch("agentobs.export.datadog.urllib.request.urlopen", _fail):
             async def _run() -> None:
                 await exporter.export(event)
 

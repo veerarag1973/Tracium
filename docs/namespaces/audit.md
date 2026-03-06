@@ -1,6 +1,6 @@
 # llm.audit — Audit Chain Events
 
-> **Auto-documented module:** `tracium.namespaces.audit`
+> **Auto-documented module:** `agentobs.namespaces.audit`
 
 The `llm.audit.*` namespace records HMAC signing-key lifecycle events and the
 results of audit-chain verification runs (RFC-0001 §11).  These events allow
@@ -36,14 +36,14 @@ of any chain segment.
 ### Example
 
 ```python
-from tracium import Event, EventType
-from tracium.namespaces.audit import AuditKeyRotatedPayload
+from agentobs import Event, EventType
+from agentobs.namespaces.audit import AuditKeyRotatedPayload
 
 payload = AuditKeyRotatedPayload(
     key_id="key_01HX_v2",
     previous_key_id="key_01HX_v1",
     rotated_at="2026-03-04T12:00:00.000000Z",
-    rotated_by="ops-bot@tracium.io",
+    rotated_by="ops-bot@agentobs.io",
     rotation_reason="scheduled",
 )
 
@@ -72,8 +72,8 @@ Records that a segment of the audit chain was checked and found intact.
 ### Example
 
 ```python
-from tracium import Event, EventType
-from tracium.namespaces.audit import AuditChainVerifiedPayload
+from agentobs import Event, EventType
+from agentobs.namespaces.audit import AuditChainVerifiedPayload
 
 payload = AuditChainVerifiedPayload(
     verified_from_event_id="01HXABC0000000000000000000",
@@ -111,8 +111,8 @@ chain.  `severity` guides incident-response triage.
 ### Example
 
 ```python
-from tracium import Event, EventType
-from tracium.namespaces.audit import AuditChainTamperedPayload
+from agentobs import Event, EventType
+from agentobs.namespaces.audit import AuditChainTamperedPayload
 
 payload = AuditChainTamperedPayload(
     first_tampered_event_id="01HXDEF0000000000000000000",

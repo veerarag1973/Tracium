@@ -9,7 +9,7 @@ is stored, exported, or logged.
 `Sensitivity` defines five ordered levels:
 
 ```python
-from tracium.redact import Sensitivity
+from agentobs.redact import Sensitivity
 
 Sensitivity.PUBLIC       # 1 — safe to log anywhere
 Sensitivity.INTERNAL     # 2 — internal-only
@@ -23,8 +23,8 @@ Sensitivity.SECRET       # 5 — credentials, tokens, keys
 Wrap any payload value in `Redactable` to mark it:
 
 ```python
-from tracium import Event, EventType
-from tracium.redact import Redactable, Sensitivity
+from agentobs import Event, EventType
+from agentobs.redact import Redactable, Sensitivity
 
 event = Event(
     event_type=EventType.PROMPT_SAVED,
@@ -46,7 +46,7 @@ event = Event(
 above the policy's `min_sensitivity`:
 
 ```python
-from tracium.redact import RedactionPolicy, Sensitivity
+from agentobs.redact import RedactionPolicy, Sensitivity
 
 policy = RedactionPolicy(
     min_sensitivity=Sensitivity.PII,
@@ -70,7 +70,7 @@ for field_name in result.fields_redacted:
     print(f"  {field_name} was redacted")
 
 # Check nothing was missed
-from tracium.redact import assert_redacted
+from agentobs.redact import assert_redacted
 assert_redacted(result, min_sensitivity=Sensitivity.PII)
 # raises PIINotRedactedError if any PII field was left unredacted
 ```
@@ -78,7 +78,7 @@ assert_redacted(result, min_sensitivity=Sensitivity.PII)
 ## Detecting PII without redacting
 
 ```python
-from tracium.redact import contains_pii
+from agentobs.redact import contains_pii
 
 if contains_pii(event):
     print("Event contains PII — apply policy before exporting")
@@ -89,7 +89,7 @@ if contains_pii(event):
 `PII_TYPES` provides the built-in set of PII type labels:
 
 ```python
-from tracium.redact import PII_TYPES
+from agentobs.redact import PII_TYPES
 print(PII_TYPES)
 # frozenset({'email', 'phone', 'name', 'address', 'ip', 'ssn', 'dob', ...})
 ```
@@ -105,7 +105,7 @@ The recommended workflow is:
    catch unannotated fields.
 
 ```python
-from tracium.redact import RedactionPolicy, Sensitivity, assert_redacted
+from agentobs.redact import RedactionPolicy, Sensitivity, assert_redacted
 
 # Strict policy — redact everything at PII or above
 CORP_POLICY = RedactionPolicy(

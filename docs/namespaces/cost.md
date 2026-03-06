@@ -1,6 +1,6 @@
 # llm.cost — Cost Tracking
 
-> **Auto-documented module:** `tracium.namespaces.cost`
+> **Auto-documented module:** `agentobs.namespaces.cost`
 
 The `llm.cost.*` namespace records token-level cost estimates, per-session
 budget summaries, and cost attribution records (RFC-0001 §9).
@@ -31,9 +31,9 @@ budget summaries, and cost attribution records (RFC-0001 §9).
 ## Example
 
 ```python
-from tracium import Event, EventType
-from tracium.namespaces.cost import CostTokenRecordedPayload
-from tracium.namespaces.trace import (
+from agentobs import Event, EventType
+from agentobs.namespaces.cost import CostTokenRecordedPayload
+from agentobs.namespaces.trace import (
     CostBreakdown, TokenUsage, ModelInfo, GenAISystem
 )
 

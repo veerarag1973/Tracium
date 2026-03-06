@@ -1,4 +1,4 @@
-﻿"""Performance benchmark tests validating all NFR targets.
+"""Performance benchmark tests validating all NFR targets.
 
 NFR targets (from implementationplan.md):
     - Event creation (no signing)          < 1ms   per event
@@ -17,9 +17,9 @@ import time
 
 import pytest
 
-from tracium import Event, EventType
-from tracium.export.otlp import _event_to_attributes
-from tracium.signing import sign
+from agentobs import Event, EventType
+from agentobs.export.otlp import _event_to_attributes
+from agentobs.signing import sign
 
 # ---------------------------------------------------------------------------
 # Shared helpers

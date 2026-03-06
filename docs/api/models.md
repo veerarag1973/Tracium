@@ -1,6 +1,6 @@
-# tracium.models
+# agentobs.models
 
-Pydantic v2 model layer for tracium events.
+Pydantic v2 model layer for agentobs events.
 
 Provides `EventModel` (and `TagsModel`) which mirror the `Event` envelope with
 strict Pydantic field validation and bidirectional conversion.
@@ -8,7 +8,7 @@ strict Pydantic field validation and bidirectional conversion.
 **Requires the `pydantic` extra:**
 
 ```bash
-pip install "tracium[pydantic]"
+pip install "agentobs[pydantic]"
 ```
 
 All validation rules are equivalent to `Event.validate()`, so
@@ -30,7 +30,7 @@ The model is frozen (immutable).
 **Example:**
 
 ```python
-from tracium.models import TagsModel
+from agentobs.models import TagsModel
 
 tags = TagsModel(env="production", model="gpt-4o")
 tags.model_dump()  # {"env": "production", "model": "gpt-4o"}
@@ -66,7 +66,7 @@ Convert back to a `Tags` instance.
 class EventModel(BaseModel)
 ```
 
-Pydantic v2 model for the tracium event envelope.
+Pydantic v2 model for the agentobs event envelope.
 
 The model is frozen (`frozen=True`). Each field carries a Pydantic `Field`
 description and is validated by a `@field_validator`. Validation rules are
@@ -97,7 +97,7 @@ equivalent to `Event.validate()`.
 **Example:**
 
 ```python
-from tracium.models import EventModel
+from agentobs.models import EventModel
 
 model = EventModel(
     event_id="01ARYZ3NDEKTSV4RRFFQ69G5FAV",

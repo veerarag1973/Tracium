@@ -1,4 +1,4 @@
-# tracium.signing
+# agentobs.signing
 
 HMAC-SHA256 event signing, chain verification, and the `AuditStream` class.
 
@@ -62,7 +62,7 @@ The original event is **not** mutated.
 **Example:**
 
 ```python
-from tracium.signing import sign
+from agentobs.signing import sign
 
 signed = sign(event, org_secret="my-secret")
 assert signed.signature is not None
@@ -163,7 +163,7 @@ maintains a tamper-evident chain.
 **Example:**
 
 ```python
-from tracium.signing import AuditStream
+from agentobs.signing import AuditStream
 
 stream = AuditStream(org_secret="my-secret", source="my-service@1.0.0")
 signed = stream.append(event)

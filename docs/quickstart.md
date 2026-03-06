@@ -11,7 +11,7 @@ OTLP — in under five minutes.
 pip install agentobs
 ```
 
-> The PyPI distribution is **`agentobs`**; the import name is `tracium`.
+> The PyPI distribution is **`agentobs`**; the import name is `agentobs`.
 
 For optional features:
 
@@ -30,7 +30,7 @@ Every interaction with an LLM tool is represented as an `Event`.
 The minimum required fields are `event_type`, `source`, and `payload`:
 
 ```python
-from tracium import Event, EventType
+from agentobs import Event, EventType
 
 event = Event(
     event_type=EventType.TRACE_SPAN_COMPLETED,
@@ -46,7 +46,7 @@ print(event.to_json())       # compact JSON
 ### Full event with optional fields
 
 ```python
-from tracium import Event, EventType, Tags
+from agentobs import Event, EventType, Tags
 
 event = Event(
     event_type=EventType.TRACE_SPAN_COMPLETED,
@@ -62,13 +62,13 @@ event = Event(
 
 ## Typed namespace payloads
 
-Use the typed payload dataclasses from `tracium.namespaces` to get
+Use the typed payload dataclasses from `agentobs.namespaces` to get
 field validation and IDE auto-complete for each event namespace:
 
 ```python
 import dataclasses
-from tracium import Event, EventType
-from tracium.namespaces.trace import (
+from agentobs import Event, EventType
+from agentobs.namespaces.trace import (
     SpanPayload, TokenUsage, ModelInfo, GenAISystem, GenAIOperationName
 )
 
@@ -96,8 +96,8 @@ event = Event(
 Sign individual events or build a full tamper-evident chain:
 
 ```python
-from tracium import Event, EventType
-from tracium.signing import sign, verify, AuditStream
+from agentobs import Event, EventType
+from agentobs.signing import sign, verify, AuditStream
 
 # --- Single event ---
 event = Event(
@@ -129,8 +129,8 @@ assert result.gaps == []              # no deletions
 Mark sensitive fields and apply a policy before storing or exporting events:
 
 ```python
-from tracium import Event, EventType
-from tracium.redact import Redactable, RedactionPolicy, Sensitivity
+from agentobs import Event, EventType
+from agentobs.redact import Redactable, RedactionPolicy, Sensitivity
 
 policy = RedactionPolicy(min_sensitivity=Sensitivity.PII, redacted_by="policy:corp-v1")
 
@@ -150,8 +150,8 @@ result = policy.apply(event)
 
 ```python
 import asyncio
-from tracium import Event, EventType
-from tracium.export.jsonl import JSONLExporter
+from agentobs import Event, EventType
+from agentobs.export.jsonl import JSONLExporter
 
 exporter = JSONLExporter("events.jsonl")
 events = [
@@ -168,4 +168,4 @@ See [user_guide/export.md](user_guide/export.md) for OTLP, webhook, and `OTelBri
 - [User Guide](user_guide/index.md) — in-depth guide to all features
 - [API Reference](api/index.md) — full API reference
 - [Namespace Payload Catalogue](namespaces/index.md) — typed payload catalogue
-- [CLI](cli.md) — `tracium check-compat` command
+- [CLI](cli.md) — `agentobs check-compat` command

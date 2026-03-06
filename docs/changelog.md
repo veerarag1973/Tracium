@@ -6,11 +6,20 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
-## 1.0.4 (current) — 2026-03-05
+## 1.0.5 (current) — 2026-03-06
 
 **Version bump**
 
-- Bumped version to 1.0.4 across `pyproject.toml`, `tracium/__init__.py`, docs, and tests.
+- Bumped version to 1.0.5 across `pyproject.toml`, `agentobs/__init__.py`, docs, and tests.
+- Completed full rename from `tracium` to `agentobs` across the entire codebase.
+
+---
+
+## 1.0.4 — 2026-03-05
+
+**Version bump**
+
+- Bumped version to 1.0.4 across `pyproject.toml`, `agentobs/__init__.py`, docs, and tests.
 
 ---
 
@@ -43,13 +52,13 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 **Phase 10 — CLI Tooling**
 
-- **`tracium validate EVENTS_JSONL`** — schema-validates every event in a
+- **`agentobs validate EVENTS_JSONL`** — schema-validates every event in a
   JSONL file; prints per-line errors.
-- **`tracium audit-chain EVENTS_JSONL`** — verifies HMAC signing-chain
-  integrity; reads `TRACIUM_SIGNING_KEY` from the environment.
-- **`tracium inspect EVENT_ID EVENTS_JSONL`** — pretty-prints a single event
+- **`agentobs audit-chain EVENTS_JSONL`** — verifies HMAC signing-chain
+  integrity; reads `AGENTOBS_SIGNING_KEY` from the environment.
+- **`agentobs inspect EVENT_ID EVENTS_JSONL`** — pretty-prints a single event
   looked up by `event_id`.
-- **`tracium stats EVENTS_JSONL`** — prints a summary of event counts, token
+- **`agentobs stats EVENTS_JSONL`** — prints a summary of event counts, token
   totals, estimated cost, and timestamp range.
 
 **Phase 11 — Security & Privacy Pipeline**
@@ -75,15 +84,15 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- **Package renamed** from `llm-toolkit-schema` to `tracium` — PyPI distribution is `agentobs` (`pip install agentobs`), import name is `tracium`. The old package name is a deprecated shim that re-exports from `tracium` and emits a `DeprecationWarning`.
+- **Package renamed** from `llm-toolkit-schema` to `agentobs` — PyPI distribution is `agentobs` (`pip install agentobs`), import name is `agentobs`. The old package name is a deprecated shim that re-exports from `agentobs` and emits a `DeprecationWarning`.
 - **Schema version** bumped to `2.0` (SpanForge Observability Standard RFC-0001 v2.0).
 - **36 canonical `EventType` values** registered (RFC-0001 Appendix B).
-- **11 namespace payload modules** ship 42 v2.0 dataclasses under `tracium.namespaces.*`.
+- **11 namespace payload modules** ship 42 v2.0 dataclasses under `agentobs.namespaces.*`.
 - **`TokenUsage`** fields renamed: `prompt_tokens` → `input_tokens`, `completion_tokens` → `output_tokens`, `total` → `total_tokens`.
 - **`ModelInfo`** field change: `provider` (plain string) replaced by `system` (`GenAISystem` enum, OTel `gen_ai.system` aligned).
 - **`SpanPayload`** replaces `SpanCompletedPayload` / `TracePayload`. New sibling payloads: `AgentStepPayload`, `AgentRunPayload`.
 - **`CacheHitPayload`** replaces `CachePayload`; `CostTokenRecordedPayload` replaces `CostPayload`; `EvalScoreRecordedPayload` replaces `EvalPayload`; `FenceValidatedPayload` replaces `FencePayload`; `PromptRenderedPayload` replaces `PromptPayload`; `RedactPiiDetectedPayload` replaces `RedactPayload`; `TemplateRegisteredPayload` replaces `TemplatePayload`; `DiffComputedPayload` replaces `DiffPayload`.
-- **`tracium.namespaces.audit`** — new module: `AuditKeyRotatedPayload`, `AuditChainVerifiedPayload`, `AuditChainTamperedPayload`.
+- **`agentobs.namespaces.audit`** — new module: `AuditKeyRotatedPayload`, `AuditChainVerifiedPayload`, `AuditChainTamperedPayload`.
 
 ---
 
@@ -91,15 +100,15 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- **`OTelBridgeExporter`** (`tracium.export.otel_bridge`) — exports
+- **`OTelBridgeExporter`** (`agentobs.export.otel_bridge`) — exports
   events through any configured OpenTelemetry `TracerProvider`. Requires the
   `[otel]` extra (`opentelemetry-sdk>=1.24`). Unlike `OTLPExporter`, this
   bridge uses the SDK's span lifecycle so all registered `SpanProcessor`
   instances (sampling, batching, auto-instrumentation hooks) fire normally.
 - **`make_traceparent(trace_id, span_id, *, sampled=True)`**
-  (`tracium.export.otlp`) — constructs a W3C TraceContext
+  (`agentobs.export.otlp`) — constructs a W3C TraceContext
   `traceparent` header string (RFC 9429).
-- **`extract_trace_context(headers)`** (`tracium.export.otlp`) —
+- **`extract_trace_context(headers)`** (`agentobs.export.otlp`) —
   parses `traceparent` / `tracestate` headers and returns a dict of
   `{trace_id, span_id, sampled[, tracestate]}`.
 - **`gen_ai.*` semantic convention attributes** (GenAI semconv 1.27+) —
@@ -162,16 +171,16 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- **`GuardPolicy`** (`tracium.namespaces.guard`) — runtime
+- **`GuardPolicy`** (`agentobs.namespaces.guard`) — runtime
   input/output guardrail enforcement with configurable fail-open / fail-closed
   mode and callable checker injection.
-- **`FencePolicy`** (`tracium.namespaces.fence`) — structured-output
+- **`FencePolicy`** (`agentobs.namespaces.fence`) — structured-output
   validation driver with retry-sequence loop and `max_retries` limit.
-- **`TemplatePolicy`** (`tracium.namespaces.template`) — variable
+- **`TemplatePolicy`** (`agentobs.namespaces.template`) — variable
   presence checking and output validation for prompt-template workflows.
-- **`iter_file(path)`** (`tracium.stream`) — synchronous generator
+- **`iter_file(path)`** (`agentobs.stream`) — synchronous generator
   that streams events from an NDJSON file without buffering the entire file.
-- **`aiter_file(path)`** (`tracium.stream`) — async-generator
+- **`aiter_file(path)`** (`agentobs.stream`) — async-generator
   equivalent of `iter_file`.
 
 ---
@@ -182,18 +191,18 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 **Phase 7 — Enterprise Export Backends**
 
-- **`DatadogExporter`** (`tracium.export.datadog`) — async exporter
+- **`DatadogExporter`** (`agentobs.export.datadog`) — async exporter
   that sends events as Datadog APM trace spans (via the local Agent) and as
   Datadog metrics series (via the public API). No `ddtrace` dependency.
 - **`DatadogResourceAttributes`** — frozen dataclass with `service`, `env`,
   `version`, and `extra` fields; `.to_tags()` for tag-string serialisation.
-- **`GrafanaLokiExporter`** (`tracium.export.grafana`) — async
+- **`GrafanaLokiExporter`** (`agentobs.export.grafana`) — async
   exporter that pushes events to Grafana Loki via the `/loki/api/v1/push`
   HTTP endpoint. Supports multi-tenant deployments via `X-Scope-OrgID`.
-- **`ConsumerRegistry`** / **`ConsumerRecord`** (`tracium.consumer`)
+- **`ConsumerRegistry`** / **`ConsumerRecord`** (`agentobs.consumer`)
   — thread-safe registry for declaring schema-namespace dependencies at startup.
   `assert_compatible()` raises `IncompatibleSchemaError` on version mismatches.
-- **`EventGovernancePolicy`** (`tracium.governance`) — data-class
+- **`EventGovernancePolicy`** (`agentobs.governance`) — data-class
   policy with blocked types, deprecated-type warnings, and arbitrary custom
   rule callbacks. Module-level `set_global_policy()` / `check_event()`.
 - **`GovernanceViolationError`**, **`GovernanceWarning`** — governance
@@ -204,19 +213,19 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 - **`EventStream.from_kafka()`** — classmethod constructor that drains a Kafka
   topic into an `EventStream`. Requires optional extra `kafka`.
 - **`DeprecationRegistry`** / **`DeprecationNotice`**
-  (`tracium.deprecations`) — structured per-event-type deprecation
+  (`agentobs.deprecations`) — structured per-event-type deprecation
   tracking with `warn_if_deprecated()` and `list_deprecated()`.
-- **`LLMSchemaCallbackHandler`** (`tracium.integrations.langchain`)
+- **`LLMSchemaCallbackHandler`** (`agentobs.integrations.langchain`)
   — LangChain `BaseCallbackHandler` that emits `llm.trace.*` events for all LLM
   and tool invocations. Requires optional extra `langchain`.
-- **`LLMSchemaEventHandler`** (`tracium.integrations.llamaindex`)
+- **`LLMSchemaEventHandler`** (`agentobs.integrations.llamaindex`)
   — LlamaIndex callback event handler. Requires optional extra `llamaindex`.
 
 **Phase 9 — v2 Migration Framework**
 
-- **`SunsetPolicy`** (`tracium.migrate`) — `Enum` classifying
+- **`SunsetPolicy`** (`agentobs.migrate`) — `Enum` classifying
   removal urgency: `NEXT_MAJOR`, `NEXT_MINOR`, `LONG_TERM`, `UNSCHEDULED`.
-- **`DeprecationRecord`** (`tracium.migrate`) — frozen dataclass
+- **`DeprecationRecord`** (`agentobs.migrate`) — frozen dataclass
   capturing `event_type`, `since`, `sunset`, `sunset_policy`, `replacement`,
   `migration_notes`, and `field_renames` for structured migration guidance.
 - **`v2_migration_roadmap()`** — returns all 9 deprecation records for event
@@ -233,7 +242,7 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 - Version: `1.0.1` → `1.1.0`
 - `export/__init__.py` now re-exports `DatadogExporter`,
   `DatadogResourceAttributes`, and `GrafanaLokiExporter`.
-- Top-level `tracium` package re-exports all Phase 7/8/9 public
+- Top-level `agentobs` package re-exports all Phase 7/8/9 public
   symbols.
 
 ### Optional extras added
@@ -252,10 +261,10 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- **Python package renamed** from `llm_schema` to `tracium`.
-  The import path is now `import tracium` (or
-  `from tracium import ...`).
-  The distribution name `tracium` and all runtime behaviour are
+- **Python package renamed** from `llm_schema` to `agentobs`.
+  The import path is now `import agentobs` (or
+  `from agentobs import ...`).
+  The distribution name `agentobs` and all runtime behaviour are
   unchanged. This is the canonical, permanently stable import name.
 - Version: `1.0.0` → `1.0.1`
 
@@ -268,19 +277,19 @@ by semantic versioning guarantees.
 
 ### Added
 
-- **Compliance package** (`tracium.compliance`) — programmatic v1.0
+- **Compliance package** (`agentobs.compliance`) — programmatic v1.0
   compatibility checklist (CHK-1 through CHK-5), multi-tenant isolation
   verification, and audit chain integrity suite. All checks are callable
   without a pytest dependency.
 - **`test_compatibility()`** — applies the five-point adoption checklist to
-  any sequence of events. Powers the new `tracium check-compat` CLI command.
+  any sequence of events. Powers the new `agentobs check-compat` CLI command.
 - **`verify_tenant_isolation()` / `verify_events_scoped()`** — detect
   cross-tenant data leakage in multi-org deployments.
 - **`verify_chain_integrity()`** — wraps `verify_chain()` with gap,
   tamper, and timestamp-monotonicity diagnostics.
-- **`tracium check-compat`** CLI sub-command — reads a JSON file of
+- **`agentobs check-compat`** CLI sub-command — reads a JSON file of
   serialised events and prints compatibility violations.
-- **`tracium.migrate`** — `MigrationResult` dataclass and
+- **`agentobs.migrate`** — `MigrationResult` dataclass and
   `v1_to_v2()` scaffold (raises `NotImplementedError`; full implementation
   ships in Phase 9).
 - Performance benchmark test suite (`tests/test_benchmarks.py`,
@@ -347,7 +356,7 @@ by semantic versioning guarantees.
 - **PII redaction framework** — `Redactable`, `Sensitivity`,
   `RedactionPolicy`, `RedactionResult`, `contains_pii()`,
   `assert_redacted()`.
-- **Pydantic v2 model layer** — `tracium.models.EventModel` with
+- **Pydantic v2 model layer** — `agentobs.models.EventModel` with
   `from_event()` / `to_event()` round-trip and `model_json_schema()`.
 
 ---

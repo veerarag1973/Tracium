@@ -25,7 +25,7 @@ Run the test suite:
 ```bash
 pytest                             # all tests
 pytest -m perf -v                  # NFR performance benchmarks only
-pytest --cov=tracium -q         # with coverage report
+pytest --cov=agentobs -q         # with coverage report
 ```
 
 ## Code standards
@@ -36,7 +36,7 @@ type checking.
 ```bash
 ruff check .       # lint
 ruff format .      # format
-mypy tracium    # type check
+mypy agentobs    # type check
 ```
 
 All CI checks must pass before a PR is merged. You can run them all at once
@@ -52,13 +52,13 @@ pre-commit run --all-files   # after: pre-commit install
 New code must come with tests that cover every branch.
 
 ```bash
-pytest --cov=tracium --cov-fail-under=100 -q
+pytest --cov=agentobs --cov-fail-under=100 -q
 ```
 
 ## Project layout
 
 ```text
-tracium/
+agentobs/
 ├── event.py           # Core Event + Tags dataclass
 ├── types.py           # EventType enum + helpers
 ├── ulid.py            # ULID generation and validation
@@ -86,19 +86,19 @@ tracium/
 
 ## Adding a new namespace payload
 
-1. Create `tracium/namespaces/<name>.py` following the existing pattern
+1. Create `agentobs/namespaces/<name>.py` following the existing pattern
    (frozen dataclass + `validate()` method + `from_event()` constructor).
-2. Register the new `EventType` members in `tracium/types.py`.
-3. Export the new payload class from `tracium/namespaces/__init__.py`
-   and `tracium/__init__.py`.
+2. Register the new `EventType` members in `agentobs/types.py`.
+3. Export the new payload class from `agentobs/namespaces/__init__.py`
+   and `agentobs/__init__.py`.
 4. Add tests in `tests/test_namespaces.py` — maintain 100% coverage.
 5. Add a `docs/namespaces/<name>.md` page.
 
 ## Adding a new export backend
 
-1. Create `tracium/export/<name>.py`. Inherit from
+1. Create `agentobs/export/<name>.py`. Inherit from
    `Exporter` and implement `export()` and `export_batch()`.
-2. Export the class from `tracium/export/__init__.py`.
+2. Export the class from `agentobs/export/__init__.py`.
 3. Add tests — `tests/test_export_<name>.py`.
 4. Document in `docs/user_guide/export.md`.
 
@@ -117,14 +117,14 @@ test(compliance): cover non-monotonic timestamp branch
 
 Before opening a PR, confirm:
 
-- [ ] `pytest --cov=tracium --cov-fail-under=100 -q` passes
+- [ ] `pytest --cov=agentobs --cov-fail-under=100 -q` passes
 - [ ] `ruff check .` reports no errors
-- [ ] `mypy tracium` reports no errors
+- [ ] `mypy agentobs` reports no errors
 - [ ] New public API has Google-style docstrings
 - [ ] `CHANGELOG.md` updated under the *Unreleased* section
 - [ ] Documentation updated if new public API was added
 
 ## License
 
-tracium is released under the [MIT License](https://github.com/veerarag1973/agentobs/blob/main/LICENSE).
+agentobs is released under the [MIT License](https://github.com/veerarag1973/agentobs/blob/main/LICENSE).
 By contributing you agree that your contributions will be licensed under the same terms.

@@ -13,7 +13,7 @@
 pip install agentobs
 ```
 
-> The PyPI distribution is named **`agentobs`**. The Python import name remains `tracium`.
+> The PyPI distribution is named **`agentobs`**. The Python import name remains `agentobs`.
 
 ## Optional extras
 
@@ -21,7 +21,7 @@ pip install agentobs
 |-------|-----------------|----------------|
 | `jsonschema` | `pip install "agentobs[jsonschema]"` | `validate_event` with full JSON Schema validation |
 | `http` | `pip install "agentobs[http]"` | `OTLPExporter` and `WebhookExporter` (stdlib transport; reserved for future `httpx` upgrade) |
-| `pydantic` | `pip install "agentobs[pydantic]"` | `tracium.models` — Pydantic v2 model layer, `model_json_schema()` |
+| `pydantic` | `pip install "agentobs[pydantic]"` | `agentobs.models` — Pydantic v2 model layer, `model_json_schema()` |
 | `otel` | `pip install "agentobs[otel]"` | `OTelBridgeExporter` — emits events through any configured `TracerProvider` (`opentelemetry-sdk>=1.24`) |
 | `kafka` | `pip install "agentobs[kafka]"` | `EventStream.from_kafka()` via `kafka-python>=2.0` |
 | `langchain` | `pip install "agentobs[langchain]"` | `LLMSchemaCallbackHandler` via `langchain-core>=0.2` |
@@ -52,11 +52,11 @@ all optional extras.
 ## Verify the installation
 
 ```python
-import tracium  # pip install agentobs  →  import tracium
-print(tracium.__version__)   # 1.0.0
-print(tracium.SCHEMA_VERSION)  # 2.0
+import agentobs  # pip install agentobs  →  import agentobs
+print(agentobs.__version__)   # 1.0.0
+print(agentobs.SCHEMA_VERSION)  # 2.0
 
-from tracium import Event, EventType
+from agentobs import Event, EventType
 evt = Event(
     event_type=EventType.TRACE_SPAN_COMPLETED,
     source="smoke-test@1.0.0",

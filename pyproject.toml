@@ -7,8 +7,8 @@ build-backend = "hatchling.build"
 # ---------------------------------------------------------------------------
 [project]
 name = "agentobs"
-version = "1.0.4"
-description = "Tracium — reference implementation of RFC-0001 AGENTOBS, the Observability Schema Standard for Agentic AI Systems"
+version = "1.0.5"
+description = "AgentOBS — reference implementation of RFC-0001 AGENTOBS, the Observability Schema Standard for Agentic AI Systems"
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "LLM Toolkit Team" }]
@@ -90,13 +90,13 @@ docs = [
 ]
 
 [project.scripts]
-tracium = "tracium._cli:main"
+agentobs = "agentobs._cli:main"
 
 # ---------------------------------------------------------------------------
 # Hatch build
 # ---------------------------------------------------------------------------
 [tool.hatch.build.targets.wheel]
-packages = ["tracium"]
+packages = ["agentobs"]
 
 # ---------------------------------------------------------------------------
 # Pytest
@@ -107,7 +107,7 @@ addopts       = [
     "--strict-markers",
     "--tb=short",
     "-ra",
-    "--cov=tracium",
+    "--cov=agentobs",
     "--cov-report=term-missing",
     "--cov-report=html:htmlcov",
     "--cov-fail-under=90",
@@ -125,8 +125,8 @@ filterwarnings = ["error"]   # treat all warnings as errors
 # ---------------------------------------------------------------------------
 [tool.coverage.run]
 branch   = true
-source   = ["tracium"]
-omit     = ["tracium/_cli.py"]   # CLI scaffolded but not in Phase 1 scope
+source   = ["agentobs"]
+omit     = ["agentobs/_cli.py"]   # CLI scaffolded but not in Phase 1 scope
 
 [tool.coverage.report]
 exclude_lines = [
@@ -144,7 +144,7 @@ fail_under   = 90
 [tool.ruff]
 target-version = "py39"
 line-length    = 100
-src            = ["tracium", "tests"]
+src            = ["agentobs", "tests"]
 
 [tool.ruff.lint]
 select = [
@@ -183,7 +183,7 @@ ignore = [
 convention = "google"
 
 [tool.ruff.lint.isort]
-known-first-party = ["tracium"]
+known-first-party = ["agentobs"]
 
 # ---------------------------------------------------------------------------
 # Mypy — strict type checking
@@ -199,4 +199,4 @@ disallow_untyped_defs  = true
 no_implicit_reexport   = true
 show_error_codes       = true
 pretty                 = true
-packages               = ["tracium"]
+packages               = ["agentobs"]

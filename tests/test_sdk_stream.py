@@ -1,4 +1,4 @@
-"""Tests for tracium._stream — emit_span, emit_agent_step, emit_agent_run, _build_source.
+"""Tests for agentobs._stream — emit_span, emit_agent_step, emit_agent_run, _build_source.
 
 Phase 3 SDK coverage target.
 """
@@ -10,8 +10,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-import tracium._stream as stream_mod
-from tracium._span import (
+import agentobs._stream as stream_mod
+from agentobs._span import (
     AgentRunContext,
     AgentRunContextManager,
     AgentStepContext,
@@ -21,17 +21,17 @@ from tracium._span import (
     _run_stack,
     _span_stack,
 )
-from tracium._stream import (
+from agentobs._stream import (
     _build_source,
     _reset_exporter,
     emit_agent_run,
     emit_agent_step,
     emit_span,
 )
-from tracium.types import EventType
+from agentobs.types import EventType
 
 if TYPE_CHECKING:
-    from tracium.event import Event
+    from agentobs.event import Event
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -110,7 +110,7 @@ class TestResetExporter:
         assert stream_mod._cached_exporter is None
 
     def test_reset_causes_rebuild_on_next_use(self) -> None:
-        from tracium.config import configure  # noqa: PLC0415
+        from agentobs.config import configure  # noqa: PLC0415
         configure(exporter="console")
         _reset_exporter()
         # Calling _active_exporter() should rebuild
@@ -160,7 +160,7 @@ class TestEmitSpan:
         assert event.trace_id == span.trace_id
 
     def test_emitted_event_source_from_config(self) -> None:
-        from tracium.config import configure  # noqa: PLC0415
+        from agentobs.config import configure  # noqa: PLC0415
         configure(service_name="test-service", service_version="1.0.0")
         cap = _install_exporter()
         with SpanContextManager(name="span"):
@@ -169,7 +169,7 @@ class TestEmitSpan:
         assert "test-service" in event.source
 
     def test_emitted_event_tags_env(self) -> None:
-        from tracium.config import configure  # noqa: PLC0415
+        from agentobs.config import configure  # noqa: PLC0415
         configure(env="staging")
         cap = _install_exporter()
         with SpanContextManager(name="span"):
@@ -269,16 +269,16 @@ class TestEmitAgentRun:
 @pytest.mark.unit
 class TestBuildExporter:
     def test_console_exporter_built(self) -> None:
-        from tracium.config import configure  # noqa: PLC0415
-        from tracium.exporters.console import SyncConsoleExporter  # noqa: PLC0415
+        from agentobs.config import configure  # noqa: PLC0415
+        from agentobs.exporters.console import SyncConsoleExporter  # noqa: PLC0415
         configure(exporter="console")
         _reset_exporter()
         exp = stream_mod._active_exporter()
         assert isinstance(exp, SyncConsoleExporter)
 
     def test_jsonl_exporter_built(self, tmp_path) -> None:
-        from tracium.config import configure  # noqa: PLC0415
-        from tracium.exporters.jsonl import SyncJSONLExporter  # noqa: PLC0415
+        from agentobs.config import configure  # noqa: PLC0415
+        from agentobs.exporters.jsonl import SyncJSONLExporter  # noqa: PLC0415
         configure(exporter="jsonl", endpoint=str(tmp_path / "test.jsonl"))
         _reset_exporter()
         exp = stream_mod._active_exporter()
@@ -287,8 +287,8 @@ class TestBuildExporter:
         _reset_exporter()
 
     def test_unknown_exporter_falls_back_to_console(self) -> None:
-        from tracium.config import configure  # noqa: PLC0415
-        from tracium.exporters.console import SyncConsoleExporter  # noqa: PLC0415
+        from agentobs.config import configure  # noqa: PLC0415
+        from agentobs.exporters.console import SyncConsoleExporter  # noqa: PLC0415
         configure(exporter="unknown_exporter_xyz")
         _reset_exporter()
         exp = stream_mod._active_exporter()
@@ -297,7 +297,7 @@ class TestBuildExporter:
         _reset_exporter()
 
     def test_org_id_in_event_when_configured(self) -> None:
-        from tracium.config import configure  # noqa: PLC0415
+        from agentobs.config import configure  # noqa: PLC0415
         configure(org_id="org_stream_test")
         cap = _install_exporter()
         _clean_stacks()

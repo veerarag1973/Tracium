@@ -1,10 +1,10 @@
-﻿"""Tests for tracium.actor.ActorContext."""
+"""Tests for agentobs.actor.ActorContext."""
 
 from __future__ import annotations
 
 import pytest
 
-from tracium.actor import ActorContext
+from agentobs.actor import ActorContext
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -124,9 +124,9 @@ class TestActorContext:
 
     def test_embed_in_event_payload(self):
         """ActorContext.to_dict() can be seamlessly embedded in an event payload."""
-        from tracium import Event  # noqa: PLC0415
-        from tracium.namespaces.prompt import PromptVersionChangedPayload  # noqa: PLC0415
-        from tracium.types import EventType  # noqa: PLC0415
+        from agentobs import Event  # noqa: PLC0415
+        from agentobs.namespaces.prompt import PromptVersionChangedPayload  # noqa: PLC0415
+        from agentobs.types import EventType  # noqa: PLC0415
 
         actor = ActorContext(
             user_id="usr_abc",
@@ -150,6 +150,6 @@ class TestActorContext:
 
 class TestActorContextTopLevelExport:
     def test_accessible_from_package_root(self):
-        import tracium  # noqa: PLC0415
-        assert hasattr(tracium, "ActorContext")
-        assert tracium.ActorContext is ActorContext
+        import agentobs  # noqa: PLC0415
+        assert hasattr(agentobs, "ActorContext")
+        assert agentobs.ActorContext is ActorContext

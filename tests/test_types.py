@@ -1,4 +1,4 @@
-﻿"""Tests for tracium.types — EventType enum and namespace helpers.
+"""Tests for agentobs.types — EventType enum and namespace helpers.
 
 100% coverage target.
 """
@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import pytest
 
-from tracium.exceptions import EventTypeError
-from tracium.types import (
+from agentobs.exceptions import EventTypeError
+from agentobs.types import (
     _RESERVED_NAMESPACES,
     EVENT_TYPE_PATTERN,
     EventType,

@@ -1,6 +1,6 @@
-# tracium.exceptions
+# agentobs.exceptions
 
-Typed exception hierarchy for Tracium.
+Typed exception hierarchy for AgentOBS.
 
 All exceptions inherit from `LLMSchemaError`, allowing callers to catch the
 entire family with a single `except LLMSchemaError`.
@@ -32,7 +32,7 @@ LLMSchemaError
 class LLMSchemaError(Exception)
 ```
 
-Base class for all tracium exceptions.
+Base class for all agentobs exceptions.
 
 Write a single broad guard:
 
@@ -40,7 +40,7 @@ Write a single broad guard:
 try:
     ...
 except LLMSchemaError as exc:
-    logger.error("tracium error: %s", exc)
+    logger.error("agentobs error: %s", exc)
 ```
 
 ---

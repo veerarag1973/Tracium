@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import time
 
-from tracium import configure, tracer
+from agentobs import configure, tracer
 
 # Console export prints human-readable output to stdout.
 configure(

@@ -1,6 +1,6 @@
 # llm.cache — Semantic Cache Events
 
-> **Auto-documented module:** `tracium.namespaces.cache`
+> **Auto-documented module:** `agentobs.namespaces.cache`
 
 The `llm.cache.*` namespace records the outcome of semantic cache lookups,
 writes, and evictions (RFC-0001 §7).
@@ -64,9 +64,9 @@ writes, and evictions (RFC-0001 §7).
 ## Example
 
 ```python
-from tracium import Event, EventType
-from tracium.namespaces.cache import CacheHitPayload
-from tracium.namespaces.trace import ModelInfo, GenAISystem, TokenUsage
+from agentobs import Event, EventType
+from agentobs.namespaces.cache import CacheHitPayload
+from agentobs.namespaces.trace import ModelInfo, GenAISystem, TokenUsage
 
 tokens_saved = TokenUsage(input_tokens=512, output_tokens=128, total_tokens=640)
 

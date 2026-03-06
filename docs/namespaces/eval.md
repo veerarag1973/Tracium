@@ -1,6 +1,6 @@
 # llm.eval — Scoring & Evaluation
 
-> **Auto-documented module:** `tracium.namespaces.eval_`
+> **Auto-documented module:** `agentobs.namespaces.eval_`
 
 The `llm.eval.*` namespace records evaluation scores, regression detections,
 and evaluation scenario lifecycle events (RFC-0001 §5).
@@ -36,8 +36,8 @@ and evaluation scenario lifecycle events (RFC-0001 §5).
 ## Example
 
 ```python
-from tracium import Event, EventType
-from tracium.namespaces.eval_ import EvalScoreRecordedPayload
+from agentobs import Event, EventType
+from agentobs.namespaces.eval_ import EvalScoreRecordedPayload
 
 payload = EvalScoreRecordedPayload(
     evaluator="gpt-4o",

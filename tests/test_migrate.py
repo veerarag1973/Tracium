@@ -1,4 +1,4 @@
-﻿"""Tests for tracium.migrate.
+"""Tests for agentobs.migrate.
 
 Covers:
 - MigrationResult dataclass (creation, field access, immutability)
@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import pytest
 
-from tracium import Event, EventType
-from tracium.migrate import (
+from agentobs import Event, EventType
+from agentobs.migrate import (
     DeprecationRecord,
     MigrationResult,
     SunsetPolicy,

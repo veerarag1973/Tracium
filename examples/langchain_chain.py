@@ -12,8 +12,8 @@ Usage
 
 from __future__ import annotations
 
-from tracium import configure
-from tracium.integrations.langchain import LLMSchemaCallbackHandler
+from agentobs import configure
+from agentobs.integrations.langchain import LLMSchemaCallbackHandler
 
 configure(
     exporter="jsonl",
@@ -26,7 +26,7 @@ handler = LLMSchemaCallbackHandler(source="langchain-example@1.0.0")
 
 
 def run_chain(question: str) -> str:
-    """Run a simple LangChain LLM call with Tracium instrumentation."""
+    """Run a simple LangChain LLM call with AgentOBS instrumentation."""
     try:
         from langchain_openai import ChatOpenAI  # noqa: PLC0415
         from langchain.schema import HumanMessage  # noqa: PLC0415

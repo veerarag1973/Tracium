@@ -1,6 +1,6 @@
 # Migration Guide
 
-`tracium.migrate` provides helpers for upgrading stored event payloads
+`agentobs.migrate` provides helpers for upgrading stored event payloads
 to use new namespace payload schemas, plus the Phase 9 v2 migration roadmap
 so you can prepare for breaking changes before v2.0 ships.
 
@@ -10,7 +10,7 @@ Every migration function returns a `MigrationResult` dataclass carrying
 per-event outcome metadata:
 
 ```python
-from tracium.migrate import MigrationResult
+from agentobs.migrate import MigrationResult
 
 result: MigrationResult   # returned by v1_to_v2()
 result.source_version     # "1.0"
@@ -28,7 +28,7 @@ v2.0 schema is finalised. Write the call-site now to receive the working
 implementation in v2.0 with zero code changes:
 
 ```python
-from tracium.migrate import v1_to_v2
+from agentobs.migrate import v1_to_v2
 
 try:
     new_event, result = v1_to_v2(event)
@@ -42,7 +42,7 @@ Phase 9 ships a structured roadmap of every event type that will change
 in v2.0. Use `v2_migration_roadmap()` to audit your codebase:
 
 ```python
-from tracium.migrate import v2_migration_roadmap
+from agentobs.migrate import v2_migration_roadmap
 
 for record in v2_migration_roadmap():
     print(record.summary())
@@ -73,10 +73,10 @@ Each `DeprecationRecord` provides:
 
 ```bash
 # Human-readable table
-tracium migration-roadmap
+agentobs migration-roadmap
 
 # JSON for tooling
-tracium migration-roadmap --json
+agentobs migration-roadmap --json
 ```
 
 ## Sunset policy
@@ -93,12 +93,12 @@ ships.
 
 ## Deprecation warnings
 
-At import time, `tracium.deprecations` auto-populates the global
+At import time, `agentobs.deprecations` auto-populates the global
 `DeprecationRegistry` with every entry from `v2_migration_roadmap()`. Callers
 can surface these warnings at runtime:
 
 ```python
-from tracium.deprecations import warn_if_deprecated
+from agentobs.deprecations import warn_if_deprecated
 
 # Inside event processing loops, or at schema validation time:
 warn_if_deprecated(event.event_type)
@@ -108,12 +108,12 @@ warn_if_deprecated(event.event_type)
 ### CLI deprecation list
 
 ```bash
-tracium list-deprecated
+agentobs list-deprecated
 ```
 
 ## Preparing for v2.0
 
-1. Run `tracium migration-roadmap` to see the full list.
+1. Run `agentobs migration-roadmap` to see the full list.
 2. Search your code for deprecated event type strings.
 3. Replace with the recommended `replacement` type from each record.
 4. Apply any `field_renames` to affected payload construction sites.
@@ -143,7 +143,7 @@ payload from the frozen v1.0 schema to any updated v2 layout that ships in
 Phase 9:
 
 ```python
-from tracium.migrate import v1_to_v2
+from agentobs.migrate import v1_to_v2
 
 result = v1_to_v2(events)
 
@@ -163,8 +163,8 @@ Read a JSONL archive, migrate, and write the output:
 
 ```python
 import json
-from tracium.event import Event
-from tracium.migrate import v1_to_v2
+from agentobs.event import Event
+from agentobs.migrate import v1_to_v2
 
 events = [Event(**json.loads(line)) for line in open("archive.jsonl")]
 result = v1_to_v2(events)
@@ -184,7 +184,7 @@ Phase 9 will ship breaking-change namespace payload schemas alongside a
 `migrate` sub-command for the CLI:
 
 ```bash
-tracium migrate --from v1 --to v2 archive.jsonl --out archive_v2.jsonl
+agentobs migrate --from v1 --to v2 archive.jsonl --out archive_v2.jsonl
 ```
 
 Until Phase 9 ships, the `v1_to_v2` Python API is the primary migration path.

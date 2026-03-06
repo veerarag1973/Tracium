@@ -1,16 +1,16 @@
 # Command-Line Interface
 
-AgentOBS ships a command-line tool, `tracium`, for operational tasks.
+AgentOBS ships a command-line tool, `agentobs`, for operational tasks.
 The entry-point is installed automatically when you `pip install agentobs`.
 
 ```bash
-tracium --help
+agentobs --help
 ```
 
 ```text
-usage: tracium [-h] <command> ...
+usage: agentobs [-h] <command> ...
 
-tracium command-line utilities
+agentobs command-line utilities
 
 positional arguments:
   <command>
@@ -29,14 +29,14 @@ options:
 
 ## `check-compat`
 
-Validate a batch of serialised events against the tracium v1.0 compatibility
+Validate a batch of serialised events against the agentobs v1.0 compatibility
 checklist (CHK-1 through CHK-5). Useful in CI pipelines, pre-commit hooks,
 and onboarding audits for third-party tool authors.
 
 **Usage**
 
 ```bash
-tracium check-compat EVENTS_JSON
+agentobs check-compat EVENTS_JSON
 ```
 
 `EVENTS_JSON`
@@ -54,14 +54,14 @@ tracium check-compat EVENTS_JSON
 **Example — passing**
 
 ```bash
-$ tracium check-compat events.json
+$ agentobs check-compat events.json
 OK — 42 event(s) passed all compatibility checks.
 ```
 
 **Example — violations found**
 
 ```bash
-$ tracium check-compat events.json
+$ agentobs check-compat events.json
 FAIL — 2 violation(s) found in 42 event(s):
 
   [01JPXXX...] CHK-3 (Source identifier format): source 'MyTool/1.0' does not match ...
@@ -72,7 +72,7 @@ FAIL — 2 violation(s) found in 42 event(s):
 
 ```python
 import json
-from tracium import Event, EventType
+from agentobs import Event, EventType
 
 events = [
     Event(
@@ -94,13 +94,13 @@ with open("events.json", "w") as f:
   run: |
     python -c "
     import json
-    from tracium import Event, EventType
+    from agentobs import Event, EventType
     events = [Event(event_type=EventType.TRACE_SPAN_COMPLETED,
                     source='my-tool@1.0.0', payload={'ok': True})]
     with open('/tmp/events.json', 'w') as f:
         json.dump([e.to_dict() for e in events], f)
     "
-    tracium check-compat /tmp/events.json
+    agentobs check-compat /tmp/events.json
 ```
 
 ## Compatibility checks
@@ -119,7 +119,7 @@ The `check-compat` command applies these checks to every event:
 The same checks are available directly in Python:
 
 ```python
-from tracium.compliance import test_compatibility
+from agentobs.compliance import test_compatibility
 
 result = test_compatibility(events)
 if not result:
@@ -127,7 +127,7 @@ if not result:
         print(f"[{v.check_id}] {v.rule}: {v.detail}")
 ```
 
-See [tracium.compliance](api/compliance.md) for the full compliance API.
+See [agentobs.compliance](api/compliance.md) for the full compliance API.
 
 ---
 
@@ -138,7 +138,7 @@ Print all deprecation notices from the global `DeprecationRegistry`.
 **Usage**
 
 ```bash
-tracium list-deprecated
+agentobs list-deprecated
 ```
 
 **Example output**
@@ -164,7 +164,7 @@ Print the structured Phase 9 v2 migration roadmap.
 **Usage**
 
 ```bash
-tracium migration-roadmap [--json]
+agentobs migration-roadmap [--json]
 ```
 
 **Options**
@@ -191,7 +191,7 @@ llm.cache.evicted
 **Example — JSON output**
 
 ```bash
-tracium migration-roadmap --json | python -m json.tool
+agentobs migration-roadmap --json | python -m json.tool
 ```
 
 ---
@@ -204,7 +204,7 @@ their compatibility with the installed schema version.
 **Usage**
 
 ```bash
-tracium check-consumers
+agentobs check-consumers
 ```
 
 **Exit codes**
@@ -244,7 +244,7 @@ the canonical schema before ingestion.
 **Usage**
 
 ```bash
-tracium validate EVENTS_JSONL
+agentobs validate EVENTS_JSONL
 ```
 
 `EVENTS_JSONL`
@@ -261,14 +261,14 @@ tracium validate EVENTS_JSONL
 **Example — all valid**
 
 ```bash
-$ tracium validate events.jsonl
+$ agentobs validate events.jsonl
 OK — 128 event(s) are all schema-valid.
 ```
 
 **Example — validation errors**
 
 ```bash
-$ tracium validate events.jsonl
+$ agentobs validate events.jsonl
 FAIL — 2 event(s) failed schema validation:
 
   Line 14: missing required field 'source'
@@ -283,12 +283,12 @@ Verify the HMAC-SHA256 signing chain of a JSONL file produced when
 `signing_key` was set via `configure()`. Detects tampering, deletions, and
 out-of-order events.
 
-The signing secret is read from the `TRACIUM_SIGNING_KEY` environment variable.
+The signing secret is read from the `AGENTOBS_SIGNING_KEY` environment variable.
 
 **Usage**
 
 ```bash
-TRACIUM_SIGNING_KEY=my-secret tracium audit-chain EVENTS_JSONL
+AGENTOBS_SIGNING_KEY=my-secret agentobs audit-chain EVENTS_JSONL
 ```
 
 **Exit codes**
@@ -297,12 +297,12 @@ TRACIUM_SIGNING_KEY=my-secret tracium audit-chain EVENTS_JSONL
 |------|---------|
 | `0` | Chain is intact — all signatures verify and no gaps detected. |
 | `1` | Chain is broken — at least one tampered event or missing link. |
-| `2` | Usage error, file not found, or `TRACIUM_SIGNING_KEY` not set. |
+| `2` | Usage error, file not found, or `AGENTOBS_SIGNING_KEY` not set. |
 
 **Example — intact chain**
 
 ```bash
-$ TRACIUM_SIGNING_KEY=secret tracium audit-chain events.jsonl
+$ AGENTOBS_SIGNING_KEY=secret agentobs audit-chain events.jsonl
 OK — chain of 50 event(s) is intact. No tampering or gaps detected.
 ```
 
@@ -325,7 +325,7 @@ whole file.
 **Usage**
 
 ```bash
-tracium inspect EVENT_ID EVENTS_JSONL
+agentobs inspect EVENT_ID EVENTS_JSONL
 ```
 
 **Exit codes**
@@ -339,7 +339,7 @@ tracium inspect EVENT_ID EVENTS_JSONL
 **Example**
 
 ```bash
-$ tracium inspect 01JPXXXXXXXXXXXXXXXXXXX events.jsonl
+$ agentobs inspect 01JPXXXXXXXXXXXXXXXXXXX events.jsonl
 {
   "event_id": "01JPXXXXXXXXXXXXXXXXXXX",
   "schema_version": "2.0",
@@ -360,7 +360,7 @@ timestamp range of the events.
 **Usage**
 
 ```bash
-tracium stats EVENTS_JSONL
+agentobs stats EVENTS_JSONL
 ```
 
 **Exit codes**
@@ -373,7 +373,7 @@ tracium stats EVENTS_JSONL
 **Example**
 
 ```bash
-$ tracium stats events.jsonl
+$ agentobs stats events.jsonl
 Events:  342 total
 Types:
   llm.trace.span.completed  : 300

@@ -23,7 +23,7 @@ import pytest
 @pytest.mark.unit
 class TestAuditChainTamperedRaises:
     def test_empty_first_tampered_id_raises(self) -> None:
-        from tracium.namespaces.audit import AuditChainTamperedPayload  # noqa: PLC0415
+        from agentobs.namespaces.audit import AuditChainTamperedPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="first_tampered_event_id"):
             AuditChainTamperedPayload(
                 first_tampered_event_id="",
@@ -33,7 +33,7 @@ class TestAuditChainTamperedRaises:
             )
 
     def test_negative_tampered_count_raises(self) -> None:
-        from tracium.namespaces.audit import AuditChainTamperedPayload  # noqa: PLC0415
+        from agentobs.namespaces.audit import AuditChainTamperedPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="tampered_count"):
             AuditChainTamperedPayload(
                 first_tampered_event_id="ev-50",
@@ -43,7 +43,7 @@ class TestAuditChainTamperedRaises:
             )
 
     def test_empty_detected_at_raises(self) -> None:
-        from tracium.namespaces.audit import AuditChainTamperedPayload  # noqa: PLC0415
+        from agentobs.namespaces.audit import AuditChainTamperedPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="detected_at"):
             AuditChainTamperedPayload(
                 first_tampered_event_id="ev-50",
@@ -53,7 +53,7 @@ class TestAuditChainTamperedRaises:
             )
 
     def test_empty_detected_by_raises(self) -> None:
-        from tracium.namespaces.audit import AuditChainTamperedPayload  # noqa: PLC0415
+        from agentobs.namespaces.audit import AuditChainTamperedPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="detected_by"):
             AuditChainTamperedPayload(
                 first_tampered_event_id="ev-50",
@@ -70,22 +70,22 @@ class TestAuditChainTamperedRaises:
 @pytest.mark.unit
 class TestCacheEvictedWrittenRaises:
     def test_evicted_empty_key_hash_raises(self) -> None:
-        from tracium.namespaces.cache import CacheEvictedPayload  # noqa: PLC0415
+        from agentobs.namespaces.cache import CacheEvictedPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="key_hash"):
             CacheEvictedPayload(key_hash="", namespace="ns", eviction_reason="ttl_expired")
 
     def test_evicted_empty_namespace_raises(self) -> None:
-        from tracium.namespaces.cache import CacheEvictedPayload  # noqa: PLC0415
+        from agentobs.namespaces.cache import CacheEvictedPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="namespace"):
             CacheEvictedPayload(key_hash="abc", namespace="", eviction_reason="ttl_expired")
 
     def test_written_empty_key_hash_raises(self) -> None:
-        from tracium.namespaces.cache import CacheWrittenPayload  # noqa: PLC0415
+        from agentobs.namespaces.cache import CacheWrittenPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="key_hash"):
             CacheWrittenPayload(key_hash="", namespace="ns", ttl_seconds=300)
 
     def test_written_empty_namespace_raises(self) -> None:
-        from tracium.namespaces.cache import CacheWrittenPayload  # noqa: PLC0415
+        from agentobs.namespaces.cache import CacheWrittenPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="namespace"):
             CacheWrittenPayload(key_hash="abc", namespace="", ttl_seconds=300)
 
@@ -97,8 +97,8 @@ class TestCacheEvictedWrittenRaises:
 @pytest.mark.unit
 class TestCostTypeErrors:
     def test_session_wrong_total_cost_type_raises(self) -> None:
-        from tracium.namespaces.cost import CostSessionRecordedPayload  # noqa: PLC0415
-        from tracium.namespaces.trace import TokenUsage  # noqa: PLC0415
+        from agentobs.namespaces.cost import CostSessionRecordedPayload  # noqa: PLC0415
+        from agentobs.namespaces.trace import TokenUsage  # noqa: PLC0415
         with pytest.raises(TypeError, match="total_cost"):
             CostSessionRecordedPayload(
                 total_cost="not_a_cost_breakdown",  # wrong type
@@ -107,8 +107,8 @@ class TestCostTypeErrors:
             )
 
     def test_session_wrong_token_usage_type_raises(self) -> None:
-        from tracium.namespaces.cost import CostSessionRecordedPayload  # noqa: PLC0415
-        from tracium.namespaces.trace import CostBreakdown  # noqa: PLC0415
+        from agentobs.namespaces.cost import CostSessionRecordedPayload  # noqa: PLC0415
+        from agentobs.namespaces.trace import CostBreakdown  # noqa: PLC0415
         with pytest.raises(TypeError, match="total_token_usage"):
             CostSessionRecordedPayload(
                 total_cost=CostBreakdown(
@@ -119,7 +119,7 @@ class TestCostTypeErrors:
             )
 
     def test_attributed_wrong_cost_type_raises(self) -> None:
-        from tracium.namespaces.cost import CostAttributedPayload  # noqa: PLC0415
+        from agentobs.namespaces.cost import CostAttributedPayload  # noqa: PLC0415
         with pytest.raises(TypeError, match="cost"):
             CostAttributedPayload(
                 cost="not_a_cost",  # wrong type
@@ -128,8 +128,8 @@ class TestCostTypeErrors:
             )
 
     def test_attributed_empty_attribution_target_raises(self) -> None:
-        from tracium.namespaces.cost import CostAttributedPayload  # noqa: PLC0415
-        from tracium.namespaces.trace import CostBreakdown  # noqa: PLC0415
+        from agentobs.namespaces.cost import CostAttributedPayload  # noqa: PLC0415
+        from agentobs.namespaces.trace import CostBreakdown  # noqa: PLC0415
         with pytest.raises(ValueError, match="attribution_target"):
             CostAttributedPayload(
                 cost=CostBreakdown(input_cost_usd=0.0, output_cost_usd=0.0, total_cost_usd=0.0),
@@ -146,7 +146,7 @@ class TestCostTypeErrors:
 @pytest.mark.unit
 class TestEvalScenarioRaises:
     def test_started_empty_scenario_name_raises(self) -> None:
-        from tracium.namespaces.eval_ import EvalScenarioStartedPayload  # noqa: PLC0415
+        from agentobs.namespaces.eval_ import EvalScenarioStartedPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="scenario_name"):
             EvalScenarioStartedPayload(
                 scenario_id="s1",
@@ -155,7 +155,7 @@ class TestEvalScenarioRaises:
             )
 
     def test_started_empty_evaluator_raises(self) -> None:
-        from tracium.namespaces.eval_ import EvalScenarioStartedPayload  # noqa: PLC0415
+        from agentobs.namespaces.eval_ import EvalScenarioStartedPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="evaluator"):
             EvalScenarioStartedPayload(
                 scenario_id="s1",
@@ -164,7 +164,7 @@ class TestEvalScenarioRaises:
             )
 
     def test_completed_with_all_optionals(self) -> None:
-        from tracium.namespaces.eval_ import EvalScenarioCompletedPayload  # noqa: PLC0415
+        from agentobs.namespaces.eval_ import EvalScenarioCompletedPayload  # noqa: PLC0415
         p = EvalScenarioCompletedPayload(
             scenario_id="s1",
             status="passed",
@@ -179,7 +179,7 @@ class TestEvalScenarioRaises:
         assert d["errors"] == ["minor warning"]
 
     def test_completed_empty_scenario_id_raises(self) -> None:
-        from tracium.namespaces.eval_ import EvalScenarioCompletedPayload  # noqa: PLC0415
+        from agentobs.namespaces.eval_ import EvalScenarioCompletedPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="scenario_id"):
             EvalScenarioCompletedPayload(
                 scenario_id="",
@@ -195,7 +195,7 @@ class TestEvalScenarioRaises:
 @pytest.mark.unit
 class TestFenceMaxRetriesSchemaName:
     def test_empty_schema_name_raises(self) -> None:
-        from tracium.namespaces.fence import FenceMaxRetriesExceededPayload  # noqa: PLC0415
+        from agentobs.namespaces.fence import FenceMaxRetriesExceededPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="schema_name"):
             FenceMaxRetriesExceededPayload(
                 fence_id="f1",
@@ -212,7 +212,7 @@ class TestFenceMaxRetriesSchemaName:
 @pytest.mark.unit
 class TestPromptLoadedRaises:
     def test_loaded_empty_version_raises(self) -> None:
-        from tracium.namespaces.prompt import PromptTemplateLoadedPayload  # noqa: PLC0415
+        from agentobs.namespaces.prompt import PromptTemplateLoadedPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="version"):
             PromptTemplateLoadedPayload(
                 template_id="t1",
@@ -221,7 +221,7 @@ class TestPromptLoadedRaises:
             )
 
     def test_loaded_invalid_template_hash_raises(self) -> None:
-        from tracium.namespaces.prompt import PromptTemplateLoadedPayload  # noqa: PLC0415
+        from agentobs.namespaces.prompt import PromptTemplateLoadedPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="template_hash"):
             PromptTemplateLoadedPayload(
                 template_id="t1",
@@ -238,7 +238,7 @@ class TestPromptLoadedRaises:
 @pytest.mark.unit
 class TestRedactRemainingRaises:
     def test_pii_detected_empty_detected_categories_raises(self) -> None:
-        from tracium.namespaces.redact import RedactPiiDetectedPayload  # noqa: PLC0415
+        from agentobs.namespaces.redact import RedactPiiDetectedPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="detected_categories"):
             RedactPiiDetectedPayload(
                 detected_categories=[],
@@ -247,7 +247,7 @@ class TestRedactRemainingRaises:
             )
 
     def test_applied_empty_policy_min_sensitivity_raises(self) -> None:
-        from tracium.namespaces.redact import RedactAppliedPayload  # noqa: PLC0415
+        from agentobs.namespaces.redact import RedactAppliedPayload  # noqa: PLC0415
         # Non-empty but invalid sensitivity level
         with pytest.raises(ValueError, match="policy_min_sensitivity"):
             RedactAppliedPayload(
@@ -257,7 +257,7 @@ class TestRedactRemainingRaises:
             )
 
     def test_applied_empty_redacted_by_raises(self) -> None:
-        from tracium.namespaces.redact import RedactAppliedPayload  # noqa: PLC0415
+        from agentobs.namespaces.redact import RedactAppliedPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="redacted_by"):
             RedactAppliedPayload(
                 policy_min_sensitivity="HIGH",
@@ -273,7 +273,7 @@ class TestRedactRemainingRaises:
 @pytest.mark.unit
 class TestTemplateRemainingRaises:
     def test_registered_invalid_hash_format_raises(self) -> None:
-        from tracium.namespaces.template import TemplateRegisteredPayload  # noqa: PLC0415
+        from agentobs.namespaces.template import TemplateRegisteredPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="template_hash"):
             TemplateRegisteredPayload(
                 template_id="t1",
@@ -282,7 +282,7 @@ class TestTemplateRemainingRaises:
             )
 
     def test_variable_bound_empty_name_raises(self) -> None:
-        from tracium.namespaces.template import TemplateVariableBoundPayload  # noqa: PLC0415
+        from agentobs.namespaces.template import TemplateVariableBoundPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="variable_name"):
             TemplateVariableBoundPayload(
                 template_id="t1",
@@ -292,7 +292,7 @@ class TestTemplateRemainingRaises:
             )
 
     def test_variable_bound_invalid_value_type_raises(self) -> None:
-        from tracium.namespaces.template import TemplateVariableBoundPayload  # noqa: PLC0415
+        from agentobs.namespaces.template import TemplateVariableBoundPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="value_type"):
             TemplateVariableBoundPayload(
                 template_id="t1",
@@ -302,7 +302,7 @@ class TestTemplateRemainingRaises:
             )
 
     def test_validation_failed_empty_failure_reason_raises(self) -> None:
-        from tracium.namespaces.template import TemplateValidationFailedPayload  # noqa: PLC0415
+        from agentobs.namespaces.template import TemplateValidationFailedPayload  # noqa: PLC0415
         with pytest.raises(ValueError, match="failure_reason"):
             TemplateValidationFailedPayload(
                 template_id="t1",
@@ -320,7 +320,7 @@ class TestAgentRunTotalToolCallsRaise:
     def test_negative_total_tool_calls_raises(self) -> None:
         import time  # noqa: PLC0415
 
-        from tracium.namespaces.trace import (  # noqa: PLC0415
+        from agentobs.namespaces.trace import (  # noqa: PLC0415
             AgentRunPayload,
             CostBreakdown,
             TokenUsage,
@@ -355,13 +355,13 @@ class TestAgentRunTotalToolCallsRaise:
 class TestExceptionLines:
     def test_schema_version_error_instantiation(self) -> None:
         """Lines 209-210: SchemaVersionError.__init__ sets self.version."""
-        from tracium.exceptions import SchemaVersionError  # noqa: PLC0415
+        from agentobs.exceptions import SchemaVersionError  # noqa: PLC0415
         err = SchemaVersionError("3.0")
         assert err.version == "3.0"
         assert "3.0" in str(err)
 
     def test_schema_version_error_message(self) -> None:
-        from tracium.exceptions import SchemaVersionError  # noqa: PLC0415
+        from agentobs.exceptions import SchemaVersionError  # noqa: PLC0415
         err = SchemaVersionError("99.0")
         assert "Unsupported" in str(err)
         assert "99.0" in str(err)

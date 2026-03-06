@@ -1,6 +1,6 @@
 # llm.guard — Safety Classifier
 
-> **Auto-documented module:** `tracium.namespaces.guard`
+> **Auto-documented module:** `agentobs.namespaces.guard`
 
 ## Field reference
 
@@ -23,7 +23,7 @@
 ## Example
 
 ```python
-from tracium.namespaces.guard import GuardPayload
+from agentobs.namespaces.guard import GuardPayload
 
 payload = GuardPayload(
     classifier="llama-guard-2",

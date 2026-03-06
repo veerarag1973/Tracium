@@ -1,4 +1,4 @@
-﻿"""Tests for tracium/export/otlp.py — OTLPExporter.
+"""Tests for agentobs/export/otlp.py — OTLPExporter.
 
 Coverage targets
 ----------------
@@ -23,9 +23,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from tracium.event import Event, Tags
-from tracium.exceptions import ExportError
-from tracium.export.otlp import (
+from agentobs.event import Event, Tags
+from agentobs.exceptions import ExportError
+from agentobs.export.otlp import (
     OTLPExporter,
     ResourceAttributes,
     _compute_end_nano,

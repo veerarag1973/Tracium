@@ -1,6 +1,6 @@
 # llm.template — Template Registry
 
-> **Auto-documented module:** `tracium.namespaces.template`
+> **Auto-documented module:** `agentobs.namespaces.template`
 
 The `llm.template.*` namespace records when prompt templates are registered,
 modified, or validated in the template registry (RFC-0001 §3).
@@ -36,8 +36,8 @@ modified, or validated in the template registry (RFC-0001 §3).
 
 ```python
 import hashlib
-from tracium import Event, EventType
-from tracium.namespaces.template import TemplateRegisteredPayload
+from agentobs import Event, EventType
+from agentobs.namespaces.template import TemplateRegisteredPayload
 
 source = "Dear {{ customer_name }}, thank you for contacting support."
 template_hash = hashlib.sha256(source.encode()).hexdigest()

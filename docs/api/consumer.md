@@ -1,4 +1,4 @@
-# tracium.consumer
+# agentobs.consumer
 
 Consumer registry for tracking which tools and services depend on which schema
 namespaces, and enforcing schema-version compatibility at startup.
@@ -45,7 +45,7 @@ Thread-safe registry that tracks all registered `ConsumerRecord` objects.
 **Example:**
 
 ```python
-from tracium.consumer import ConsumerRegistry, ConsumerRecord
+from agentobs.consumer import ConsumerRegistry, ConsumerRecord
 
 registry = ConsumerRegistry()
 registry.register(ConsumerRecord(
@@ -211,7 +211,7 @@ Defaults to the current library schema version (`"2.0"`).
 **Example:**
 
 ```python
-from tracium.consumer import register_consumer, assert_compatible
+from agentobs.consumer import register_consumer, assert_compatible
 
 register_consumer(
     "billing-agent",

@@ -1,4 +1,4 @@
-# tracium.deprecations
+# agentobs.deprecations
 
 Per-event-type deprecation tracking — register deprecation notices, format
 human-readable messages, and emit standard `DeprecationWarning` signals when
@@ -145,7 +145,7 @@ Remove all deprecation notices. Useful in tests.
 
 A **global registry singleton** is maintained for package-wide deprecation tracking.
 The v2 migration roadmap items are pre-populated at import time via
-`tracium.migrate.v2_migration_roadmap()`.
+`agentobs.migrate.v2_migration_roadmap()`.
 
 ### `get_registry() -> DeprecationRegistry`
 
@@ -178,7 +178,7 @@ Return all notices from the global registry sorted by `event_type`.
 **Example:**
 
 ```python
-from tracium.deprecations import (
+from agentobs.deprecations import (
     mark_deprecated, warn_if_deprecated, list_deprecated, DeprecationNotice,
 )
 

@@ -1,4 +1,4 @@
-﻿"""Tests for tracium.redact — PII redaction framework.
+"""Tests for agentobs.redact — PII redaction framework.
 
 100% branch coverage target.
 """
@@ -11,8 +11,8 @@ from typing import Any
 import pytest
 
 from tests.conftest import FIXED_TIMESTAMP
-from tracium import Event, EventType
-from tracium.redact import (
+from agentobs import Event, EventType
+from agentobs.redact import (
     PII_TYPES,
     PIINotRedactedError,
     Redactable,
@@ -180,8 +180,8 @@ class TestRedactable:
 
 @pytest.mark.unit
 class TestPIINotRedactedError:
-    def test_is_tracium_error(self) -> None:
-        from tracium.exceptions import LLMSchemaError  # noqa: PLC0415
+    def test_is_agentobs_error(self) -> None:
+        from agentobs.exceptions import LLMSchemaError  # noqa: PLC0415
         err = PIINotRedactedError(count=2)
         assert isinstance(err, LLMSchemaError)
 
@@ -379,7 +379,7 @@ class TestRedactionPolicyApply:
         assert result.event.span_id == "b" * 16
 
     def test_tags_preserved(self) -> None:
-        from tracium.event import Tags  # noqa: PLC0415
+        from agentobs.event import Tags  # noqa: PLC0415
         policy = RedactionPolicy()
         event = Event(
             event_type=EventType.PROMPT_RENDERED,

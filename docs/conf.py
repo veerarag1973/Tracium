@@ -10,7 +10,7 @@ from pathlib import Path
 # Make the source package importable from docs/
 sys.path.insert(0, str(Path("..").resolve()))
 
-from tracium import __version__
+from agentobs import __version__
 
 # ---------------------------------------------------------------------------
 # Project information

@@ -1,6 +1,6 @@
 # Export Backends & EventStream
 
-tracium ships five export backends and an `EventStream`
+agentobs ships five export backends and an `EventStream`
 routing layer that ties them together.
 
 ## Quick overview
@@ -19,7 +19,7 @@ routing layer that ties them together.
 The simplest backend — useful for local replay and testing:
 
 ```python
-from tracium.export.jsonl import JSONLExporter
+from agentobs.export.jsonl import JSONLExporter
 
 exporter = JSONLExporter("events.jsonl", gzip=False)
 exporter.export(event)
@@ -39,7 +39,7 @@ Each line is a compact JSON object identical to `Event.to_dict()`.
 POSTs each event as JSON to an arbitrary HTTP endpoint:
 
 ```python
-from tracium.export.webhook import WebhookExporter
+from agentobs.export.webhook import WebhookExporter
 
 exporter = WebhookExporter(
     url="https://hooks.example.com/llm-events",
@@ -59,7 +59,7 @@ failed attempts the event is dropped and a warning is logged.
 Sends events to an OpenTelemetry collector via gRPC:
 
 ```python
-from tracium.export.otlp import OTLPExporter
+from agentobs.export.otlp import OTLPExporter
 
 exporter = OTLPExporter(
     endpoint="http://otel-collector:4317",
@@ -87,9 +87,9 @@ Events **without** a `trace_id` become OTLP log records (`resourceLogs`).
 filterable routing:
 
 ```python
-from tracium.stream import EventStream
-from tracium.export.jsonl import JSONLExporter
-from tracium.export.webhook import WebhookExporter
+from agentobs.stream import EventStream
+from agentobs.export.jsonl import JSONLExporter
+from agentobs.export.webhook import WebhookExporter
 
 stream = EventStream()
 stream.add_exporter(JSONLExporter("all.jsonl"))
@@ -106,7 +106,7 @@ stream.emit(event)     # emits to all matching exporters
 Restrict an exporter to a specific org or team:
 
 ```python
-from tracium.stream import EventStream
+from agentobs.stream import EventStream
 
 stream = EventStream()
 stream.add_exporter(
@@ -150,7 +150,7 @@ when the SDK is already initialised by auto-instrumentation and you want
 events to participate in the same trace pipeline.
 
 ```bash
-pip install "tracium[otel]"
+pip install "agentobs[otel]"
 ```
 
 ```python
@@ -163,9 +163,9 @@ provider = TracerProvider()
 provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
 trace.set_tracer_provider(provider)
 
-from tracium.export.otel_bridge import OTelBridgeExporter
+from agentobs.export.otel_bridge import OTelBridgeExporter
 
-exporter = OTelBridgeExporter(tracer_name="Tracium")
+exporter = OTelBridgeExporter(tracer_name="AgentOBS")
 exporter.export(event)               # single event
 await exporter.export_batch(events)  # batch
 ```
@@ -182,11 +182,11 @@ Sends events to the Datadog Agent as APM trace spans, and optionally to the
 Datadog metrics API for numeric payload fields.
 
 ```bash
-pip install "tracium[datadog]"
+pip install "agentobs[datadog]"
 ```
 
 ```python
-from tracium.export.datadog import DatadogExporter
+from agentobs.export.datadog import DatadogExporter
 
 exporter = DatadogExporter(
     service="llm-gateway",
@@ -221,7 +221,7 @@ metric series automatically.
 Pushes events to a Grafana Loki instance via the HTTP push API.
 
 ```python
-from tracium.export.grafana import GrafanaLokiExporter
+from agentobs.export.grafana import GrafanaLokiExporter
 
 exporter = GrafanaLokiExporter(
     url="http://loki:3100",
@@ -251,9 +251,9 @@ Enterprise Loki multi-tenant configurations.
 ### Fan-out with Loki + OTLP
 
 ```python
-from tracium.stream import EventStream
-from tracium.export.otlp import OTLPExporter
-from tracium.export.grafana import GrafanaLokiExporter
+from agentobs.stream import EventStream
+from agentobs.export.otlp import OTLPExporter
+from agentobs.export.grafana import GrafanaLokiExporter
 
 stream = EventStream(events)
 await stream.route(OTLPExporter("http://otel-collector:4318/v1/traces"))
@@ -267,11 +267,11 @@ await stream.route(GrafanaLokiExporter("http://loki:3100"))
 Load events from a Kafka topic directly into an `EventStream`:
 
 ```bash
-pip install "tracium[kafka]"
+pip install "agentobs[kafka]"
 ```
 
 ```python
-from tracium.stream import EventStream
+from agentobs.stream import EventStream
 
 stream = EventStream.from_kafka(
     topic="llm-events",

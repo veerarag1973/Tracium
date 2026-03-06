@@ -1,4 +1,4 @@
-﻿"""Tests for tracium.models — Pydantic v2 model layer.
+"""Tests for agentobs.models — Pydantic v2 model layer.
 
 100% branch coverage target.
 """
@@ -12,16 +12,16 @@ from tests.conftest import (
     FIXED_TIMESTAMP,
     FIXED_TRACE_ID,
 )
-from tracium import Event, EventType, Tags
-from tracium.event import SCHEMA_VERSION
-from tracium.ulid import generate as gen_ulid
+from agentobs import Event, EventType, Tags
+from agentobs.event import SCHEMA_VERSION
+from agentobs.ulid import generate as gen_ulid
 
 # Guard: skip entire module if pydantic is not installed
 pytest.importorskip("pydantic")
 
 from pydantic import ValidationError
 
-from tracium.models import EventModel, TagsModel
+from agentobs.models import EventModel, TagsModel
 
 # ---------------------------------------------------------------------------
 # Helpers

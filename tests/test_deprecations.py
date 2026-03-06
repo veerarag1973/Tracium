@@ -1,4 +1,4 @@
-﻿"""Tests for tracium.deprecations (DeprecationRegistry)."""
+"""Tests for agentobs.deprecations (DeprecationRegistry)."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import warnings
 
 import pytest
 
-from tracium.deprecations import (
+from agentobs.deprecations import (
     DeprecationNotice,
     DeprecationRegistry,
     get_deprecation_notice,

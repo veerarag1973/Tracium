@@ -1,6 +1,6 @@
-# tracium.event
+# agentobs.event
 
-Core event envelope and tag container for Tracium.
+Core event envelope and tag container for AgentOBS.
 
 This module provides the `Event` class (the immutable event envelope) and the
 `Tags` class (an immutable `str → str` mapping for arbitrary metadata).
@@ -118,7 +118,7 @@ provided.
 **Example:**
 
 ```python
-from tracium import Event, EventType
+from agentobs import Event, EventType
 
 event = Event(
     event_type=EventType.TRACE_SPAN_COMPLETED,

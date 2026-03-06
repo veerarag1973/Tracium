@@ -1,4 +1,4 @@
-"""Tests for tracium.config — TraciumConfig, configure(), get_config(), env vars.
+"""Tests for agentobs.config — AgentOBSConfig, configure(), get_config(), env vars.
 
 Phase 1 SDK coverage target.
 """
@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tracium.config import TraciumConfig, configure, get_config
+from agentobs.config import AgentOBSConfig, configure, get_config
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -31,46 +31,46 @@ def _restore_config() -> Generator[None, None, None]:
 
 
 # ===========================================================================
-# TraciumConfig defaults
+# AgentOBSConfig defaults
 # ===========================================================================
 
 
 @pytest.mark.unit
-class TestTraciumConfigDefaults:
+class TestAgentOBSConfigDefaults:
     def test_default_exporter(self) -> None:
-        cfg = TraciumConfig()
+        cfg = AgentOBSConfig()
         assert cfg.exporter == "console"
 
     def test_default_endpoint_is_none(self) -> None:
-        cfg = TraciumConfig()
+        cfg = AgentOBSConfig()
         assert cfg.endpoint is None
 
     def test_default_org_id_is_none(self) -> None:
-        cfg = TraciumConfig()
+        cfg = AgentOBSConfig()
         assert cfg.org_id is None
 
     def test_default_service_name(self) -> None:
-        cfg = TraciumConfig()
+        cfg = AgentOBSConfig()
         assert cfg.service_name == "unknown-service"
 
     def test_default_env(self) -> None:
-        cfg = TraciumConfig()
+        cfg = AgentOBSConfig()
         assert cfg.env == "production"
 
     def test_default_service_version(self) -> None:
-        cfg = TraciumConfig()
+        cfg = AgentOBSConfig()
         assert cfg.service_version == "0.0.0"
 
     def test_default_signing_key_is_none(self) -> None:
-        cfg = TraciumConfig()
+        cfg = AgentOBSConfig()
         assert cfg.signing_key is None
 
     def test_default_redaction_policy_is_none(self) -> None:
-        cfg = TraciumConfig()
+        cfg = AgentOBSConfig()
         assert cfg.redaction_policy is None
 
     def test_custom_construction(self) -> None:
-        cfg = TraciumConfig(
+        cfg = AgentOBSConfig(
             exporter="jsonl",
             endpoint="./events.jsonl",
             service_name="my-agent",
@@ -130,7 +130,7 @@ class TestConfigureFunction:
         assert cfg.env == "dev"
 
     def test_configure_unknown_key_raises(self) -> None:
-        with pytest.raises(ValueError, match="Unknown tracium configuration key"):
+        with pytest.raises(ValueError, match="Unknown agentobs configuration key"):
             configure(unknown_key="value")
 
     def test_configure_multiple_calls_accumulate(self) -> None:
@@ -173,67 +173,67 @@ class TestGetConfig:
 
 @pytest.mark.unit
 class TestEnvVars:
-    def test_tracium_exporter_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("TRACIUM_EXPORTER", "jsonl")
+    def test_agentobs_exporter_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("AGENTOBS_EXPORTER", "jsonl")
         # Force re-import by directly calling _load_from_env
-        import tracium.config as config_mod  # noqa: PLC0415
+        import agentobs.config as config_mod  # noqa: PLC0415
         old = config_mod._config.exporter
         config_mod._load_from_env()
         assert config_mod._config.exporter == "jsonl"
         # Restore
         config_mod._config.exporter = old
 
-    def test_tracium_service_name_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("TRACIUM_SERVICE_NAME", "env-service")
-        import tracium.config as config_mod  # noqa: PLC0415
+    def test_agentobs_service_name_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("AGENTOBS_SERVICE_NAME", "env-service")
+        import agentobs.config as config_mod  # noqa: PLC0415
         old = config_mod._config.service_name
         config_mod._load_from_env()
         assert config_mod._config.service_name == "env-service"
         config_mod._config.service_name = old
 
-    def test_tracium_endpoint_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("TRACIUM_ENDPOINT", "http://localhost:4317")
-        import tracium.config as config_mod  # noqa: PLC0415
+    def test_agentobs_endpoint_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("AGENTOBS_ENDPOINT", "http://localhost:4317")
+        import agentobs.config as config_mod  # noqa: PLC0415
         old = config_mod._config.endpoint
         config_mod._load_from_env()
         assert config_mod._config.endpoint == "http://localhost:4317"
         config_mod._config.endpoint = old
 
-    def test_tracium_org_id_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("TRACIUM_ORG_ID", "org_test")
-        import tracium.config as config_mod  # noqa: PLC0415
+    def test_agentobs_org_id_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("AGENTOBS_ORG_ID", "org_test")
+        import agentobs.config as config_mod  # noqa: PLC0415
         old = config_mod._config.org_id
         config_mod._load_from_env()
         assert config_mod._config.org_id == "org_test"
         config_mod._config.org_id = old
 
-    def test_tracium_env_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("TRACIUM_ENV", "development")
-        import tracium.config as config_mod  # noqa: PLC0415
+    def test_agentobs_env_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("AGENTOBS_ENV", "development")
+        import agentobs.config as config_mod  # noqa: PLC0415
         old = config_mod._config.env
         config_mod._load_from_env()
         assert config_mod._config.env == "development"
         config_mod._config.env = old
 
-    def test_tracium_service_version_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("TRACIUM_SERVICE_VERSION", "2.0.0")
-        import tracium.config as config_mod  # noqa: PLC0415
+    def test_agentobs_service_version_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("AGENTOBS_SERVICE_VERSION", "2.0.0")
+        import agentobs.config as config_mod  # noqa: PLC0415
         old = config_mod._config.service_version
         config_mod._load_from_env()
         assert config_mod._config.service_version == "2.0.0"
         config_mod._config.service_version = old
 
-    def test_tracium_signing_key_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("TRACIUM_SIGNING_KEY", "test_key==")
-        import tracium.config as config_mod  # noqa: PLC0415
+    def test_agentobs_signing_key_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("AGENTOBS_SIGNING_KEY", "test_key==")
+        import agentobs.config as config_mod  # noqa: PLC0415
         old = config_mod._config.signing_key
         config_mod._load_from_env()
         assert config_mod._config.signing_key == "test_key=="
         config_mod._config.signing_key = old
 
     def test_unset_env_vars_do_not_override(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.delenv("TRACIUM_SERVICE_NAME", raising=False)
-        import tracium.config as config_mod  # noqa: PLC0415
+        monkeypatch.delenv("AGENTOBS_SERVICE_NAME", raising=False)
+        import agentobs.config as config_mod  # noqa: PLC0415
         config_mod._config.service_name = "my-service"
         config_mod._load_from_env()
         assert config_mod._config.service_name == "my-service"

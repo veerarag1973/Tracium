@@ -1,5 +1,5 @@
 # AgentOBS SDK — Release Runbook
-# PyPI distribution: agentobs  |  Import: tracium
+# PyPI distribution: agentobs  |  Import: agentobs
 # Version: 1.0.0 — 2026-03-04
 #
 # STATUS: READY TO PUBLISH
@@ -8,7 +8,7 @@
 # WHAT'S IN 1.0.0
 # ─────────────────────────────────────────────────────────────────────────────
 #
-#   Phase 0   Package rename llm_toolkit_schema → tracium
+#   Phase 0   Package rename llm_toolkit_schema → agentobs
 #   Phase 1   Configuration layer (configure(), env vars, singleton)
 #   Phase 2   Core tracer + span (tracer.span() context manager)
 #   Phase 3   Event emission (SpanPayload → Event → EventStream → Exporter)
@@ -18,7 +18,7 @@
 #   Phase 7   Provider integrations (Anthropic, Ollama, Groq, Together AI)
 #   Phase 8   Additional exporters (OTLP, Webhook, Datadog, Grafana Loki)
 #   Phase 9   Framework integrations (LangChain, LlamaIndex)
-#   Phase 10  CLI tooling (tracium validate / audit-chain / inspect / stats)
+#   Phase 10  CLI tooling (agentobs validate / audit-chain / inspect / stats)
 #   Phase 11  Security + privacy (HMAC signing chain, PII redaction)
 #   Phase 12  Hardening + docs + 1.0.0 (this release)
 #
@@ -57,7 +57,7 @@
 #        python -m pytest --tb=short -q
 #
 #   2. Confirm version:
-#        python -c "import tracium; print(tracium.__version__)"
+#        python -c "import agentobs; print(agentobs.__version__)"
 #        # → 1.0.0
 #
 #   3. Build distribution artefacts:
@@ -66,7 +66,7 @@
 #   4. Upload to TestPyPI and smoke-test:
 #        python -m twine upload --repository testpypi dist/*
 #        pip install --index-url https://test.pypi.org/simple/ agentobs==1.0.0
-#        python -c "import tracium; print(tracium.__version__)"
+#        python -c "import agentobs; print(agentobs.__version__)"
 #
 #   5. Upload to PyPI:
 #        python -m twine upload dist/*
@@ -84,6 +84,6 @@
 #     - Full SpanForge Observability Standard v2.0 compliance
 #     - HMAC signing chain (opt-in via signing_key=)
 #     - PII redaction pipeline (opt-in via redaction_policy=)
-#     - CLI: tracium validate / audit-chain / inspect / stats
+#     - CLI: agentobs validate / audit-chain / inspect / stats
 #     - Exporters: console, jsonl, otlp, webhook, datadog, grafana_loki
 #     - Integrations: openai, anthropic, ollama, groq, together, langchain, llamaindex

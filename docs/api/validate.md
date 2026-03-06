@@ -1,4 +1,4 @@
-# tracium.validate
+# agentobs.validate
 
 JSON Schema validation for `Event` envelopes.
 
@@ -10,7 +10,7 @@ check is run that covers all required fields, types, and regex patterns.
 **Install for full validation:**
 
 ```bash
-pip install "tracium[jsonschema]"
+pip install "agentobs[jsonschema]"
 ```
 
 ---
@@ -38,8 +38,8 @@ Serialises `event` to a plain dict and validates the envelope structure.
 **Example:**
 
 ```python
-from tracium import Event, EventType
-from tracium.validate import validate_event
+from agentobs import Event, EventType
+from agentobs.validate import validate_event
 
 event = Event(
     event_type=EventType.TRACE_SPAN_COMPLETED,
