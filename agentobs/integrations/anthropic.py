@@ -384,5 +384,5 @@ def _auto_populate_span(response: Any) -> None:  # noqa: ANN401
         if span.model is None:
             span.model = model_info.name
 
-    except Exception:  # noqa: S110
+    except Exception:  # noqa: S110  # NOSONAR
         pass

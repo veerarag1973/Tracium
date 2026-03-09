@@ -131,7 +131,7 @@ def _reset_exporter() -> None:
         from agentobs._store import _reset_store  # noqa: PLC0415
         from agentobs.config import get_config as _gc  # noqa: PLC0415
         _reset_store(_gc().trace_store_size)
-    except Exception:
+    except Exception:  # NOSONAR
         pass  # never let store reset failures affect the exporter reset
 
 
@@ -254,7 +254,7 @@ def emit_span(span: object) -> None:
         if collector is not None:
             try:
                 collector._record_span(span)
-            except Exception:
+            except Exception:  # NOSONAR
                 pass  # never let collection errors affect the main emit path
 
 
@@ -351,7 +351,7 @@ def _should_emit(event: "Event", cfg: "AgentOBSConfig") -> bool:
         try:
             if not f(event):
                 return False
-        except Exception:
+        except Exception:  # NOSONAR
             pass  # a failing filter never silently drops the event
 
     return True

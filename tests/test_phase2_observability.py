@@ -500,11 +500,11 @@ class TestLLMSpanSchemaAdditions:
         """No validation on temperature — library trusts caller."""
         with tracer.span("s", temperature=-1.0) as s:
             ...
-        assert s.temperature == -1.0
+        assert s.temperature == pytest.approx(-1.0)
 
     def test_max_tokens_in_trace_json(self):
         trace = start_trace("bot")
-        with trace.llm_call(model="gpt-4o", max_tokens=128) as s:
+        with trace.llm_call(model="gpt-4o", max_tokens=128):
             ...
         trace.end()
         data = json.loads(trace.to_json())

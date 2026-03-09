@@ -413,7 +413,7 @@ class SpanContextManager:
         try:
             from agentobs._hooks import hooks as _hooks  # noqa: PLC0415
             _hooks._fire_start(self._span)
-        except Exception:
+        except Exception:  # NOSONAR
             pass
         return self._span
 
@@ -441,7 +441,7 @@ class SpanContextManager:
         try:
             from agentobs._hooks import hooks as _hooks  # noqa: PLC0415
             _hooks._fire_end(self._span)
-        except Exception:
+        except Exception:  # NOSONAR
             pass
 
         # Emit the event.

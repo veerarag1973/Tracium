@@ -249,7 +249,7 @@ class HookRegistry:
                         UserWarning,
                         stacklevel=2,
                     )
-                except Exception:
+                except Exception:  # NOSONAR
                     pass  # if warn itself raises (e.g. treated as error), ignore
         # Fire async hooks if a loop is running.
         self._fire_async(kind, span)
@@ -276,7 +276,7 @@ class HookRegistry:
                         UserWarning,
                         stacklevel=2,
                     )
-                except Exception:
+                except Exception:  # NOSONAR
                     pass
 
     def __repr__(self) -> str:

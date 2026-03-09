@@ -166,7 +166,7 @@ class GrafanaLokiExporter:
         # Build the log line (JSON)
         try:
             line = event.to_json()
-        except Exception:
+        except Exception:  # NOSONAR
             line = json.dumps(
                 {
                     "event_id": str(getattr(event, "event_id", "")),

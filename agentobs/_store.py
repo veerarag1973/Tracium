@@ -184,7 +184,7 @@ class TraceStore:
                 if op in operations:
                     try:
                         result.append(SpanPayload.from_dict(payload))
-                    except Exception:
+                    except Exception:  # NOSONAR
                         pass  # malformed span — skip without raising
             result.sort(key=lambda s: s.start_time_unix_nano)
             return result

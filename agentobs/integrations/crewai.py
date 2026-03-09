@@ -73,7 +73,7 @@ class AgentOBSCrewAIHandler:
             )
             span = cm.__enter__()
             self._tool_spans[key] = (cm, span, key)
-        except Exception:
+        except Exception:  # NOSONAR
             pass  # hook errors must never abort crew execution
 
     def on_agent_finish(self, agent: Any, output: Any) -> None:
@@ -86,7 +86,7 @@ class AgentOBSCrewAIHandler:
                 if hasattr(output, "return_values"):
                     span.set_attribute("crewai.output", str(output.return_values)[:2048])
                 cm.__exit__(None, None, None)
-        except Exception:
+        except Exception:  # NOSONAR
             pass
 
     # ------------------------------------------------------------------
@@ -107,7 +107,7 @@ class AgentOBSCrewAIHandler:
             )
             span = cm.__enter__()
             self._tool_spans[key] = (cm, span, key)
-        except Exception:
+        except Exception:  # NOSONAR
             pass
 
     def on_tool_end(self, tool: Any, output: Any) -> None:
@@ -123,7 +123,7 @@ class AgentOBSCrewAIHandler:
                 cm, span, _ = self._tool_spans.pop(key)
                 span.set_attribute("crewai.tool_output", str(output)[:2048])
                 cm.__exit__(None, None, None)
-        except Exception:
+        except Exception:  # NOSONAR
             pass
 
     # ------------------------------------------------------------------
@@ -144,7 +144,7 @@ class AgentOBSCrewAIHandler:
             )
             span = cm.__enter__()
             self._task_spans[key] = (cm, span)
-        except Exception:
+        except Exception:  # NOSONAR
             pass
 
     def on_task_end(self, task: Any, output: Any) -> None:
@@ -157,7 +157,7 @@ class AgentOBSCrewAIHandler:
                 if output is not None:
                     span.set_attribute("crewai.task_output", str(output)[:2048])
                 cm.__exit__(None, None, None)
-        except Exception:
+        except Exception:  # NOSONAR
             pass
 
 
@@ -232,7 +232,7 @@ def unpatch() -> None:
             del crewai._agentobs_patched  # type: ignore[attr-defined]
         except AttributeError:
             pass
-    except Exception:
+    except Exception:  # NOSONAR
         pass
 
 
@@ -247,5 +247,5 @@ def is_patched() -> bool:
     try:
         import crewai  # noqa: PLC0415, F401
         return bool(getattr(crewai, _PATCH_FLAG, False))
-    except Exception:
+    except Exception:  # NOSONAR
         return False
