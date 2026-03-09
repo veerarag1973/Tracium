@@ -386,9 +386,8 @@ def _build_mock_openai() -> types.ModuleType:
 
 
 def _uninstall_mock_openai() -> None:
-    for key in list(sys.modules):
-        if key == "openai" or key.startswith("openai."):
-            del sys.modules[key]
+    for key in [k for k in sys.modules if k == "openai" or k.startswith("openai.")]:
+        del sys.modules[key]
 
 
 class TestPatchLifecycle:
