@@ -205,39 +205,52 @@ Compute the SHA-256 digest of the canonical JSON payload.
 
 ---
 
-#### `from_dict(data: Dict[str, Any], *, source_hint: str = "<dict>") -> Event` *(classmethod)*
+#### `from_dict(data: Dict[str, Any], *, max_size_bytes: int = 1_048_576, max_payload_depth: int = 10, max_tags: int = 50, source_hint: str = "<dict>") -> Event` *(classmethod)*
 
 Construct an `Event` from a plain dictionary.
 
 The dictionary shape matches `to_dict()` output. The returned event is **not
 yet validated** — call `validate()` separately if needed.
 
+DoS limits are enforced before any field parsing (RFC §19.4). Pass `0` to
+disable an individual limit.
+
 **Args:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `data` | `Dict[str, Any]` | Dictionary with event fields. |
-| `source_hint` | `str` | Short label used in error messages (e.g. a filename). |
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `data` | `Dict[str, Any]` | — | Dictionary with event fields. |
+| `max_size_bytes` | `int` | `1_048_576` | Maximum serialised size in bytes (1 MiB). |
+| `max_payload_depth` | `int` | `10` | Maximum nesting depth of the `payload` object. |
+| `max_tags` | `int` | `50` | Maximum number of keys in the `tags` object. |
+| `source_hint` | `str` | `"<dict>"` | Short label used in error messages (e.g. a filename). |
 
 **Returns:** `Event`
 
-**Raises:** `DeserializationError` — if a required field is missing or has an unexpected type.
+**Raises:** `DeserializationError` — if a required field is missing, has an unexpected type, or any DoS limit is exceeded.
 
 ---
 
-#### `from_json(json_str: str, *, source_hint: str = "<json>") -> Event` *(classmethod)*
+#### `from_json(json_str: str, *, max_size_bytes: int = 1_048_576, max_payload_depth: int = 10, max_tags: int = 50, source_hint: str = "<json>") -> Event` *(classmethod)*
 
 Construct an `Event` from a JSON string (as produced by `to_json()`).
 
 The returned event is **not yet validated** — call `validate()` if needed.
 
+The byte-length of the UTF-8-encoded string is checked **before parsing** to
+guard against parse-bomb attacks (RFC §19.4). Pass `max_size_bytes=0` to
+disable the pre-parse check.
+
 **Args:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `json_str` | `str` | A JSON string in the format produced by `to_json()`. |
-| `source_hint` | `str` | Short label used in error messages. |
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `json_str` | `str` | — | A JSON string in the format produced by `to_json()`. |
+| `max_size_bytes` | `int` | `1_048_576` | Maximum string size in UTF-8 bytes (1 MiB). |
+| `max_payload_depth` | `int` | `10` | Maximum nesting depth of the `payload` object. |
+| `max_tags` | `int` | `50` | Maximum number of keys in the `tags` object. |
+| `source_hint` | `str` | `"<json>"` | Short label used in error messages. |
 
 **Returns:** `Event`
 
-**Raises:** `DeserializationError` — if `json_str` is not valid JSON or is missing required fields.
+**Raises:** `DeserializationError` — if `json_str` is not valid JSON, is missing required fields, or any DoS limit is exceeded.

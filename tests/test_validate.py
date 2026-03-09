@@ -88,19 +88,19 @@ class TestLoadSchema:
         assert a is b
 
     def test_missing_schema_raises_file_not_found(self, tmp_path, monkeypatch):
-        """Point schema path at a non-existent file; expect FileNotFoundError."""
+        """Point schema paths at non-existent files; expect FileNotFoundError."""
         import agentobs.validate as v_module  # noqa: PLC0415
 
-        original_path = v_module._SCHEMA_PATH
-        original_cache = v_module._CACHED_SCHEMA
-        try:
-            v_module._CACHED_SCHEMA = None
-            v_module._SCHEMA_PATH = tmp_path / "nonexistent.json"
-            with pytest.raises(FileNotFoundError, match="JSON Schema not found"):
-                v_module.load_schema()
-        finally:
-            v_module._SCHEMA_PATH = original_path
-            v_module._CACHED_SCHEMA = original_cache
+        bad_path = tmp_path / "nonexistent.json"
+        # Patch both the paths dict and the cache so load_schema() hits the disk.
+        monkeypatch.setattr(
+            v_module,
+            "_SCHEMA_PATHS",
+            {"2.0": bad_path, "1.0": bad_path},
+        )
+        monkeypatch.setattr(v_module, "_CACHED_SCHEMAS", {})
+        with pytest.raises(FileNotFoundError, match="JSON Schema not found"):
+            v_module.load_schema()
 
 
 # ===========================================================================

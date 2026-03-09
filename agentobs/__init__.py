@@ -328,8 +328,12 @@ from agentobs.ulid import extract_timestamp_ms
 from agentobs.ulid import generate as generate_ulid
 from agentobs.ulid import validate as validate_ulid
 from agentobs.validate import validate_event
+from agentobs.normalizer import GenericNormalizer, ProviderNormalizer
 
 __version__: str = "1.0.7"
+#: RFC-0001 conformance profile label (AGENTOBS-Enterprise-2.0).
+from typing import Final as _Final
+CONFORMANCE_PROFILE: _Final[str] = "AGENTOBS-Enterprise-2.0"
 
 # Optional sub-modules — import on demand to keep startup cost zero.
 import agentobs.testing as testing  # noqa: E402
@@ -516,5 +520,10 @@ __all__: list[str] = [
     "verify",
     "verify_chain",
     "warn_if_deprecated",
+    # Normalizer (RFC-0001 §10.4)
+    "ProviderNormalizer",
+    "GenericNormalizer",
+    # Conformance
+    "CONFORMANCE_PROFILE",
 ]
 

@@ -666,6 +666,14 @@ class SpanPayload:
             raise ValueError("SpanPayload.end_time_unix_nano must be >= start_time_unix_nano")
         if self.duration_ms < 0:
             raise ValueError("SpanPayload.duration_ms must be non-negative")
+        # RFC-0001 §8.1 — duration_ms MUST equal (end - start) / 1_000_000 ± 1 ms
+        _computed_ms = (self.end_time_unix_nano - self.start_time_unix_nano) / 1_000_000
+        if abs(self.duration_ms - _computed_ms) > 1.0:
+            raise ValueError(
+                f"SpanPayload.duration_ms {self.duration_ms} must equal "
+                f"(end_time_unix_nano - start_time_unix_nano) / 1_000_000 "
+                f"= {_computed_ms:.3f} \u00b11 ms (RFC-0001 \u00a78.1)"
+            )
 
     def _add_optional_fields(self, d: dict[str, Any]) -> None:
         """Add optional fields to *d* when they are not None/empty."""
@@ -809,6 +817,14 @@ class AgentStepPayload:
             raise ValueError("AgentStepPayload.start_time_unix_nano must be non-negative")
         if self.end_time_unix_nano < self.start_time_unix_nano:
             raise ValueError("AgentStepPayload.end_time_unix_nano must be >= start_time_unix_nano")
+        # RFC-0001 §8.1 — duration_ms MUST equal (end - start) / 1_000_000 ± 1 ms
+        _computed_ms = (self.end_time_unix_nano - self.start_time_unix_nano) / 1_000_000
+        if abs(self.duration_ms - _computed_ms) > 1.0:
+            raise ValueError(
+                f"AgentStepPayload.duration_ms {self.duration_ms} must equal "
+                f"(end_time_unix_nano - start_time_unix_nano) / 1_000_000 "
+                f"= {_computed_ms:.3f} \u00b11 ms (RFC-0001 \u00a78.1)"
+            )
 
     def to_dict(self) -> dict[str, Any]:
         """Serialise the payload to a plain ``dict``."""

@@ -8,7 +8,7 @@ agentobs --help
 ```
 
 ```text
-usage: agentobs [-h] <command> ...
+usage: agentobs [-h] [-V] <command> ...
 
 agentobs command-line utilities
 
@@ -26,7 +26,29 @@ positional arguments:
 
 options:
   -h, --help          show this help message and exit
+  -V, --version       show version and conformance profile, then exit
 ```
+
+## `--version`
+
+Print the installed version and conformance profile label, then exit.
+
+```bash
+agentobs --version
+agentobs -V
+```
+
+**Example output**
+
+```
+agentobs 1.0.7 [AGENTOBS-Enterprise-2.0]
+```
+
+The bracketed label is `CONFORMANCE_PROFILE` from `agentobs.CONFORMANCE_PROFILE`
+(RFC §1.5). Use this to verify that your installed SDK declares the correct
+conformance class.
+
+---
 
 ## `check`
 

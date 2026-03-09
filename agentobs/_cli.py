@@ -476,9 +476,15 @@ def _cmd_stats(args: argparse.Namespace) -> int:
 
 def main(argv: list[str] | None = None) -> NoReturn:
     """Entry point for the ``agentobs`` CLI tool."""
+    from agentobs import CONFORMANCE_PROFILE, __version__  # noqa: PLC0415
     parser = argparse.ArgumentParser(
         prog="agentobs",
         description="agentobs command-line utilities",
+    )
+    parser.add_argument(
+        "-V", "--version",
+        action="version",
+        version=f"agentobs {__version__} [{CONFORMANCE_PROFILE}]",
     )
     sub = parser.add_subparsers(dest="command", metavar="<command>")
 

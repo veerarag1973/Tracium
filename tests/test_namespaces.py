@@ -277,7 +277,7 @@ class TestAgentStepPayload:
             "status": "ok",
             "start_time_unix_nano": TS_START,
             "end_time_unix_nano": TS_END,
-            "duration_ms": 500.0,
+            "duration_ms": 1000.0,
         }
         defaults.update(kw)
         return AgentStepPayload(**defaults)

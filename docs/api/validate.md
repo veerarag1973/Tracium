@@ -2,10 +2,15 @@
 
 JSON Schema validation for `Event` envelopes.
 
-Validates `Event` instances against the published JSON Schema in
-`schemas/v1.0/schema.json`. When the optional `jsonschema` package is installed,
-full Draft 2020-12 validation is performed. Otherwise a stdlib-only structural
-check is run that covers all required fields, types, and regex patterns.
+Validates `Event` instances against the published JSON Schema. Schema version
+is selected automatically from the event's `schema_version` field:
+
+- `"1.0"` → `schemas/v1.0/schema.json`
+- `"2.0"` (default) → `schemas/v2.0/schema.json`
+
+When the optional `jsonschema` package is installed, full Draft 2020-12
+validation is performed. Otherwise a stdlib-only structural check covers all
+required fields, types, and regex patterns.
 
 **Install for full validation:**
 
@@ -19,9 +24,11 @@ pip install "agentobs[jsonschema]"
 
 ### `validate_event(event: Event) -> None`
 
-Validate `event` against the published v1.0 JSON Schema.
+Validate `event` against the published JSON Schema.
 
-Serialises `event` to a plain dict and validates the envelope structure.
+The schema version is read from `event.schema_version` and the matching schema
+file is selected automatically (RFC §15.5). Falls back to `"2.0"` when the
+field is absent.
 
 **Args:**
 
@@ -32,7 +39,7 @@ Serialises `event` to a plain dict and validates the envelope structure.
 **Raises:**
 
 - `SchemaValidationError` — if the event does not conform to the envelope schema.
-- `FileNotFoundError` — if `schemas/v1.0/schema.json` is missing from the distribution.
+- `FileNotFoundError` — if the matching schema file is missing from the distribution.
 - `TypeError` — if `event` is not an `Event` instance.
 
 **Example:**
@@ -51,15 +58,35 @@ validate_event(event)  # passes silently
 
 ---
 
-### `load_schema() -> Dict[str, Any]`
+### `load_schema(version: Optional[str] = None) -> Dict[str, Any]`
 
-Load and cache the v1.0 JSON Schema from disk.
+Load and cache a JSON Schema from disk by version.
 
-The schema is loaded once and cached in memory for subsequent calls.
+The schema is loaded once per version key and cached in memory. If `version`
+is `None`, the current default (`"2.0"`) is used. Unknown versions fall back
+to the closest matching major version.
+
+**Args:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `version` | `str \| None` | `None` | Schema version string, e.g. `"1.0"` or `"2.0"`. Defaults to `"2.0"`. |
 
 **Returns:** `Dict[str, Any]` — parsed JSON Schema as a plain Python dict.
 
-**Raises:** `FileNotFoundError` — if `schemas/v1.0/schema.json` cannot be found relative to the package root.
+**Raises:**
+
+- `FileNotFoundError` — if the schema file cannot be found relative to the package root.
+- `ValueError` — if an unknown version with no major-version fallback is requested.
+
+**Example:**
+
+```python
+from agentobs.validate import load_schema
+
+schema_v2 = load_schema()        # loads schemas/v2.0/schema.json
+schema_v1 = load_schema("1.0")   # loads schemas/v1.0/schema.json
+```
 
 ---
 

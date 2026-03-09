@@ -13,6 +13,7 @@ exported at the top-level package under `agentobs`.
 - [export](export.md)
 - [stream](stream.md)
 - [validate](validate.md)
+- [normalizer](normalizer.md)
 - [migrate](migrate.md)
 - [consumer](consumer.md)
 - [governance](governance.md)
@@ -40,7 +41,8 @@ exported at the top-level package under `agentobs`.
 | `agentobs.compliance` | Compatibility checks, isolation, chain integrity, scope verification |
 | `agentobs.export` | OTLP, Webhook, JSONL, Datadog, and Grafana Loki export backends |
 | `agentobs.stream` | `EventStream` multiplexer with Kafka support |
-| `agentobs.validate` | JSON Schema validation helpers |
+| `agentobs.validate` | JSON Schema validation helpers (version-aware: v1.0 + v2.0) |
+| `agentobs.normalizer` | `ProviderNormalizer` protocol and `GenericNormalizer` fallback |
 | `agentobs.migrate` | `MigrationResult`, `SunsetPolicy`, `DeprecationRecord`, `v2_migration_roadmap()` |
 | `agentobs.consumer` | `ConsumerRegistry`, `ConsumerRecord`, `IncompatibleSchemaError` |
 | `agentobs.governance` | `EventGovernancePolicy`, `GovernanceViolationError`, `GovernanceWarning` |

@@ -608,6 +608,9 @@ class Event:
         cls,
         data: dict[str, Any],
         *,
+        max_size_bytes: int = 1_048_576,
+        max_payload_depth: int = 10,
+        max_tags: int = 50,
         source_hint: str = "<dict>",
     ) -> Event:
         """Construct an :class:`Event` from a plain dictionary.
@@ -615,15 +618,21 @@ class Event:
         The dictionary shape matches the output of :meth:`to_dict`.
 
         Args:
-            data:        Dictionary with event fields.
-            source_hint: Short label for error messages (e.g. a filename).
+            data:              Dictionary with event fields.
+            max_size_bytes:    Maximum serialised size in bytes (RFC §19.4).
+                               Defaults to 1 MiB.  Pass 0 to disable.
+            max_payload_depth: Maximum nesting depth of the payload object
+                               (RFC §19.4).  Defaults to 10.
+            max_tags:          Maximum number of tag keys allowed (RFC §19.4).
+                               Defaults to 50.
+            source_hint:       Short label for error messages (e.g. a filename).
 
         Returns:
             A new :class:`Event` instance (not yet validated).
 
         Raises:
             DeserializationError: If a required field is missing or has an
-                unexpected type.
+                unexpected type, or if any DoS limit is exceeded.
 
         Example::
 
@@ -631,6 +640,37 @@ class Event:
             event.validate()
         """
         _require_dict(data, source_hint)
+
+        # RFC §19.4 — DoS guards
+        if max_size_bytes > 0:
+            try:
+                _encoded = json.dumps(data, separators=(",", ":")).encode()
+            except (TypeError, ValueError):
+                _encoded = b""
+            if len(_encoded) > max_size_bytes:
+                raise DeserializationError(
+                    reason=(
+                        f"event exceeds max_size_bytes limit of {max_size_bytes} "
+                        f"(got {len(_encoded)} bytes)"
+                    ),
+                    source_hint=source_hint,
+                )
+
+        if max_tags > 0:
+            tags_raw = data.get("tags")
+            if isinstance(tags_raw, dict) and len(tags_raw) > max_tags:
+                raise DeserializationError(
+                    reason=(
+                        f"event has {len(tags_raw)} tags, exceeding max_tags={max_tags} "
+                        "(RFC §19.4)"
+                    ),
+                    source_hint=source_hint,
+                )
+
+        if max_payload_depth > 0:
+            payload_raw = data.get("payload")
+            if payload_raw is not None:
+                _check_nesting_depth(payload_raw, max_payload_depth, source_hint)
 
         try:
             tags_raw = data.get("tags")
@@ -666,25 +706,46 @@ class Event:
             ) from exc
 
     @classmethod
-    def from_json(cls, json_str: str, *, source_hint: str = "<json>") -> Event:
+    def from_json(
+        cls,
+        json_str: str,
+        *,
+        max_size_bytes: int = 1_048_576,
+        max_payload_depth: int = 10,
+        max_tags: int = 50,
+        source_hint: str = "<json>",
+    ) -> Event:
         """Construct an :class:`Event` from a JSON string.
 
         Args:
-            json_str:    A JSON string in the format produced by :meth:`to_json`.
-            source_hint: Short label for error messages.
+            json_str:          A JSON string in the format produced by :meth:`to_json`.
+            max_size_bytes:    Maximum string size in UTF-8 bytes (RFC §19.4).
+                               Defaults to 1 MiB.  Pass 0 to disable.
+            max_payload_depth: Maximum nesting depth forwarded to :meth:`from_dict`.
+            max_tags:          Maximum number of tag keys forwarded to :meth:`from_dict`.
+            source_hint:       Short label for error messages.
 
         Returns:
             A new :class:`Event` instance (not yet validated).
 
         Raises:
-            DeserializationError: If *json_str* is not valid JSON or is missing
-                required fields.
+            DeserializationError: If *json_str* is not valid JSON, is missing
+                required fields, or exceeds any DoS limit.
 
         Example::
 
             event = Event.from_json(raw_json_str)
             event.validate()
         """
+        # RFC §19.4 — byte-length check before parsing to prevent parse-bomb attacks.
+        if max_size_bytes > 0 and len(json_str.encode()) > max_size_bytes:
+            raise DeserializationError(
+                reason=(
+                    f"JSON string exceeds max_size_bytes limit of {max_size_bytes} "
+                    f"(got {len(json_str.encode())} bytes)"
+                ),
+                source_hint=source_hint,
+            )
         try:
             data: dict[str, Any] = json.loads(json_str)
         except json.JSONDecodeError as exc:
@@ -692,12 +753,46 @@ class Event:
                 reason=f"invalid JSON: {exc}",
                 source_hint=source_hint,
             ) from exc
-        return cls.from_dict(data, source_hint=source_hint)
+        return cls.from_dict(
+            data,
+            max_size_bytes=0,  # already checked above
+            max_payload_depth=max_payload_depth,
+            max_tags=max_tags,
+            source_hint=source_hint,
+        )
 
 
 # ---------------------------------------------------------------------------
 # Validation helpers  (module-private)
 # ---------------------------------------------------------------------------
+
+
+def _check_nesting_depth(
+    obj: Any,
+    max_depth: int,
+    source_hint: str,
+    _current: int = 0,
+) -> None:
+    """Recursively check that *obj* does not exceed *max_depth* nesting levels.
+
+    Raises :exc:`~agentobs.exceptions.DeserializationError` if the depth
+    limit is exceeded.  This guards against deeply nested JSON that could
+    cause stack overflows or excessive CPU use (RFC §19.4).
+    """
+    if _current >= max_depth:
+        raise DeserializationError(
+            reason=(
+                f"payload exceeds max nesting depth of {max_depth} levels "
+                "(RFC §19.4)"
+            ),
+            source_hint=source_hint,
+        )
+    if isinstance(obj, dict):
+        for v in obj.values():
+            _check_nesting_depth(v, max_depth, source_hint, _current + 1)
+    elif isinstance(obj, list):
+        for item in obj:
+            _check_nesting_depth(item, max_depth, source_hint, _current + 1)
 
 
 def _validate_schema_version(value: str) -> None:

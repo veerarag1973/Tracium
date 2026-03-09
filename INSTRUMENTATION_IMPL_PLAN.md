@@ -566,3 +566,359 @@ from agentobs.cache import SemanticCache, cached
 - `CircuitOpenError` — raised by `CircuitBreaker` in OPEN state
 - `AllProvidersFailedError` — raised by `FallbackChain` when all providers fail
 - `CacheBackendError` — raised by `SemanticCache` on backend connectivity failure
+
+---
+
+## RFC-0001 Conformance Gap Analysis
+
+**Date of analysis:** March 2026
+**RFC version reviewed:** RFC-0001-AGENTOBS (targets v2.0)
+**Claimed conformance level (current):** AGENTOBS-Enterprise-2.0 (COMPLETE — all 6 gaps resolved 2026-03-09)
+
+This section documents the delta between what RFC-0001-AGENTOBS normatively requires and what the current SDK provides. It was compiled by reading the full RFC (§1–§24 + Appendices A–D) against the live codebase.
+
+---
+
+### Already Conformant — Pre-Verified
+
+The following RFC requirements were verified present and correct in the SDK and do **not** require further work:
+
+| RFC Ref | Requirement | Location |
+|---------|-------------|----------|
+| §5 | Event Envelope (17 fields, all types/constraints) | `event.py` |
+| §5.3 | `Event.from_json()` / `Event.from_dict()` deserialisation | `event.py` |
+| §6 | ULID generation, monotonic ordering within same ms, first-char `0–7` validation | `ulid.py` |
+| §7 | Full 36-event canonical namespace / `EventType` enum | `types.py` |
+| §8.1 | `SpanPayload` with `operation` (`GenAIOperationName`), `span_kind` (`SpanKind`), all required/optional fields | `namespaces/trace.py` |
+| §8.1 | `tool_calls` defaults to `[]` not `null` | `namespaces/trace.py` |
+| §8.1 | Envelope `trace_id`/`span_id`/`parent_span_id` copied from payload in `_stream.emit_*()` | `_stream.py` |
+| §8.2 | `ReasoningStep` (step_index, reasoning_tokens, duration_ms, content_hash SHA-256; raw content never stored) | `namespaces/trace.py` |
+| §8.3 | `DecisionPoint` (decision_id, decision_type enum, options_considered, chosen_option, rationale) | `namespaces/trace.py` |
+| §8.4 | `AgentStepPayload.reasoning_steps` + `decision_points` (both default `[]`) | `_span.py` |
+| §8.5 | `AgentRunPayload.status` includes `"max_steps_exceeded"` | `namespaces/trace.py` |
+| §9.1 | `TokenUsage` with all 7 fields incl. `cached_tokens`, `cache_creation_tokens`, `reasoning_tokens`, `image_tokens` | `namespaces/trace.py` |
+| §9.2 | `ModelInfo.response_model` + `custom_system_name` (required + validated when `system == "_custom"`) | `namespaces/trace.py` |
+| §9.3 | `CostBreakdown.pricing_date` (ISO 8601) and total-cost invariant check | `namespaces/trace.py` |
+| §9.4 | `PricingTier` typed object with all required fields and `effective_date` | `namespaces/trace.py` |
+| §10.1 | `GenAISystem` with all 12 RFC values incl. `cohere`, `vertex_ai`, `aws_bedrock`, `az.ai.inference`, `mistral_ai`, `hugging_face`, `_custom` | `namespaces/trace.py` |
+| §10.2 | `GenAIOperationName` with all 8 values (chat, text_completion, embeddings, image_generation, execute_tool, invoke_agent, create_agent, reasoning) | `namespaces/trace.py` |
+| §10.3 | `SpanKind` with all 5 values (CLIENT, SERVER, INTERNAL, CONSUMER, PRODUCER) | `namespaces/trace.py` |
+| §10.5 | `normalize_response()` per provider returning `(TokenUsage, ModelInfo, CostBreakdown)` | `integrations/{openai,anthropic,groq,ollama,together}.py` |
+| §11 | HMAC-SHA256 signing, audit chain, `verify_chain()`, key rotation with `AuditStream.rotate_key()` | `signing.py` |
+| §12 | PII redaction: `Redactable`, `Sensitivity` (5 levels), `RedactionPolicy`, `contains_pii()`, `assert_redacted()` | `redact.py` |
+| §13 | All 6 named exporters (OTLP, JSONL, Datadog, Grafana, Webhook, OTel bridge) | `export/` |
+| §14.1 | All 13 required OTel attribute mappings incl. `gen_ai.response.finish_reasons`, `deployment.environment.name` | `export/otlp.py` |
+| §14.2 | `make_traceparent()` (W3C format), `extract_trace_context()` (parse incoming header) | `export/otlp.py` |
+| §15 | `EventGovernancePolicy`, `ConsumerRegistry`, `DeprecationRegistry`, `migration_roadmap()` | `governance.py`, `consumer.py`, `deprecations.py`, `migrate.py` |
+| §15.5 | `SchemaVersionError` raised on unknown `schema_version` | `exceptions.py` |
+| §16 | Compliance checks CHK-1 through CHK-4 with JSON output CLI flag | `compliance/` |
+| §17 | Structural stdlib fallback validation path (no jsonschema required) | `validate.py` |
+| §19.2 | Constant-time HMAC comparison via `hmac.compare_digest` | `signing.py` |
+| §19.3 | `org_secret` never in exception messages, `__repr__`, or stack traces; empty secret rejected at signing time | `signing.py` |
+| §20 | `Redactable.__repr__`/`__str__` never surfaces wrapped value; only sensitivity level visible | `redact.py` |
+
+---
+
+### Gap 1 — `SpanPayload.duration_ms` Invariant Not Validated (MUST)
+
+**RFC ref:** §8.1
+**Profile:** Core
+**Severity:** MUST
+**Status:** ✅ RESOLVED (2026-03-09) — invariant enforced in both `SpanPayload` and `AgentStepPayload`; see `agentobs/namespaces/trace.py`
+
+#### Problem
+
+`SpanPayload.__post_init__` checks `duration_ms >= 0` but the RFC requires:
+
+> `duration_ms` MUST equal `(end_time_unix_nano − start_time_unix_nano) / 1_000_000` ± 1 ms
+
+A caller can currently provide `start_time_unix_nano=1000`, `end_time_unix_nano=2000` (1 µs elapsed) but `duration_ms=999.0` (1 s declared) and the SDK accepts it silently, producing a verifiable but internally inconsistent event.
+
+#### Fix required
+
+Add an invariant check in `SpanPayload.__post_init__` in `agentobs/namespaces/trace.py`:
+
+```python
+computed_ms = (self.end_time_unix_nano - self.start_time_unix_nano) / 1_000_000
+if abs(self.duration_ms - computed_ms) > 1.0:
+    raise ValueError(
+        f"SpanPayload.duration_ms {self.duration_ms} must equal "
+        f"(end_time_unix_nano - start_time_unix_nano) / 1_000_000 "
+        f"= {computed_ms:.3f} ± 1 ms"
+    )
+```
+
+The same invariant should be applied to `AgentStepPayload` if that class exposes `duration_ms` + nanosecond timestamps directly.
+
+#### Files to modify
+
+| File | Change |
+|------|--------|
+| `agentobs/namespaces/trace.py` | Add invariant check in `SpanPayload.__post_init__` |
+| `tests/test_namespaces_trace.py` | Tests: valid case, 1 ms tolerance edge, violation raises `ValueError` |
+
+---
+
+### Gap 2 — `schemas/v2.0/schema.json` Missing (MUST)
+
+**RFC ref:** §17.1, §21.2
+**Profile:** Core (C-11)
+**Severity:** MUST
+**Status:** ✅ RESOLVED (2026-03-09) — `schemas/v2.0/schema.json` created; `agentobs/validate.py` updated to version-aware schema loading
+
+#### Problem
+
+The SDK emits `schema_version = "2.0"` (set in `event.py`) but the JSON Schema file is only present at `schemas/v1.0/schema.json`. RFC §21.2 states:
+
+> The versioned JSON Schema at `schemas/v1.0/schema.json` is the normative, language-neutral definition of the Event Envelope. Any implementation that validates events against this schema is interoperable with any other conformant implementation.
+
+The v1.0 schema predates RFC v2.0 and lacks definitions for `AgentStepPayload`, `AgentRunPayload`, `ReasoningStep`, `DecisionPoint`, `PricingTier`, the full `TokenUsage` optional fields, `ModelInfo.response_model`, `CostBreakdown.pricing_date`, and all the §10 enums. A `schemas/v2.0/schema.json` is required as the portability contract for any language-neutral implementation.
+
+#### Fix required
+
+Create `schemas/v2.0/schema.json` with:
+- Top-level Event Envelope definition matching Appendix A (all 17 fields)
+- `$defs` for every value object: `SpanPayload`, `AgentStepPayload`, `AgentRunPayload`, `TokenUsage`, `ModelInfo`, `CostBreakdown`, `PricingTier`, `ReasoningStep`, `DecisionPoint`, `ToolCall`, `SpanEvent`
+- Enum arrays for `GenAISystem` (12 values), `GenAIOperationName` (8), `SpanKind` (5)
+- Pattern validations: `trace_id` (`^[0-9a-f]{32}$`), `span_id` (`^[0-9a-f]{16}$`), ULID (`^[0-7][0-9A-HJKMNP-TV-Z]{25}$`), ISO 8601 microsecond timestamps
+
+Also update `agentobs/validate.py` to load `schemas/v2.0/schema.json` when the event's `schema_version` is `"2.0"`.
+
+#### Files to create/modify
+
+| File | Action |
+|------|--------|
+| `schemas/v2.0/schema.json` | **Create** — comprehensive JSON Schema for all v2.0 shapes |
+| `agentobs/validate.py` | Update schema loader to select v1.0 or v2.0 based on `schema_version` |
+| `tests/test_validate.py` | Add tests using the v2.0 schema file directly |
+
+---
+
+### Gap 3 — `ProviderNormalizer` Protocol + `GenericNormalizer` Fallback Missing (MUST)
+
+**RFC ref:** §10.4
+**Profile:** Core
+**Severity:** MUST
+**Status:** ✅ RESOLVED (2026-03-09) — `agentobs/normalizer.py` created with `ProviderNormalizer` Protocol and `GenericNormalizer` fallback; both re-exported from `agentobs/__init__.py`
+
+#### Problem
+
+RFC §10.4 requires the SDK to expose a `ProviderNormalizer` structural `Protocol` so third-party integrations can add new providers without modifying the SDK core. Currently each integration (`openai.py`, `anthropic.py`, etc.) has its own `normalize_response()` with no common interface. A team adding a `cohere` integration or an enterprise proxy gateway has no Protocol to follow and no way for the SDK to dispatch to their normaliser generically.
+
+RFC §10.4 also requires a `GenericNormalizer` fallback that handles common response shapes (`{usage: {input_tokens, output_tokens}}`) for providers not covered by a named integration.
+
+#### Fix required
+
+Create `agentobs/normalizer.py`:
+
+```python
+from typing import Protocol, runtime_checkable
+from agentobs.namespaces.trace import CostBreakdown, ModelInfo, TokenUsage
+
+@runtime_checkable
+class ProviderNormalizer(Protocol):
+    """RFC-0001 §10.4 — Structural protocol for provider response normalisers."""
+
+    def normalize_response(
+        self, response: object
+    ) -> tuple[TokenUsage, ModelInfo, CostBreakdown | None]:
+        """Extract token usage, model info, and optional cost from a raw provider response."""
+        ...
+
+
+class GenericNormalizer:
+    """RFC-0001 §10.4 — Fallback normaliser for unknown/uncovered providers.
+
+    Best-effort extraction from common response shapes:
+    - OpenAI-compatible: ``response.usage.prompt_tokens`` / ``completion_tokens``
+    - Anthropic-compatible: ``response.usage.input_tokens`` / ``output_tokens``
+    - Raw dict: ``{"usage": {"input_tokens": N, "output_tokens": N}}``
+    """
+
+    def normalize_response(
+        self, response: object
+    ) -> tuple[TokenUsage, ModelInfo, CostBreakdown | None]:
+        ...
+```
+
+#### Files to create/modify
+
+| File | Action |
+|------|--------|
+| `agentobs/normalizer.py` | **Create** — `ProviderNormalizer` Protocol, `GenericNormalizer` class |
+| `agentobs/namespaces/trace.py` | Re-export `ProviderNormalizer` (or import from normalizer) |
+| `agentobs/__init__.py` | Add `ProviderNormalizer`, `GenericNormalizer` to public exports |
+| `tests/test_normalizer.py` | Tests: `GenericNormalizer` for OAI-compat/Anthropic-compat/raw dict shapes; Protocol `isinstance` checks |
+
+---
+
+### Gap 4 — DoS Input Limits Not Enforced on `Event.from_json()` (RECOMMENDED)
+
+**RFC ref:** §19.4
+**Profile:** Security
+**Severity:** RECOMMENDED (not MUST, but required for safely parsing untrusted input)
+**Status:** ✅ RESOLVED (2026-03-09) — DoS limits (`max_size_bytes`, `max_payload_depth`, `max_tags`) added to `Event.from_dict()` and `Event.from_json()`
+
+#### Problem
+
+RFC §19.4 states that implementations parsing events from untrusted input (e.g., HTTP webhook receivers) MUST enforce:
+1. Maximum event byte size (RECOMMENDED: 1 MB)
+2. Maximum `payload` nesting depth (RECOMMENDED: 10 levels)
+3. Maximum number of `tags` keys (RECOMMENDED: 50)
+
+`Event.from_json()` and `Event.from_dict()` currently accept arbitrarily large, deep, and wide inputs. Operators using these methods in webhook receivers or API endpoints are exposed to denial-of-service via maliciously crafted inputs.
+
+#### Fix required
+
+Add optional limit keyword arguments with RFC-recommended defaults to `Event.from_json()` and `Event.from_dict()` in `agentobs/event.py`:
+
+```python
+@classmethod
+def from_json(
+    cls,
+    json_str: str,
+    *,
+    max_size_bytes: int = 1_048_576,   # RFC §19.4 — 1 MB
+    max_payload_depth: int = 10,        # RFC §19.4 — 10 levels
+    max_tags: int = 50,                 # RFC §19.4 — 50 keys
+    source_hint: str = "<json>",
+) -> Event: ...
+```
+
+Add a `_check_nesting_depth(obj: Any, max_depth: int, current: int = 0) -> None` helper that raises `DeserializationError` when depth exceeds `max_depth`.
+
+Limits default to the RFC-recommended values so existing callers are unaffected. Operators with tighter requirements can pass lower values; trusted internal callers can pass `max_size_bytes=0` to disable the check.
+
+#### Files to modify
+
+| File | Change |
+|------|--------|
+| `agentobs/event.py` | Add size/depth/tags limits to `from_json()` and `from_dict()` |
+| `tests/test_event.py` | Add tests: oversized event, deeply nested payload, too many tags, limits respected |
+
+---
+
+### Gap 5 — Conformance Claim Label Absent from CLI `--version` (SHOULD)
+
+**RFC ref:** §18.6
+**Profile:** Enterprise
+**Severity:** SHOULD
+**Status:** ✅ RESOLVED (2026-03-09) — `CONFORMANCE_PROFILE` constant added to `agentobs/__init__.py`; `-V/--version` flag now outputs `agentobs 1.0.7 [AGENTOBS-Enterprise-2.0]`
+
+#### Problem
+
+RFC §18.6 specifies:
+
+> A conformant implementation SHOULD include its conformance claim label in `--version` output, e.g.: `agentobs 1.0.7 [AGENTOBS-Enterprise-2.0]`
+
+The current output is `agentobs 1.0.7` with no conformance claim. This makes it impossible for operators to verify at a glance which RFC profile the installed version declares.
+
+#### Fix required
+
+```bash
+# Current:
+$ agentobs --version
+agentobs 1.0.7
+
+# Target:
+$ agentobs --version
+agentobs 1.0.7 [AGENTOBS-Enterprise-2.0]
+```
+
+Add a `CONFORMANCE_PROFILE` constant and thread it through the CLI version string:
+
+```python
+# agentobs/__init__.py
+CONFORMANCE_PROFILE: Final[str] = "AGENTOBS-Enterprise-2.0"
+
+# agentobs/_cli.py  — in the --version callback
+f"agentobs {__version__} [{CONFORMANCE_PROFILE}]"
+```
+
+#### Files to modify
+
+| File | Change |
+|------|--------|
+| `agentobs/__init__.py` | Add `CONFORMANCE_PROFILE = "AGENTOBS-Enterprise-2.0"` constant |
+| `agentobs/_cli.py` | Append `[{CONFORMANCE_PROFILE}]` to the `-V/--version` string |
+
+---
+
+### Gap 6 — Property-Based Tests Absent (SHOULD)
+
+**RFC ref:** §18.7
+**Profile:** All profiles
+**Severity:** SHOULD
+**Status:** ✅ RESOLVED (2026-03-09) — `tests/test_properties.py` created with property-based tests for signing correctness, canonical JSON determinism, and ULID monotonic generation
+
+#### Problem
+
+RFC §18.7 states:
+
+> Implementations SHOULD include property-based tests for signing correctness, canonical JSON determinism, and ULID monotonic generation to give confidence that invariants hold across the full input space, not just the examples chosen by the test author.
+
+The current suite (2,518 passing tests) is entirely example-based. Property-based tests would catch edge cases invisible to hand-written examples — e.g., a payload whose key ordering happens to expose a non-deterministic serialisation bug, or a ULID clock-skew scenario not covered by any fixture.
+
+#### Fix required
+
+Add `tests/test_properties.py` using `hypothesis`:
+
+```python
+from hypothesis import given, settings
+from hypothesis import strategies as st
+
+@given(
+    payload=st.dictionaries(st.text(min_size=1, max_size=20), st.text(max_size=100)),
+    secret=st.text(min_size=1, max_size=128).filter(str.strip),
+)
+def test_sign_verify_roundtrip(payload, secret):
+    """sign() → verify() must hold for any valid payload and secret."""
+    event = Event(event_type=EventType.TRACE_SPAN_COMPLETED, source="prop@1.0.0", payload=payload)
+    signed = sign(event, org_secret=secret)
+    assert verify(signed, org_secret=secret)
+
+@given(payload=st.dictionaries(st.text(min_size=1), st.integers()))
+def test_canonical_json_deterministic(payload):
+    """Same payload always produces identical canonical JSON bytes."""
+    b1 = _canonical_payload_bytes(payload)
+    b2 = _canonical_payload_bytes(dict(reversed(list(payload.items()))))
+    assert b1 == b2
+
+@settings(max_examples=500)
+@given(count=st.integers(min_value=2, max_value=100))
+def test_ulid_monotonic_within_ms(count):
+    """All ULIDs generated in the same millisecond are strictly ordered."""
+    ulids = [generate() for _ in range(count)]
+    assert ulids == sorted(ulids)
+```
+
+#### Files to create/modify
+
+| File | Action |
+|------|--------|
+| `tests/test_properties.py` | **Create** — property tests for signing, serialisation, ULID |
+| `pyproject.toml` | Add `hypothesis>=6.0` to `[project.optional-dependencies.dev]` |
+
+---
+
+### RFC-0001 Conformance Summary
+
+| Profile | MUST Requirements | Status after all gaps fixed |
+|---------|------------------|-----------------------------|
+| **Core** (C-1 – C-11) | All 11 | ✅ All met (Gap 1 + Gap 2 are the remaining MUST items) |
+| **Security** (S-1 – S-7) | All 7 | ✅ All met (Gap 4 is RECOMMENDED, not a MUST) |
+| **Privacy** (P-1 – P-6) | All 6 | ✅ All met |
+| **Enterprise** (E-1 – E-7) | All 7 | ✅ All met |
+
+**Conformance claim after all gaps are resolved:** `AGENTOBS-Enterprise-2.0`
+
+### Gap Implementation Priority
+
+| Priority | Gap | Estimated Effort | Rationale |
+|----------|-----|-----------------|-----------|
+| **P1** | Gap 2 — `schemas/v2.0/schema.json` | 2–3 days | Portability contract; required for language-neutral consumers and C-11 |
+| **P1** | Gap 1 — `duration_ms` invariant | 1–2 hours | Data integrity; trivial change, high correctness value |
+| **P2** | Gap 3 — `ProviderNormalizer` + `GenericNormalizer` | 1 day | Extensibility; unblocks enterprise provider integrations |
+| **P2** | Gap 4 — DoS input limits | Half day | Security; protects webhook/API use cases |
+| **P3** | Gap 5 — Conformance label in CLI | 15 minutes | Compliance declaration; one-line change |
+| **P3** | Gap 6 — Property-based tests | 1–2 days | Test quality; SHOULD not MUST, but high confidence value |

@@ -1,7 +1,11 @@
 """agentobs.validate — JSON Schema validation for Event envelopes.
 
 This module validates :class:`~agentobs.event.Event` instances against the
-published JSON Schema specification in ``schemas/v1.0/schema.json``.
+published JSON Schema specification. Schema version is selected automatically
+from the event's ``schema_version`` field:
+
+* ``"1.0"`` → ``schemas/v1.0/schema.json``
+* ``"2.0"`` (default) → ``schemas/v2.0/schema.json``
 
 It uses the optional ``jsonschema`` library when available for full Draft 2020-12
 validation.  If ``jsonschema`` is not installed, a lightweight structural check
@@ -25,7 +29,8 @@ Usage
 Public API
 ----------
 * :func:`validate_event` — validate an :class:`~agentobs.event.Event`
-  against the v1.0 envelope schema.
+  against the matching envelope schema (version-aware).
+* :func:`load_schema` — load a specific schema version by key.
 * :exc:`~agentobs.exceptions.SchemaValidationError` — raised on validation
   failure (re-exported from :mod:`agentobs.exceptions`).
 """
@@ -43,13 +48,22 @@ from agentobs.exceptions import SchemaValidationError
 __all__: list[str] = ["load_schema", "validate_event"]
 
 # ---------------------------------------------------------------------------
-# Schema path
+# Schema paths — version-aware (RFC-0001 §15.5)
 # ---------------------------------------------------------------------------
 
-#: Absolute path to the published JSON Schema (RFC-0001 v2.0 envelope schema).
-_SCHEMA_PATH: pathlib.Path = (
-    pathlib.Path(__file__).parent.parent / "docs" / "schema" / "envelope.schema.json"
-)
+_SCHEMAS_DIR: pathlib.Path = pathlib.Path(__file__).parent.parent / "schemas"
+
+#: Map of schema-version strings to their JSON Schema file paths.
+_SCHEMA_PATHS: dict[str, pathlib.Path] = {
+    "1.0": _SCHEMAS_DIR / "v1.0" / "schema.json",
+    "2.0": _SCHEMAS_DIR / "v2.0" / "schema.json",
+}
+
+#: Default (current) schema version (RFC-0001-AGENTOBS-Enterprise-2.0).
+_DEFAULT_SCHEMA_VERSION: str = "2.0"
+
+# Legacy single-path alias kept for backwards-compatible callers.
+_SCHEMA_PATH: pathlib.Path = _SCHEMA_PATHS["1.0"]
 
 # ---------------------------------------------------------------------------
 # Compiled patterns from schema (stdlib fallback)
@@ -81,11 +95,20 @@ _SIGNATURE_RE: re.Pattern[str] = re.compile(r"^hmac-sha256:[0-9a-f]{64}$")
 # Schema loader
 # ---------------------------------------------------------------------------
 
+_CACHED_SCHEMAS: dict[str, dict[str, Any]] = {}
+
+# Legacy alias kept for call sites that used the old single-schema API.
 _CACHED_SCHEMA: dict[str, Any] | None = None
 
 
-def load_schema() -> dict[str, Any]:
-    """Load and cache the v1.0 JSON Schema from disk.
+def load_schema(version: str | None = None) -> dict[str, Any]:
+    """Load and cache a JSON Schema from disk by version.
+
+    Parameters
+    ----------
+    version:
+        Schema version string, e.g. ``"1.0"`` or ``"2.0"``.
+        Defaults to the current SDK schema version (``"2.0"``; RFC §15.5).
 
     Returns:
     -------
@@ -95,21 +118,42 @@ def load_schema() -> dict[str, Any]:
     Raises:
     ------
     FileNotFoundError
-        If ``schemas/v1.0/schema.json`` cannot be found relative to the
+        If the requested schema file cannot be found relative to the
         package root.  This should never happen in a correctly installed
         distribution.
+    ValueError
+        If an unknown schema version is requested.
     """
-    global _CACHED_SCHEMA  # noqa: PLW0603
-    if _CACHED_SCHEMA is None:
-        if not _SCHEMA_PATH.is_file():
-            raise FileNotFoundError(
-                f"JSON Schema not found at {_SCHEMA_PATH}.  "
-                "Ensure the 'schemas/' directory is included in the "
-                "installed package."
-            )
-        with _SCHEMA_PATH.open("r", encoding="utf-8") as fh:
-            _CACHED_SCHEMA = json.load(fh)
-    return _CACHED_SCHEMA
+    resolved = version or _DEFAULT_SCHEMA_VERSION
+    if resolved in _CACHED_SCHEMAS:
+        return _CACHED_SCHEMAS[resolved]
+
+    # Look up the path; fall back to v1.0 for unknown versions so that
+    # callers with future minor versions (e.g. "2.1") still validate.
+    path = _SCHEMA_PATHS.get(resolved)
+    if path is None:
+        # Try major-version match (e.g. "2.1" → "2.0", "1.5" → "1.0").
+        major = resolved.split(".")[0]
+        for key, candidate in _SCHEMA_PATHS.items():
+            if key.split(".")[0] == major:
+                path = candidate
+                break
+    if path is None:
+        raise ValueError(
+            f"Unknown schema version {resolved!r}. "
+            f"Available versions: {list(_SCHEMA_PATHS)}"
+        )
+
+    if not path.is_file():
+        raise FileNotFoundError(
+            f"JSON Schema not found at {path}.  "
+            "Ensure the 'schemas/' directory is included in the "
+            "installed package."
+        )
+    with path.open("r", encoding="utf-8") as fh:
+        schema = json.load(fh)
+    _CACHED_SCHEMAS[resolved] = schema
+    return schema
 
 
 # ---------------------------------------------------------------------------
@@ -275,11 +319,14 @@ def validate_event(event: Event) -> None:
 
     doc = event.to_dict()
 
+    # Select schema version from event envelope (RFC §15.5).
+    schema_version: str = doc.get("schema_version") or _DEFAULT_SCHEMA_VERSION
+
     try:
         import jsonschema  # noqa: PLC0415  (optional import)
         import jsonschema.exceptions  # noqa: PLC0415
 
-        schema = load_schema()
+        schema = load_schema(schema_version)
         try:
             jsonschema.validate(instance=doc, schema=schema)
         except jsonschema.exceptions.ValidationError as exc:

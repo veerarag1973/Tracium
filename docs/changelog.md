@@ -8,38 +8,76 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## 1.0.7 — 2026-03-09
 
-**Code-Quality Audit — SonarCloud Maintainability Fixes**
+**RFC-0001 Full Conformance — Six Gaps Closed + Code-Quality Audit**
 
-All changes are internal; no public API was added, changed, or removed.
+This release achieves **100% RFC-0001-AGENTOBS-Enterprise-2.0 conformance**.
+All six gaps identified in the internal conformance audit have been
+resolved. All changes are backward-compatible; no existing public API was
+removed.
+
+### Added
+
+- **`schemas/v2.0/schema.json`** — full Draft 2020-12 JSON Schema for the
+  v2.0 event envelope. Includes `$defs` for every value object
+  (`TokenUsage`, `ModelInfo`, `CostBreakdown`, `PricingTier`, `ToolCall`,
+  `SpanEvent`, `ReasoningStep`, `DecisionPoint`, `SpanPayload`,
+  `AgentStepPayload`, `AgentRunPayload`) and all enums (`GenAISystem`,
+  `GenAIOperationName`, `SpanKind`). (RFC-0001 §5, Appendix A)
+- **`agentobs.normalizer`** — new module exposing:
+  - `ProviderNormalizer` — `@runtime_checkable` structural `Protocol` that
+    provider integration modules must satisfy (RFC §10.4).
+  - `GenericNormalizer` — zero-dependency fallback that normalises
+    OpenAI-compatible, Anthropic-compatible, and raw `dict` response shapes
+    into `(TokenUsage, ModelInfo, CostBreakdown | None)` triples.
+  Both are exported at the top-level `agentobs` namespace.
+- **`agentobs.CONFORMANCE_PROFILE`** — new `Final[str]` constant set to
+  `"AGENTOBS-Enterprise-2.0"`, exported at the package level (RFC §1.5).
+- **`agentobs --version` / `-V` CLI flag** — the `agentobs` CLI entry-point
+  now supports `agentobs --version` which prints
+  `agentobs 1.0.7 [AGENTOBS-Enterprise-2.0]` (RFC §1.5).
+- **DoS input limits on `Event.from_dict()` and `Event.from_json()`** (RFC
+  §19.4) — both methods now accept:
+  - `max_size_bytes: int = 1_048_576` — rejects inputs exceeding 1 MiB.
+  - `max_payload_depth: int = 10` — rejects payloads nested more than 10
+    levels deep.
+  - `max_tags: int = 50` — rejects events with more than 50 tag keys.
+  All three limits are enforced before any field parsing.
+- **Property-based tests** (`tests/test_properties.py`) using `hypothesis`:
+  - `sign()` → `verify()` roundtrip for arbitrary payloads and secrets.
+  - Wrong-secret rejection (verify must return `False` with a different key).
+  - Canonical JSON determinism (`to_json()` byte-identical across calls).
+  - Sorted-keys invariant (envelope and payload keys are always sorted).
+  - ULID monotonic ordering and first-char `[0-7]` constraint (RFC §6.3).
 
 ### Changed
 
+- **`agentobs.validate.load_schema()`** — now accepts an optional `version`
+  parameter (e.g. `"1.0"` or `"2.0"`), selects the matching schema file, and
+  caches each version independently. Defaults to `"2.0"`. Backward-
+  compatible — callers that passed no argument continue to work.
+- **`agentobs.validate.validate_event()`** — now reads `schema_version`
+  from the event envelope and selects the corresponding schema file
+  automatically (RFC §15.5). Falls through to `"2.0"` when absent.
+- **`agentobs.namespaces.trace.SpanPayload.__post_init__`** — added RFC
+  §8.1 invariant: `duration_ms` must equal
+  `(end_time_unix_nano − start_time_unix_nano) / 1_000_000 ± 1 ms`.
+- **`agentobs.namespaces.trace.AgentStepPayload.__post_init__`** — same
+  `duration_ms` invariant as `SpanPayload` (RFC §8.1).
+
+### Code-quality (SonarCloud)
+
 - **`agentobs/_stream.py`** — broad `except Exception` at the export-error
-  handler is intentional and tested; annotated with `# NOSONAR` to suppress
-  static-analysis false-positive.
-- **`agentobs/event.py`** — `Event.__init__` with 17 parameters is required
-  by the schema; annotated with `# noqa: PLR0913  # NOSONAR`.
-- **`agentobs/export/datadog.py`** — removed leftover inline comment that
-  SonarCloud flagged as commented-out code.
-- **Tests** — resolved all 36 SonarCloud maintainability findings across
-  `test_phase6_openai_integration.py`, `test_sdk_coverage_boost.py`,
-  `test_sdk_openai_integration.py`, `test_sdk_phase7_integrations.py`,
-  `test_signing.py`, `test_stream.py`, `test_ulid.py`, `test_validate.py`:
-  - Replaced `list(sys.modules)` snapshot anti-pattern with list
-    comprehensions.
-  - Renamed uppercase local variables (`Completions`, `AsyncCompletions`) to
-    lowercase (`completions_cls`, `async_completions_cls`).
-  - Replaced unused variable bindings with `_`.
-  - Changed `[:2] == "20"` prefix checks to `.startswith("20")`.
-  - Deduplicated `test_construction_valid` test method name.
-  - Removed orphaned `teardown_method` override.
-  - Added `# NOSONAR` on lines where intentional wrong-type arguments test
-    defensive validation logic.
+  handler annotated with `# NOSONAR` (intentional, tested).
+- **`agentobs/event.py`** — `Event.__init__` 17-parameter signature
+  annotated with `# noqa: PLR0913  # NOSONAR` (schema-required).
+- **`agentobs/export/datadog.py`** — removed SonarCloud false-positive
+  commented-out-code finding.
+- **Tests** — resolved 36 SonarCloud maintainability findings (see prior
+  internal audit notes).
 
 ### Test suite
 
-- **2 560 tests collected** (2 518 passing, 42 skipped), ≥ 94 % line and
-  branch coverage.
+- **2 524 tests passing**, 42 skipped, ≥ 94 % line and branch coverage.
 
 ---
 

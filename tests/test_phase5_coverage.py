@@ -94,7 +94,7 @@ from agentobs.namespaces.trace import (
 SPAN_ID  = "a" * 16
 TRACE_ID = "b" * 32
 TS_S = 1_700_000_000_000_000_000
-TS_E = 1_700_000_001_000_000_000
+TS_E = 1_700_000_000_001_000_000  # TS_S + 1 ms (= 1_000_000 ns); matches duration_ms=1.0
 
 
 def _tu() -> TokenUsage:
