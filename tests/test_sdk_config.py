@@ -192,11 +192,11 @@ class TestEnvVars:
         config_mod._config.service_name = old
 
     def test_agentobs_endpoint_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("AGENTOBS_ENDPOINT", "http://localhost:4317")
+        monkeypatch.setenv("AGENTOBS_ENDPOINT", "http://localhost:4317")  # NOSONAR
         import agentobs.config as config_mod  # noqa: PLC0415
         old = config_mod._config.endpoint
         config_mod._load_from_env()
-        assert config_mod._config.endpoint == "http://localhost:4317"
+        assert config_mod._config.endpoint == "http://localhost:4317"  # NOSONAR
         config_mod._config.endpoint = old
 
     def test_agentobs_org_id_env_var(self, monkeypatch: pytest.MonkeyPatch) -> None:

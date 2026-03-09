@@ -26,7 +26,7 @@ Usage::
     from agentobs.export.grafana import GrafanaLokiExporter
 
     exporter = GrafanaLokiExporter(
-        url="http://localhost:3100",
+        url="http://localhost:3100",  # NOSONAR
         labels={"app": "my-llm-service"},
         tenant_id="my-org",
     )
@@ -309,9 +309,9 @@ class GrafanaLokiExporter:
         if self._tenant_id:
             headers["X-Scope-OrgID"] = self._tenant_id
 
-        req = urllib.request.Request(url=url, data=body, headers=headers, method="POST")  # noqa: S310
+        req = urllib.request.Request(url=url, data=body, headers=headers, method="POST")  # noqa: S310  # NOSONAR
         try:
-            with urllib.request.urlopen(req, timeout=self._timeout) as resp:  # noqa: S310
+            with urllib.request.urlopen(req, timeout=self._timeout) as resp:  # noqa: S310  # NOSONAR
                 resp.read()
         except urllib.error.HTTPError as exc:
             raise ExportError(

@@ -55,7 +55,7 @@ def _mock_urlopen_success() -> MagicMock:
 
 def _make_http_error(code: int, reason: str) -> urllib.error.HTTPError:
     return urllib.error.HTTPError(
-        url="http://example.com",
+        url="http://example.com",  # NOSONAR
         code=code,
         msg=reason,
         hdrs=None,  # type: ignore[arg-type]
@@ -104,18 +104,18 @@ class TestWebhookExporterInit:
 
     def test_zero_timeout_raises(self) -> None:
         with pytest.raises(ValueError, match="timeout"):
-            WebhookExporter("http://example.com", timeout=0.0)
+            WebhookExporter("http://example.com", timeout=0.0)  # NOSONAR
 
     def test_negative_timeout_raises(self) -> None:
         with pytest.raises(ValueError, match="timeout"):
-            WebhookExporter("http://example.com", timeout=-1.0)
+            WebhookExporter("http://example.com", timeout=-1.0)  # NOSONAR
 
     def test_negative_max_retries_raises(self) -> None:
         with pytest.raises(ValueError, match="max_retries"):
-            WebhookExporter("http://example.com", max_retries=-1)
+            WebhookExporter("http://example.com", max_retries=-1)  # NOSONAR
 
     def test_zero_max_retries_allowed(self) -> None:
-        exp = WebhookExporter("http://example.com", max_retries=0)
+        exp = WebhookExporter("http://example.com", max_retries=0)  # NOSONAR
         assert exp._max_retries == 0
 
     def test_invalid_scheme_url_raises(self) -> None:
@@ -123,14 +123,14 @@ class TestWebhookExporterInit:
             WebhookExporter("ftp://invalid-scheme.example.com")
 
     def test_defaults(self) -> None:
-        exp = WebhookExporter("http://example.com")
+        exp = WebhookExporter("http://example.com")  # NOSONAR
         assert exp._timeout == pytest.approx(10.0)
         assert exp._max_retries == 3
         assert exp._secret is None
 
     def test_headers_copied(self) -> None:
         headers = {"X-Custom": "value"}
-        exp = WebhookExporter("http://example.com", headers=headers)
+        exp = WebhookExporter("http://example.com", headers=headers)  # NOSONAR
         headers["X-Extra"] = "extra"
         assert "X-Extra" not in exp._headers
 
@@ -150,15 +150,15 @@ class TestWebhookRepr:
         assert "ultra-secret-value" not in repr(exp)
 
     def test_repr_shows_signed_true_when_secret_set(self) -> None:
-        exp = WebhookExporter("http://example.com", secret="s3cr3t")  # noqa: S106
+        exp = WebhookExporter("http://example.com", secret="s3cr3t")  # noqa: S106  # NOSONAR
         assert "True" in repr(exp)
 
     def test_repr_shows_signed_false_without_secret(self) -> None:
-        exp = WebhookExporter("http://example.com")
+        exp = WebhookExporter("http://example.com")  # NOSONAR
         assert "False" in repr(exp)
 
     def test_repr_shows_max_retries(self) -> None:
-        exp = WebhookExporter("http://example.com", max_retries=5)
+        exp = WebhookExporter("http://example.com", max_retries=5)  # NOSONAR
         assert "5" in repr(exp)
 
 
@@ -169,7 +169,7 @@ class TestWebhookRepr:
 
 class TestExportSingleEvent:
     def test_export_makes_post_request(self) -> None:
-        exp = WebhookExporter("http://example.com/hook")
+        exp = WebhookExporter("http://example.com/hook")  # NOSONAR
         event = _make_event()
         captured: list = []
 
@@ -182,10 +182,10 @@ class TestExportSingleEvent:
 
         assert len(captured) == 1
         assert captured[0].get_method() == "POST"
-        assert captured[0].full_url == "http://example.com/hook"
+        assert captured[0].full_url == "http://example.com/hook"  # NOSONAR
 
     def test_export_body_is_event_json(self) -> None:
-        exp = WebhookExporter("http://example.com/hook")
+        exp = WebhookExporter("http://example.com/hook")  # NOSONAR
         event = _make_event()
         captured: list = []
 
@@ -200,7 +200,7 @@ class TestExportSingleEvent:
         assert body == event.to_json().encode("utf-8")
 
     def test_export_with_secret_adds_signature_header(self) -> None:
-        exp = WebhookExporter("http://example.com/hook", secret="my-secret")  # noqa: S106
+        exp = WebhookExporter("http://example.com/hook", secret="my-secret")  # noqa: S106  # NOSONAR
         event = _make_event()
         captured: list = []
 
@@ -219,7 +219,7 @@ class TestExportSingleEvent:
         assert sig_header.startswith("hmac-sha256:")
 
     def test_export_without_secret_no_signature_header(self) -> None:
-        exp = WebhookExporter("http://example.com/hook")
+        exp = WebhookExporter("http://example.com/hook")  # NOSONAR
         event = _make_event()
         captured: list = []
 
@@ -236,7 +236,7 @@ class TestExportSingleEvent:
 
     def test_export_signature_is_verifiable(self) -> None:
         secret = "verify-me-secret"  # noqa: S105  # NOSONAR
-        exp = WebhookExporter("http://example.com/hook", secret=secret)
+        exp = WebhookExporter("http://example.com/hook", secret=secret)  # NOSONAR
         event = _make_event()
         captured: list = []
 
@@ -254,7 +254,7 @@ class TestExportSingleEvent:
         assert received_sig == expected_sig
 
     def test_export_sets_json_content_type(self) -> None:
-        exp = WebhookExporter("http://example.com/hook")
+        exp = WebhookExporter("http://example.com/hook")  # NOSONAR
         event = _make_event()
         captured: list = []
 
@@ -269,7 +269,7 @@ class TestExportSingleEvent:
 
     def test_export_includes_custom_headers(self) -> None:
         exp = WebhookExporter(
-            "http://example.com/hook",
+            "http://example.com/hook",  # NOSONAR
             headers={"X-Tenant": "acme"},
         )
         event = _make_event()
@@ -292,7 +292,7 @@ class TestExportSingleEvent:
 
 class TestExportBatch:
     def test_batch_sends_json_array(self) -> None:
-        exp = WebhookExporter("http://example.com/hook")
+        exp = WebhookExporter("http://example.com/hook")  # NOSONAR
         events = [_make_event() for _ in range(3)]
         captured: list = []
 
@@ -310,7 +310,7 @@ class TestExportBatch:
         assert len(body) == 3
 
     def test_batch_empty_returns_zero_no_request(self) -> None:
-        exp = WebhookExporter("http://example.com/hook")
+        exp = WebhookExporter("http://example.com/hook")  # NOSONAR
         calls: list = []
 
         with patch("urllib.request.urlopen", side_effect=calls.append):
@@ -321,7 +321,7 @@ class TestExportBatch:
 
     def test_batch_signature_over_array_body(self) -> None:
         secret = "batch-secret"  # noqa: S105
-        exp = WebhookExporter("http://example.com/hook", secret=secret)
+        exp = WebhookExporter("http://example.com/hook", secret=secret)  # NOSONAR
         events = [_make_event(), _make_event()]
         captured: list = []
 
@@ -347,7 +347,7 @@ class TestExportBatch:
 class TestRetryLogic:
     def test_retries_on_os_error_until_success(self) -> None:
         exp = WebhookExporter(
-            "http://example.com/hook",
+            "http://example.com/hook",  # NOSONAR
             max_retries=2,
         )
         event = _make_event()
@@ -368,7 +368,7 @@ class TestRetryLogic:
 
     def test_retries_on_5xx_until_success(self) -> None:
         exp = WebhookExporter(
-            "http://example.com/hook",
+            "http://example.com/hook",  # NOSONAR
             max_retries=2,
         )
         event = _make_event()
@@ -389,7 +389,7 @@ class TestRetryLogic:
 
     def test_no_retry_on_4xx(self) -> None:
         exp = WebhookExporter(
-            "http://example.com/hook",
+            "http://example.com/hook",  # NOSONAR
             max_retries=3,
         )
         event = _make_event()
@@ -410,7 +410,7 @@ class TestRetryLogic:
 
     def test_raises_after_max_retries_exceeded(self) -> None:
         exp = WebhookExporter(
-            "http://example.com/hook",
+            "http://example.com/hook",  # NOSONAR
             max_retries=2,
         )
         event = _make_event()
@@ -428,7 +428,7 @@ class TestRetryLogic:
 
     def test_export_error_carries_event_id(self) -> None:
         exp = WebhookExporter(
-            "http://example.com/hook",
+            "http://example.com/hook",  # NOSONAR
             max_retries=0,
         )
         event = _make_event()
@@ -441,7 +441,7 @@ class TestRetryLogic:
 
     def test_zero_retries_fails_immediately(self) -> None:
         exp = WebhookExporter(
-            "http://example.com/hook",
+            "http://example.com/hook",  # NOSONAR
             max_retries=0,
         )
         event = _make_event()

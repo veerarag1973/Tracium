@@ -405,7 +405,7 @@ class OTLPExporter:
     Example::
 
         exporter = OTLPExporter(
-            endpoint="http://localhost:4318/v1/traces",
+            endpoint="http://localhost:4318/v1/traces",  # NOSONAR
             resource_attrs=ResourceAttributes(service_name="llm-trace"),
         )
         await exporter.export(event)
@@ -630,14 +630,14 @@ class OTLPExporter:
         timeout = self._timeout
 
         def _do_request() -> None:
-            req = urllib.request.Request(  # noqa: S310
+            req = urllib.request.Request(  # noqa: S310  # NOSONAR
                 url=endpoint,
                 data=body,
                 headers=request_headers,
                 method="POST",
             )
             try:
-                with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310
+                with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310  # NOSONAR
                     resp.read()
             except urllib.error.HTTPError as exc:
                 raise ExportError(

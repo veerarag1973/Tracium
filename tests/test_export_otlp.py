@@ -80,7 +80,7 @@ def _make_event(  # noqa: PLR0913
 
 
 def _make_exporter(**kwargs: Any) -> OTLPExporter:
-    return OTLPExporter("http://localhost:4318/v1/traces", **kwargs)
+    return OTLPExporter("http://localhost:4318/v1/traces", **kwargs)  # NOSONAR
 
 
 def _mock_urlopen_success() -> MagicMock:
@@ -379,18 +379,18 @@ class TestOTLPExporterInit:
 
     def test_zero_timeout_raises(self) -> None:
         with pytest.raises(ValueError, match="timeout"):
-            OTLPExporter("http://localhost", timeout=0.0)
+            OTLPExporter("http://localhost", timeout=0.0)  # NOSONAR
 
     def test_negative_timeout_raises(self) -> None:
         with pytest.raises(ValueError, match="timeout"):
-            OTLPExporter("http://localhost", timeout=-1.0)
+            OTLPExporter("http://localhost", timeout=-1.0)  # NOSONAR
 
     def test_zero_batch_size_raises(self) -> None:
         with pytest.raises(ValueError, match="batch_size"):
-            OTLPExporter("http://localhost", batch_size=0)
+            OTLPExporter("http://localhost", batch_size=0)  # NOSONAR
 
     def test_defaults_applied(self) -> None:
-        exp = OTLPExporter("http://localhost")
+        exp = OTLPExporter("http://localhost")  # NOSONAR
         assert exp._timeout == pytest.approx(5.0)
         assert exp._batch_size == 500
 
@@ -400,7 +400,7 @@ class TestOTLPExporterInit:
 
     def test_custom_headers_copied(self) -> None:
         headers = {"Authorization": "Bearer token"}
-        exp = OTLPExporter("http://localhost", headers=headers)
+        exp = OTLPExporter("http://localhost", headers=headers)  # NOSONAR
         assert exp._headers == headers
         # Modifying original should not affect exporter's copy.
         headers["X-Extra"] = "extra"
@@ -408,11 +408,11 @@ class TestOTLPExporterInit:
 
     def test_custom_resource_attrs(self) -> None:
         ra = ResourceAttributes(service_name="custom-svc")
-        exp = OTLPExporter("http://localhost", resource_attrs=ra)
+        exp = OTLPExporter("http://localhost", resource_attrs=ra)  # NOSONAR
         assert exp._resource_attrs is ra
 
     def test_default_resource_attrs_set(self) -> None:
-        exp = OTLPExporter("http://localhost")
+        exp = OTLPExporter("http://localhost")  # NOSONAR
         assert exp._resource_attrs.service_name == "agentobs"
 
 
@@ -555,7 +555,7 @@ class TestWrapHelpers:
 
     def test_wrap_spans_resource_uses_configured_attrs(self) -> None:
         ra = ResourceAttributes(service_name="my-svc")
-        exp = OTLPExporter("http://localhost", resource_attrs=ra)
+        exp = OTLPExporter("http://localhost", resource_attrs=ra)  # NOSONAR
         result = exp._wrap_spans([])
         resource_attrs = result["resourceSpans"][0]["resource"]["attributes"]
         keys = {a["key"] for a in resource_attrs}
@@ -577,7 +577,7 @@ class TestSend:
     def test_send_http_error_raises_export_error(self) -> None:
         exp = _make_exporter()
         http_err = urllib.error.HTTPError(
-            url="http://localhost",
+            url="http://localhost",  # NOSONAR
             code=500,
             msg="Internal Server Error",
             hdrs=None,  # type: ignore[arg-type]
@@ -613,7 +613,7 @@ class TestSend:
 
     def test_send_includes_custom_headers(self) -> None:
         exp = OTLPExporter(
-            "http://localhost",
+            "http://localhost",  # NOSONAR
             headers={"X-Api-Key": "secret-key"},
         )
         captured: list = []
@@ -728,15 +728,15 @@ class TestExportBatch:
 
 class TestOTLPRepr:
     def test_repr_contains_endpoint(self) -> None:
-        exp = OTLPExporter("http://localhost:4318")
-        assert "http://localhost:4318" in repr(exp)
+        exp = OTLPExporter("http://localhost:4318")  # NOSONAR
+        assert "http://localhost:4318" in repr(exp)  # NOSONAR
 
     def test_repr_contains_batch_size(self) -> None:
-        exp = OTLPExporter("http://localhost", batch_size=250)
+        exp = OTLPExporter("http://localhost", batch_size=250)  # NOSONAR
         assert "250" in repr(exp)
 
     def test_repr_does_not_leak_headers(self) -> None:
-        exp = OTLPExporter("http://localhost", headers={"Authorization": "Bearer top-secret"})
+        exp = OTLPExporter("http://localhost", headers={"Authorization": "Bearer top-secret"})  # NOSONAR
         assert "top-secret" not in repr(exp)
 
 

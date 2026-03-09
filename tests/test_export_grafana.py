@@ -35,7 +35,7 @@ def sample_event() -> Event:
 @pytest.fixture()
 def exporter() -> GrafanaLokiExporter:
     return GrafanaLokiExporter(
-        url="http://localhost:3100",
+        url="http://localhost:3100",  # NOSONAR
         labels={"env": "production", "service": "llm-trace"},
     )
 
@@ -56,18 +56,18 @@ class TestConstruction:
 
     def test_zero_timeout_raises(self) -> None:
         with pytest.raises(ValueError, match="timeout"):
-            GrafanaLokiExporter(url="http://x", timeout=0.0)
+            GrafanaLokiExporter(url="http://x", timeout=0.0)  # NOSONAR
 
     def test_negative_timeout_raises(self) -> None:
         with pytest.raises(ValueError, match="timeout"):
-            GrafanaLokiExporter(url="http://x", timeout=-1.0)
+            GrafanaLokiExporter(url="http://x", timeout=-1.0)  # NOSONAR
 
     def test_default_labels(self) -> None:
-        exp = GrafanaLokiExporter(url="http://x")
+        exp = GrafanaLokiExporter(url="http://x")  # NOSONAR
         assert exp._global_labels == {}
 
     def test_tenant_id_stored(self) -> None:
-        exp = GrafanaLokiExporter(url="http://x", tenant_id="acme")
+        exp = GrafanaLokiExporter(url="http://x", tenant_id="acme")  # NOSONAR
         assert exp._tenant_id == "acme"
 
 
@@ -107,7 +107,7 @@ class TestEventToLokiEntry:
 
     def test_no_envelope_labels_when_disabled(self, sample_event: Event) -> None:
         exp = GrafanaLokiExporter(
-            url="http://x",
+            url="http://x",  # NOSONAR
             labels={"service": "test"},
             include_envelope_labels=False,
         )
@@ -253,7 +253,7 @@ class TestHttpErrors:
     def test_tenant_id_header_set(
         self, sample_event: Event
     ) -> None:
-        exp = GrafanaLokiExporter(url="http://loki", tenant_id="tenant-123")
+        exp = GrafanaLokiExporter(url="http://loki", tenant_id="tenant-123")  # NOSONAR
         captured_headers: list[dict] = []
 
         def _mock_urlopen(req: Any, timeout: Any = None) -> Any:

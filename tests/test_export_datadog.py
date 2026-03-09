@@ -48,7 +48,7 @@ def exporter() -> DatadogExporter:
     return DatadogExporter(
         service="my-llm",
         env="production",
-        agent_url="http://localhost:8126",
+        agent_url="http://localhost:8126",  # NOSONAR
         api_key="fake-api-key",
     )
 

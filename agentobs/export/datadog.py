@@ -33,7 +33,7 @@ from __future__ import annotations
 import asyncio
 import ipaddress
 import json
-import random
+import secrets
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -189,7 +189,7 @@ def _iso_to_epoch_us(ts: str) -> int:
 
 def _make_span_id() -> int:
     """Generate a random 64-bit span ID as an unsigned integer."""
-    return random.getrandbits(64)
+    return secrets.randbits(64)
 
 
 def _trace_id_to_int(trace_id: str | None) -> int:
@@ -244,7 +244,7 @@ class DatadogExporter:
         service: str,
         env: str = "production",
         *,
-        agent_url: str = "http://localhost:8126",
+        agent_url: str = "http://localhost:8126",  # NOSONAR
         api_key: str | None = None,
         dd_site: str | None = None,
         timeout: float = 10.0,
@@ -458,9 +458,9 @@ class DatadogExporter:
         Raises:
             ExportError: On HTTP or network failure.
         """
-        req = urllib.request.Request(url=url, data=body, headers=headers, method="POST")  # noqa: S310
+        req = urllib.request.Request(url=url, data=body, headers=headers, method="POST")  # noqa: S310  # NOSONAR
         try:
-            with urllib.request.urlopen(req, timeout=self._timeout) as resp:  # noqa: S310
+            with urllib.request.urlopen(req, timeout=self._timeout) as resp:  # noqa: S310  # NOSONAR
                 resp.read()
         except urllib.error.HTTPError as exc:
             raise ExportError(

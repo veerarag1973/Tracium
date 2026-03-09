@@ -470,7 +470,7 @@ class TestDatadogExporterDdSiteValidation:
         exp = DatadogExporter(
             service="svc",
             env="prod",
-            agent_url="http://localhost:8126",
+            agent_url="http://localhost:8126",  # NOSONAR
             dd_site="datadoghq.com",
         )
         assert exp  # construction succeeds
@@ -482,7 +482,7 @@ class TestDatadogExporterDdSiteValidation:
             DatadogExporter(
                 service="svc",
                 env="prod",
-                agent_url="http://localhost:8126",
+                agent_url="http://localhost:8126",  # NOSONAR
                 dd_site="",
             )
 
@@ -493,7 +493,7 @@ class TestDatadogExporterDdSiteValidation:
             DatadogExporter(
                 service="svc",
                 env="prod",
-                agent_url="http://localhost:8126",
+                agent_url="http://localhost:8126",  # NOSONAR
                 dd_site="https://datadoghq.com",
             )
 
@@ -504,7 +504,7 @@ class TestDatadogExporterDdSiteValidation:
             DatadogExporter(
                 service="svc",
                 env="prod",
-                agent_url="http://localhost:8126",
+                agent_url="http://localhost:8126",  # NOSONAR
                 dd_site="localhost",
             )
 
@@ -515,7 +515,7 @@ class TestDatadogExporterDdSiteValidation:
             DatadogExporter(
                 service="svc",
                 env="prod",
-                agent_url="http://localhost:8126",
+                agent_url="http://localhost:8126",  # NOSONAR
                 dd_site="datadoghq .com",
             )
 
@@ -525,7 +525,7 @@ class TestDatadogExporterDdSiteValidation:
         exp = DatadogExporter(
             service="svc",
             env="prod",
-            agent_url="http://localhost:8126",
+            agent_url="http://localhost:8126",  # NOSONAR
             dd_site="datadoghq.eu",
         )
         assert exp
@@ -547,7 +547,7 @@ class TestDatadogExporterDdSiteValidation:
             DatadogExporter(
                 service="svc",
                 env="prod",
-                agent_url="http://localhost:8126",
+                agent_url="http://localhost:8126",  # NOSONAR
                 timeout=0.0,
             )
 

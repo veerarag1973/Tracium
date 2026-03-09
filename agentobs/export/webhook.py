@@ -203,14 +203,14 @@ class WebhookExporter:
     @staticmethod
     def _do_http_post(url: str, body: bytes, headers: dict[str, str], timeout: float, event_id: str) -> None:
         """Execute a single HTTP POST; raises ExportError on failure."""
-        req = urllib.request.Request(  # noqa: S310
+        req = urllib.request.Request(  # noqa: S310  # NOSONAR
             url=url,
             data=body,
             headers=headers,
             method="POST",
         )
         try:
-            with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310
+            with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310  # NOSONAR
                 resp.read()
         except urllib.error.HTTPError as exc:
             raise ExportError("webhook", f"HTTP {exc.code}: {exc.reason}", event_id) from exc
